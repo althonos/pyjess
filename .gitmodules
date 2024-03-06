@@ -1,0 +1,3 @@
+[submodule "vendor/jess"]
+	path = vendor/jess
+	url = https://gitlab.ebi.ac.uk/riziotis/jess
