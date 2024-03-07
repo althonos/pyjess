@@ -135,9 +135,6 @@ cdef class JessQuery:
 
             rmsd = jess.super.Superposition_rmsd(sup)
             if rmsd <= self.rmsd_threshold:
-                
-
-                
 
                 hit = Hit.__new__(Hit)
                 hit.rmsd = rmsd
@@ -204,8 +201,7 @@ cdef class Jess:
         self._jess = jess.jess.Jess_create()
         for template in templates:
             # FIXME: copy templates here so that the Jess storage owns the data
-            jess.jess.Jess_addTemplate(self._jess, template._tpl)
-            # jess.jess.Jess_addTemplate(self._jess, template._tpl.copy(template._tpl))
+            jess.jess.Jess_addTemplate(self._jess, template._tpl.copy(template._tpl))
 
     cpdef JessQuery query(
         self, 

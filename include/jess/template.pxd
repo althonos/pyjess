@@ -13,3 +13,4 @@ cdef extern from "Template.h" nogil:
         const char* (*name)(const Template*)
         double (*logE)(const Template*, double, int)
         double (*distWeight)(const Template*, int)
+        Template* (*copy)(const Template*)

@@ -1,0 +1,12 @@
+diff --git a/src/Template.h b/src/Template.h
+index 13f68f1..8dec3c9 100644
+--- a/src/Template.h
++++ b/src/Template.h
+@@ -42,6 +42,7 @@ struct _Template
+ 	const char *(*name)(const Template*);
+ 	double (*logE)(const Template*,double,int);
+ 	double (*distWeight)(const Template*,int);
++	Template* (*copy)(const Template*);
+ };
+ 
+ // ==================================================================

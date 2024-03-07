@@ -1,0 +1,12 @@
+diff --git a/src/TessTemplate.h b/src/TessTemplate.h
+index 1e597f2..b810b60 100644
+--- a/src/TessTemplate.h
++++ b/src/TessTemplate.h
+@@ -18,6 +18,7 @@
+ // ==================================================================
+ 
+ extern Template *TessTemplate_create(FILE*,const char*);
++extern Template *TessTemplate_copy(const Template*);
+ 
+ // ==================================================================
+ 

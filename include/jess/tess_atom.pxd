@@ -13,3 +13,4 @@ cdef extern from "TessAtom.h" nogil:
     char TessAtom_chainID1(const TessAtom*)
     char TessAtom_chainID2(const TessAtom*)
     double TessAtom_distWeight(const TessAtom*)
+    TessAtom* TessAtom_copy(const TessAtom*)

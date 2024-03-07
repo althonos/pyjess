@@ -1,0 +1,54 @@
+diff --git a/src/TessAtom.c b/src/TessAtom.c
+index 1e75c16..32e7960 100644
+--- a/src/TessAtom.c
++++ b/src/TessAtom.c
+@@ -257,6 +257,49 @@ TessAtom *TessAtom_create(const char *s)
+ 	return A;
+ }
+ 
++TessAtom *TessAtom_copy(const TessAtom *A)
++{
++	int ac;
++	int rc;
++	int rq;
++	int m;
++	void* p;
++	TessAtom* B;
++
++	// get allocation size
++	ac = A->nameCount;
++	rc = A->resNameCount;
++	rq = sizeof(TessAtom);
++	rq += sizeof(char*)*(ac+rc);
++	rq += sizeof(char)*(5*ac+4*rc);
++
++	// allocate new atom
++	B = (TessAtom*)calloc(1,rq);
++
++	// copy all fields including string data from original Atom
++	memcpy(B, A, rq);
++
++	// set pointers to string data
++	p=&B[1];
++	B->name=p;
++	p+=sizeof(char*)*ac;
++	for(m=0; m<ac; m++)
++	{
++		B->name[m]=p;
++		p+=5;
++	}
++
++	B->resName=p;
++	p+=sizeof(char*)*rc;
++	for(m=0; m<rc; m++)
++	{
++		B->resName[m]=p;
++		p+=4;
++	}
++
++	return B;
++}
++
+ //Riziotis edit
+ char TessAtom_chainID1(const TessAtom *A)
+ {

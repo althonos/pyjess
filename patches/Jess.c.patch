@@ -1,0 +1,47 @@
+diff --git a/src/Jess.c b/src/Jess.c
+index e81bda0..6d44558 100644
+--- a/src/Jess.c
++++ b/src/Jess.c
+@@ -91,8 +91,10 @@ void Jess_free(Jess *J)
+ 			n=J->head->next;
+ 			T=J->head->template;
+ 			if(T) T->free(T);
++			free(J->head);
+ 			J->head=n;
+ 		}
++		free(J);
+ 	}
+ }
+ 
+@@ -157,26 +159,26 @@ Superposition *JessQuery_superposition(JessQuery *Q)
+ 	Template *T;
+ 	Atom **A;
+ 
+-	if(Q->super) return Q->super;
++	Superposition* super;
++	// if(Q->super) return Q->super;
+ 
+ 	A = Q->atoms;
+ 	T = Q->node->template;
+ 	count = T->count(T);
+-	Q->super=Superposition_create();
++	super=Superposition_create();
+ 
+ 	for(i=0; i<count; i++)
+ 	{
+-		Superposition_align(Q->super,A[i]->x,T->position(T,i));
++		Superposition_align(super,A[i]->x,T->position(T,i));
+ 	}
+ 
+-	return Q->super;
++	return super;
+ }
+ 
+ int JessQuery_next(JessQuery *Q, int ignore_chain)
+ {
+ 	Template *T;
+ 	Atom **A;
+-	Superposition *S;
+ 
+ 	while(Q->node)
+ 	{
