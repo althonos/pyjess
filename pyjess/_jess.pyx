@@ -212,6 +212,7 @@ cdef class JessQuery:
     cdef readonly Molecule molecule
     cdef readonly bint     ignore_chain
     cdef readonly double   rmsd_threshold
+    cdef readonly int      max_candidates
 
     def __cinit__(self):
         self._jq = NULL
@@ -239,46 +240,36 @@ cdef class JessQuery:
         cdef int             kill_switch = 0
         cdef Hit             hit
 
-        while jess.jess.JessQuery_next(self._jq, self.ignore_chain) and self._candidates < 200:
-
-            self._candidates += 1
-
+        while jess.jess.JessQuery_next(self._jq, self.ignore_chain) and self._candidates < self.max_candidates:
             tpl = jess.jess.JessQuery_template(self._jq)
             count = tpl.count(tpl)
             sup = jess.jess.JessQuery_superposition(self._jq)
             atoms = jess.jess.JessQuery_atoms(self._jq)
-
             rmsd = jess.super.Superposition_rmsd(sup)
             if rmsd <= self.rmsd_threshold:
-
                 # create a new hit
                 hit = Hit.__new__(Hit)
                 hit.rmsd = rmsd
-
                 # record superposition object
                 # (TODO: expose as a Superposition object)
                 hit._sup = sup
-
                 # copy atoms (the pointer will be invalidated on the next
                 # call of JessQuery_next)
                 hit._atoms = <_Atom*> calloc(count, sizeof(_Atom))
                 for i in range(count):
                     memcpy(&hit._atoms[i], atoms[i], sizeof(_Atom))
-
                 # record molecule from which we got the hit (the query molecule)
                 hit.molecule = self.molecule
-
                 # create a new object to wrap the template that got a hit
                 # (no need to copy, we keep a reference to the template
                 # list from the original Jess object).
                 hit.template = Template.__new__(Template)
                 hit.template._tpl = tpl
                 hit.template.owner = self.jess
-
                 return hit
-
-            #
+            # free superposition items that are not used for hits
             jess.super.Superposition_free(sup)
+            self._candidates += 1
 
         raise StopIteration
 
@@ -367,7 +358,8 @@ cdef class Jess:
 
         self._jess = jess.jess.Jess_create()
         for template in templates:
-            # FIXME: copy templates here so that the Jess storage owns the data
+            # NOTE: the Jess storage owns the data, so we make a copy of the 
+            #       template given as argument to avoid a double-free.
             jess.jess.Jess_addTemplate(self._jess, template._tpl.copy(template._tpl))
 
     cpdef JessQuery query(
@@ -375,12 +367,13 @@ cdef class Jess:
         Molecule molecule,
         double rmsd_threshold,
         double distance_cutoff,
-        double max_total_threshold,
-        bint transform = True,
+        double max_total_threshold,  # FIXME
+        int max_candidates = 200,
         bint ignore_chain = False,
     ):
         cdef JessQuery query = JessQuery.__new__(JessQuery)
         query.ignore_chain = ignore_chain
+        query.max_candidates = max_candidates
         query.rmsd_threshold = rmsd_threshold
         query.molecule = molecule
         query.jess = self
