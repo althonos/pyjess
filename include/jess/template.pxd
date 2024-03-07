@@ -5,13 +5,13 @@ cdef extern from "Template.h" nogil:
 
     ctypedef _Template Template
     cdef struct _Template:
-        void (*free)(Template*)
-        int (*count)(const Template*)
-        int (*match)(const Template*, int, const Atom*)
-        int (*range)(const Template*, int, int, double*, double*)
-        int (*check)(const Template*, Atom**, int, int)
-        const double* (*position)(const Template*, int)
-        const char* (*name)(const Template*)
-        double (*logE)(const Template*, double, int)
-        double (*distWeight)(const Template*, int)
-        Template* (*copy)(const Template*)
+        void (*free)(Template*) nogil
+        int (*count)(const Template*) nogil
+        int (*match)(const Template*, int, const Atom*) nogil
+        int (*range)(const Template*, int, int, double*, double*) nogil
+        int (*check)(const Template*, Atom**, int, int) nogil
+        const double* (*position)(const Template*, int) nogil
+        const char* (*name)(const Template*) nogil
+        double (*logE)(const Template*, double, int) nogil
+        double (*distWeight)(const Template*, int) nogil
+        Template* (*copy)(const Template*) nogil
