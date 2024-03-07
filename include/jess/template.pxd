@@ -1,5 +1,6 @@
 from .atom cimport Atom
 
+
 cdef extern from "Template.h" nogil:
 
     ctypedef _Template Template

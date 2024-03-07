@@ -1,6 +1,7 @@
 from .molecule import Molecule
 from .template import Template
 
+
 cdef extern from "Scanner.h" nogil:
 
     cdef struct _Scanner:

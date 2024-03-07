@@ -3,6 +3,7 @@ from .molecule cimport Molecule
 from .super cimport Superposition
 from .template cimport Template
 
+
 cdef extern from "Jess.h" nogil:
 
     ctypedef struct _Jess:

@@ -1,5 +1,6 @@
 from .region cimport Region
 
+
 cdef extern from "KdTree.h" nogil:
 
     cdef struct _KdTree:

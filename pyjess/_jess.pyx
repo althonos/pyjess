@@ -1,23 +1,23 @@
 cimport cython
 from cpython.unicode cimport PyUnicode_FromStringAndSize
 
-from libc.stdio cimport FILE, fdopen, fclose, printf
-from libc.stdlib cimport free, calloc, malloc
-from libc.string cimport memcpy
 from libc.math cimport exp
+from libc.stdio cimport FILE, fclose, fdopen, printf
+from libc.stdlib cimport calloc, free, malloc
+from libc.string cimport memcpy
 
 cimport jess.jess
 cimport jess.molecule
-cimport jess.tess_template
 cimport jess.super
+cimport jess.tess_template
 from jess.atom cimport Atom as _Atom
-from jess.jess cimport Jess as _Jess, JessQuery as _JessQuery
+from jess.jess cimport Jess as _Jess
+from jess.jess cimport JessQuery as _JessQuery
 from jess.molecule cimport Molecule as _Molecule
-from jess.template cimport Template as _Template
 from jess.super cimport Superposition as _Superposition
+from jess.template cimport Template as _Template
 
 import os
-
 
 
 cdef class Molecule:

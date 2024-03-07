@@ -6,12 +6,11 @@ import multiprocessing.pool
 import os
 import platform
 import re
+import setuptools
 import sys
 import sysconfig
 from distutils.command.clean import clean as _clean
 from distutils.errors import CompileError
-
-import setuptools
 from setuptools.command.build_clib import build_clib as _build_clib
 from setuptools.command.build_ext import build_ext as _build_ext
 from setuptools.command.sdist import sdist as _sdist

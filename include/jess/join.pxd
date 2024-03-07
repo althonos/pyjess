@@ -1,5 +1,6 @@
 from .region cimport Region
 
+
 cdef extern from "Join.h" nogil:
 
     ctypedef enum JoinType:
