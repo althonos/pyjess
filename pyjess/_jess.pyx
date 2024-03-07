@@ -361,7 +361,6 @@ cdef class Jess:
 
     def __init__(self, object templates):
         cdef Template template
-
         self._jess = jess.jess.Jess_create()
         for template in templates:
             # NOTE: the Jess storage owns the data, so we make a copy of the 
@@ -373,7 +372,7 @@ cdef class Jess:
         Molecule molecule,
         double rmsd_threshold,
         double distance_cutoff,
-        double max_total_threshold,  # FIXME
+        double max_dynamic_distance,
         int max_candidates = 200,
         bint ignore_chain = False,
     ):
@@ -387,6 +386,6 @@ cdef class Jess:
             self._jess,
             molecule._mol,
             distance_cutoff,
-            max_total_threshold
+            max_dynamic_distance,
         )
         return query
