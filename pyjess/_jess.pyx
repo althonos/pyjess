@@ -47,6 +47,27 @@ cdef class Molecule:
         finally:
             fclose(f)
 
+    def __len__(self):
+        assert self._mol is not NULL
+        return jess.molecule.Molecule_count(self._mol)
+
+    def __getitem__(self, ssize_t index):
+        assert self._mol is not NULL
+
+        cdef Atom    atom
+        cdef ssize_t length = jess.molecule.Molecule_count(self._mol)
+        cdef ssize_t index_ = index
+
+        if index_ < 0:
+            index_ += length
+        if index_ < 0 or index_ >= length:
+            raise IndexError(index)
+
+        atom = Atom.__new__(Atom)
+        atom.owner = self
+        atom._atom = jess.molecule.Molecule_atom(self._mol, index_)
+        return atom
+
     @property
     def id(self):
         assert self._mol is not NULL
@@ -204,9 +225,6 @@ cdef class Template:
     def name(self):
         assert self._tpl is not NULL
         return self._tpl.name(self._tpl).decode()
-
-
-
 
 
 cdef class JessQuery:
