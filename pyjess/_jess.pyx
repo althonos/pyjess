@@ -1,7 +1,9 @@
 cimport cython
+from cpython.unicode cimport PyUnicode_FromStringAndSize
 
 from libc.stdio cimport FILE, fdopen, fclose, printf
-from libc.stdlib cimport free 
+from libc.stdlib cimport free, calloc, malloc
+from libc.string cimport memcpy
 from libc.math cimport exp
 
 cimport jess.jess
@@ -16,47 +18,6 @@ from jess.super cimport Superposition as _Superposition
 
 import os
 
-@cython.no_gc_clear
-cdef class Template:
-    cdef object     owner
-    cdef _Template* _tpl
-
-    def __cinit__(self):
-        self._tpl  = NULL
-        self.owner = None
-
-    def __dealloc__(self):
-        # if self.owner is None:
-            # self._tpl.free(self._tpl)
-        pass
-
-    def __init__(self, str name, object file):
-        """Create a new template by loading the given file.
-
-        Arguments:
-            name (`str`): The name of the template.
-            file (`str`, `bytes` or `os.PathLike`): The filename of the file
-                containing the template atoms.
-
-        """
-        cdef bytes name_  = name.encode()
-        cdef int   fd     = os.open(file, os.O_RDONLY)
-        cdef FILE* f      = fdopen(fd, "r")
-
-        try:
-            self._tpl = jess.tess_template.TessTemplate_create(f, name_)
-            if self._tpl is NULL:
-                raise ValueError(f"Failed to parse template file from {file!r}")
-        finally:
-            fclose(f)
-
-    def __len__(self):
-        assert self._tpl is not NULL
-
-    @property
-    def name(self):
-        assert self._tpl is not NULL
-        return self._tpl.name(self._tpl).decode()
 
 
 cdef class Molecule:
@@ -87,13 +48,168 @@ cdef class Molecule:
         return jess.molecule.Molecule_id(self._mol).decode()
 
 
+@cython.no_gc_clear
+cdef class Atom:
+    cdef object owner
+    cdef _Atom* _atom
+
+    def __cinit__(self):
+        self._atom = NULL
+        self.owner = None
+
+    def __dealloc__(self):
+        if self.owner is None:
+            free(self._atom)
+
+    @property
+    def serial(self):
+        """`int`: The atom serial number.
+        """
+        assert self._atom is not NULL
+        return self._atom.serial
+
+    @property
+    def altloc(self):
+        """`str`: The alternate locaiton indicator for the atom.
+        """
+        assert self._atom is not NULL
+        return chr(self._atom.altLoc)
+
+    @property
+    def name(self):
+        """`str`: The atom name.
+        """
+        assert self._atom is not NULL
+        return PyUnicode_FromStringAndSize(self._atom.name, 4).strip("_")
+
+    @property
+    def residue_name(self):
+        """`str`: The residue name.
+        """
+        assert self._atom is not NULL
+        return PyUnicode_FromStringAndSize(self._atom.resName, 3).strip("_")
+
+    @property
+    def residue_number(self):
+        """`int`: The residue sequence number.
+        """
+        assert self._atom is not NULL
+        return self._atom.resSeq
+
+    @property
+    def segment(self):
+        """`str`: The segment identifier
+        """
+        assert self._atom is not NULL
+        return PyUnicode_FromStringAndSize(self._atom.segID, 4).strip()
+
+    @property
+    def element(self):
+        """`str`: The element symbol.
+        """
+        assert self._atom is not NULL
+        return PyUnicode_FromStringAndSize(self._atom.element, 3)
+
+    @property
+    def insertion_code(self):
+        """`str`: The code for insertion of residues.
+        """
+        assert self._atom is not NULL
+        return chr(self._atom.iCode)
+
+    @property
+    def chain_id(self):
+        assert self._atom is not NULL
+        return "{}{}".format(chr(self._atom.chainID1), chr(self._atom.chainID2)).strip()
+
+    @property
+    def occupancy(self):
+        """`float`: The atom occupancy.
+        """
+        assert self._atom is not NULL
+        return self._atom.occupancy
+
+    @property
+    def temperature_factor(self):
+        """`float`: The atom temperature factor.
+        """
+        assert self._atom is not NULL
+        return self._atom.tempFactor
+
+    @property
+    def charge(self):
+        """`int`: The atom charge.
+        """
+        assert self._atom is not NULL
+        return self._atom.charge
+
+    @property
+    def x(self):
+        assert self._atom is not NULL
+        return self._atom.x[0]
+
+    @property
+    def y(self):
+        assert self._atom is not NULL
+        return self._atom.x[1]
+
+    @property
+    def z(self):
+        assert self._atom is not NULL
+        return self._atom.x[2]
+
+
+@cython.no_gc_clear
+cdef class Template:
+    cdef object     owner
+    cdef _Template* _tpl
+
+    def __cinit__(self):
+        self._tpl  = NULL
+        self.owner = None
+
+    def __dealloc__(self):
+        if self.owner is None:
+            self._tpl.free(self._tpl)
+
+    def __init__(self, str name, object file):
+        """Create a new template by loading the given file.
+
+        Arguments:
+            name (`str`): The name of the template.
+            file (`str`, `bytes` or `os.PathLike`): The filename of the file
+                containing the template atoms.
+
+        """
+        cdef bytes name_  = name.encode()
+        cdef int   fd     = os.open(file, os.O_RDONLY)
+        cdef FILE* f      = fdopen(fd, "r")
+
+        try:
+            self._tpl = jess.tess_template.TessTemplate_create(f, name_)
+            if self._tpl is NULL:
+                raise ValueError(f"Failed to parse template file from {file!r}")
+        finally:
+            fclose(f)
+
+    def __len__(self):
+        assert self._tpl is not NULL
+
+    @property
+    def name(self):
+        assert self._tpl is not NULL
+        return self._tpl.name(self._tpl).decode()
+
+
+
+
+
 cdef class JessQuery:
     cdef _JessQuery* _jq
     cdef int         _candidates
 
     cdef readonly Jess     jess
-
-    cdef readonly Molecule molecule    
+    cdef readonly Molecule molecule
     cdef readonly bint     ignore_chain
     cdef readonly double   rmsd_threshold
 
@@ -121,7 +237,6 @@ cdef class JessQuery:
         cdef double          logE
         cdef double          rmsd
         cdef int             kill_switch = 0
-        
         cdef Hit             hit
 
         while jess.jess.JessQuery_next(self._jq, self.ignore_chain) and self._candidates < 200:
@@ -136,18 +251,33 @@ cdef class JessQuery:
             rmsd = jess.super.Superposition_rmsd(sup)
             if rmsd <= self.rmsd_threshold:
 
+                # create a new hit
                 hit = Hit.__new__(Hit)
                 hit.rmsd = rmsd
+
+                # record superposition object
+                # (TODO: expose as a Superposition object)
                 hit._sup = sup
 
+                # copy atoms (the pointer will be invalidated on the next
+                # call of JessQuery_next)
+                hit._atoms = <_Atom*> calloc(count, sizeof(_Atom))
+                for i in range(count):
+                    memcpy(&hit._atoms[i], atoms[i], sizeof(_Atom))
+
+                # record molecule from which we got the hit (the query molecule)
                 hit.molecule = self.molecule
+
+                # create a new object to wrap the template that got a hit
+                # (no need to copy, we keep a reference to the template
+                # list from the original Jess object).
                 hit.template = Template.__new__(Template)
                 hit.template._tpl = tpl
                 hit.template.owner = self.jess
 
                 return hit
 
-            # 
+            #
             jess.super.Superposition_free(sup)
 
         raise StopIteration
@@ -155,6 +285,7 @@ cdef class JessQuery:
 
 cdef class Hit:
     cdef _Superposition* _sup
+    cdef _Atom*          _atoms
 
     cdef readonly double   rmsd
     cdef readonly Template template
@@ -162,6 +293,7 @@ cdef class Hit:
 
     def __dealloc__(self):
         jess.super.Superposition_free(self._sup)
+        free(self._atoms)
 
     @property
     def determinant(self):
@@ -186,6 +318,41 @@ cdef class Hit:
         return exp(self.template._tpl.logE(self.template._tpl, self.rmsd, n))
 
 
+    cpdef list atoms(self, bint transform=True):
+        """Get the list of atoms.
+        """
+        assert self.template._tpl is not NULL
+        assert self._sup is not NULL
+
+        cdef Atom atom
+        cdef int  i
+        cdef int  j
+        cdef int  k
+        cdef int  count = self.template._tpl.count(self.template._tpl)
+        cdef list atoms = []
+
+        cdef const double* M = jess.super.Superposition_rotation(self._sup)
+        cdef const double* c = jess.super.Superposition_centroid(self._sup, 0)
+        cdef const double* v = jess.super.Superposition_centroid(self._sup, 1)
+
+        for k in range(count):
+
+            atom = Atom.__new__(Atom)
+            atom._atom = <_Atom*> malloc(sizeof(_Atom))
+            memcpy(atom._atom, &self._atoms[k], sizeof(_Atom))
+
+            if transform:
+                for i in range(3):
+                    atom._atom.x[i] = v[i]
+                    for j in range(3):
+                        atom._atom.x[i] += M[3*i + j] * (self._atoms[k].x[j] - c[j]) 
+
+            atoms.append(atom)
+
+        return atoms
+
+
+
 cdef class Jess:
     cdef _Jess* _jess
 
@@ -204,9 +371,9 @@ cdef class Jess:
             jess.jess.Jess_addTemplate(self._jess, template._tpl.copy(template._tpl))
 
     cpdef JessQuery query(
-        self, 
-        Molecule molecule, 
-        double rmsd_threshold, 
+        self,
+        Molecule molecule,
+        double rmsd_threshold,
         double distance_cutoff,
         double max_total_threshold,
         bint transform = True,
@@ -218,9 +385,9 @@ cdef class Jess:
         query.molecule = molecule
         query.jess = self
         query._jq = jess.jess.Jess_query(
-            self._jess, 
-            molecule._mol, 
-            distance_cutoff, 
+            self._jess,
+            molecule._mol,
+            distance_cutoff,
             max_total_threshold
         )
         return query

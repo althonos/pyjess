@@ -12,7 +12,7 @@ cdef extern from "Atom.h" nogil:
         double[3] x
         double occupancy
         double tempFactor
-        char[4] setID
+        char[4] segID
         char[3] element
         int charge
 

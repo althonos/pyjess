@@ -1,7 +1,7 @@
 # noqa: D104
 
 __version__ = "0.0.1"
-__author__ = "Martin Larralde <martin.larralde@embl.de>
+__author__ = "Martin Larralde <martin.larralde@embl.de>"
 __all__ = []
 
 from . import _jess
