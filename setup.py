@@ -24,9 +24,6 @@ except ImportError as err:
 
 # --- Utils ------------------------------------------------------------------
 
-_HEADER_PATTERN = re.compile("^@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@$")
-
-
 def _eprint(*args, **kwargs):
     print(*args, **kwargs, file=sys.stderr)
 
@@ -137,11 +134,13 @@ class build_clib(_build_clib):
 
     # --- Patch and copy sources ---
 
-    @staticmethod
-    def _apply_patch(s, patch, revert=False):
+    _HEADER_PATTERN = re.compile(r"^@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@.*$")
+
+    @classmethod
+    def _apply_patch(cls, s, patch, revert=False):
         # see https://stackoverflow.com/a/40967337
         s = s.splitlines(keepends=True)
-        p = patch.splitlines(keepends=True)
+        p = patch.splitlines(keepends=True)[2:]   # ignore `git diff` header
         t = []
         i = 0
         sl = 0
@@ -150,7 +149,7 @@ class build_clib(_build_clib):
             i += 1  # skip header lines
 
         while i < len(p):
-            match = _HEADER_PATTERN.match(p[i])
+            match = cls._HEADER_PATTERN.match(p[i])
             if not match:
                 raise ValueError("Invalid line in patch: {!r}".format(p[i]))
             i += 1
@@ -501,7 +500,6 @@ setuptools.setup(
                 os.path.join("pyjess", "_jess.pyx"),
             ],
             include_dirs=[
-                os.path.join("vendor", "jess", "src"),
                 "pyjess",
                 "include",
             ],
