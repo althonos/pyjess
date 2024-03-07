@@ -1,0 +1,17 @@
+include COPYING
+include CHANGELOG.md
+include CONTRIBUTING.md
+include README.md
+
+recursive-include include           *.pxd
+recursive-include patches           *.patch
+recursive-include pyjess            *.py *.pyi *.pxi *.pyx *.pxd *.h py.typed
+recursive-include pyjess/tests/data *
+
+recursive-include vendor/jess       README.md LICENSE AUTHORS CHANGELOG
+recursive-include vendor/jess       *.c *.h
+prune                               vendor/sword/vendor
+
+recursive-include pyjess            *.py *.pyi *.pxi *.pyx *.pxd *.h py.typed
+recursive-exclude pyjess            *.cpp *.html
+
