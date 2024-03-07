@@ -29,14 +29,19 @@ cdef class Molecule:
     def __dealloc__(self):
         jess.molecule.Molecule_free(self._mol)
 
-    def __init__(self, object file, bint ignore_endmdl = False):
+    def __init__(
+        self, 
+        object file, 
+        bint ignore_endmdl = False, 
+        double conservation_cutoff = 0.0,
+    ):
         """Create a new molecule by loading the given file.
         """
         cdef int   fd = os.open(file, os.O_RDONLY)
         cdef FILE* f  = fdopen(fd, "r")
 
         try:
-            self._mol = jess.molecule.Molecule_create(f, ignore_endmdl)
+            self._mol = jess.molecule.Molecule_create(f, ignore_endmdl, conservation_cutoff)
             if self._mol is NULL:
                 raise ValueError(f"Failed to parse molecule file from {file!r}")
         finally:
@@ -246,6 +251,7 @@ cdef class JessQuery:
             sup = jess.jess.JessQuery_superposition(self._jq)
             atoms = jess.jess.JessQuery_atoms(self._jq)
             rmsd = jess.super.Superposition_rmsd(sup)
+            # check that the candidate passes threshold
             if rmsd <= self.rmsd_threshold:
                 # create a new hit
                 hit = Hit.__new__(Hit)

@@ -1,8 +1,8 @@
 diff --git a/src/TessAtom.c b/src/TessAtom.c
-index 1e75c16..32e7960 100644
+index e1cce1a..e73440d 100644
 --- a/src/TessAtom.c
 +++ b/src/TessAtom.c
-@@ -257,6 +257,49 @@ TessAtom *TessAtom_create(const char *s)
+@@ -258,6 +258,49 @@ TessAtom *TessAtom_create(const char *s)
  	return A;
  }
  

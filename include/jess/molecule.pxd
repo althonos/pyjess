@@ -9,7 +9,7 @@ cdef extern from "Molecule.h" nogil:
 
     ctypedef _Molecule Molecule
 
-    Molecule* Molecule_create(FILE*, int)
+    Molecule* Molecule_create(FILE*, int, double)
     void Molecule_free(Molecule*) 
     int Molecule_count(const Molecule*)
     Atom* Molecule_atom(const Molecule*, int)
