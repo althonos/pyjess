@@ -166,4 +166,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Ruff linter
+.ruff_cache/
+
 # End of https://www.gitignore.io/api/python,c
