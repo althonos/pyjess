@@ -373,7 +373,7 @@ cdef class Jess:
         double rmsd_threshold,
         double distance_cutoff,
         double max_dynamic_distance,
-        int max_candidates = 200,
+        int max_candidates = 1000,
         bint ignore_chain = False,
     ):
         cdef JessQuery query = JessQuery.__new__(JessQuery)
