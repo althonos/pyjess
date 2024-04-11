@@ -218,7 +218,7 @@ cdef class Atom:
 
 
 @cython.no_gc_clear
-cdef class TessAtom:
+cdef class TemplateAtom:
     cdef object owner
     cdef _TessAtom* _atom
 
@@ -228,8 +228,8 @@ cdef class TessAtom:
 
     @classmethod
     def loads(cls, text):
-        cdef bytearray b
-        cdef TessAtom  atom
+        cdef bytearray    b
+        cdef TemplateAtom atom
         
         if isinstance(text, str):
             b = bytearray(text, 'utf-8')
@@ -238,7 +238,7 @@ cdef class TessAtom:
         if not b.endswith(b'\n'):
             b.append(b'\n')
         
-        atom = TessAtom.__new__(TessAtom)
+        atom = TemplateAtom.__new__(TemplateAtom)
         atom._atom = jess.tess_atom.TessAtom_create(<const char*> b)
         if atom._atom == NULL:
             return ValueError("Invalid atom")
@@ -470,16 +470,16 @@ cdef class Template:
     def __getitem__(self, ssize_t index):
         assert self._tess is not NULL
 
-        cdef TessAtom atom
-        cdef ssize_t  length = self._tess.count
-        cdef ssize_t  index_ = index
+        cdef TemplateAtom atom
+        cdef ssize_t      length = self._tess.count
+        cdef ssize_t      index_ = index
 
         if index_ < 0:
             index_ += length
         if index_ < 0 or index_ >= length:
             raise IndexError(index)
 
-        atom = TessAtom.__new__(TessAtom)
+        atom = TemplateAtom.__new__(TemplateAtom)
         atom.owner = self
         atom._atom = self._tess.atom[index_]
         return atom
