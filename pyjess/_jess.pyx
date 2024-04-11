@@ -201,6 +201,37 @@ cdef class TessAtom:
     cdef object owner
     cdef _TessAtom* _atom
 
+    @classmethod
+    def load(cls, file):
+        return self.loads(file.read())
+
+    @classmethod
+    def loads(cls, text):
+        cdef bytearray b
+        cdef TessAtom  atom
+        
+        if isinstance(text, str):
+            b = bytearray(text, 'utf-8')
+        else:
+            b = bytearray(text)
+        if not b.endswith(b'\n'):
+            b.append(b'\n')
+        
+        atom = TessAtom.__new__(TessAtom)
+        atom._atom = jess.tess_atom.TessAtom_create(<const char*> b)
+        if atom._atom == NULL:
+            return ValueError("invalid template atom")
+
+        return atom
+
+    def __cinit__(self):
+        self.owner = None
+        self._atom = NULL
+
+    def __dealloc__(self):
+        if self.owner is None:
+            jess.tess_atom.TessAtom_free(self._atom)
+
     @property
     def match_mode(self):
         """`int`: The match mode for this particular atom.
