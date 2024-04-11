@@ -1,8 +1,48 @@
 diff --git a/src/TessTemplate.h b/src/TessTemplate.h
-index 1e597f2..b810b60 100644
+index 1e597f2..a4de14c 100644
 --- a/src/TessTemplate.h
 +++ b/src/TessTemplate.h
-@@ -18,6 +18,7 @@
+@@ -9,8 +9,39 @@
+ #define TESSTEMPLATE_H
+ 
+ #include "Template.h"
++#include "TessAtom.h"
+ #include <stdio.h>
+ 
++typedef struct _TessTemplate TessTemplate;
++
++struct _TessTemplate
++{
++	int count;
++	TessAtom **atom;
++	double **distance;
++	char *symbol;
++	int dim;
++};
++
++// ==================================================================
++// Oracles of type TessTemplate
++// ==================================================================
++
++extern int TessTemplate_count(const Template *T);
++extern int TessTemplate_match(const Template *T,int k,const Atom *A);
++extern int TessTemplate_range(const Template *T,int i,int j,double *a,double *b);
++extern const double *TessTemplate_position(const Template *T, int k);
++extern double TessTemplate_distWeight(const Template *T, int k);
++extern int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_chain);
++extern const char *TessTemplate_name(const Template *T);
++extern double TessTemplate_logE(const Template *T,double rmsd, int n);
++
++// ==================================================================
++// Private methods of type TessTemplate
++// ==================================================================
++
++extern void TessTemplate_free(Template *T);
++
+ // ==================================================================
+ // Creation of a TessTemplate object
+ // ==================================================================
+@@ -18,6 +49,7 @@
  // ==================================================================
  
  extern Template *TessTemplate_create(FILE*,const char*);

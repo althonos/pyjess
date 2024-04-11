@@ -1,3 +1,5 @@
+from .atom cimport Atom
+
 cdef extern from "TessAtom.h" nogil:
 
     struct _TessAtom:
