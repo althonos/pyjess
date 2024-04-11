@@ -1,8 +1,29 @@
 diff --git a/src/TessAtom.h b/src/TessAtom.h
-index 6480d8b..7e267eb 100644
+index 6480d8b..0eb9d00 100644
 --- a/src/TessAtom.h
 +++ b/src/TessAtom.h
-@@ -39,6 +39,7 @@ extern char TessAtom_chainID1(const TessAtom*);
+@@ -17,6 +17,20 @@
+ // ==================================================================
+ 
+ typedef struct _TessAtom TessAtom;
++struct _TessAtom
++{
++	int code;
++	int resSeq;
++	int nameCount;
++	int resNameCount;
++	char chainID1; //Riziotis edit
++	char chainID2;
++	//char chainID; 
++	char **name;
++	char **resName;
++	double pos[3];
++	double distWeight;
++};
+ 
+ // ==================================================================
+ // Methods of type TessAtom
+@@ -39,6 +53,7 @@ extern char TessAtom_chainID1(const TessAtom*);
  extern char TessAtom_chainID2(const TessAtom*);
  extern double TessAtom_distWeight(const TessAtom*);
  //extern char TessAtom_chainID(const TessAtom*);

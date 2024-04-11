@@ -1,8 +1,30 @@
 diff --git a/src/TessAtom.c b/src/TessAtom.c
-index e1cce1a..e73440d 100644
+index e1cce1a..54bb6d0 100644
 --- a/src/TessAtom.c
 +++ b/src/TessAtom.c
-@@ -258,6 +258,49 @@ TessAtom *TessAtom_create(const char *s)
+@@ -26,21 +26,6 @@
+ // distWeight[k]			kth atom distance threshold modifier (weight)
+ // ==================================================================
+ 
+-struct _TessAtom
+-{
+-	int code;
+-	int resSeq;
+-	int nameCount;
+-	int resNameCount;
+-	char chainID1; //Riziotis edit
+-	char chainID2;
+-	//char chainID; 
+-	char **name;
+-	char **resName;
+-	double pos[3];
+-	double distWeight;
+-};
+-
+ // ==================================================================
+ // Methods of type TessAtom (ARGGH!!!)
+ // ==================================================================
+@@ -258,6 +243,49 @@ TessAtom *TessAtom_create(const char *s)
  	return A;
  }
  
