@@ -96,6 +96,27 @@ cdef class Atom:
         if self.owner is None:
             free(self._atom)
 
+    def __repr__(self):
+        cdef str ty = type(self).__name__
+        return (
+            f"{ty}("
+            f"serial={self.serial!r}, "
+            f"name={self.name!r}, "
+            f"altloc={self.altloc!r}, "
+            f"residue_name={self.residue_name!r}, "
+            f"chain_id={self.chain_id!r}, "
+            f"residue_number={self.residue_number!r}, "
+            f"x={self.x!r}, "
+            f"y={self.y!r}, "
+            f"z={self.z!r}, "
+            f"segment={self.segment!r}, "
+            f"insertion_code={self.insertion_code!r}, "
+            f"occupancy={self.occupancy!r}, "
+            f"temperature_factor={self.temperature_factor!r}, "
+            f"charge={self.charge!r}, "
+            f"element={self.element!r})"
+        )
+
     @property
     def serial(self):
         """`int`: The atom serial number.
@@ -105,7 +126,7 @@ cdef class Atom:
 
     @property
     def altloc(self):
-        """`str`: The alternate locaiton indicator for the atom.
+        """`str`: The alternate location indicator for the atom.
         """
         assert self._atom is not NULL
         return chr(self._atom.altLoc)
@@ -133,17 +154,17 @@ cdef class Atom:
 
     @property
     def segment(self):
-        """`str`: The segment identifier
+        """`str`: The segment identifier.
         """
         assert self._atom is not NULL
-        return PyUnicode_FromStringAndSize(self._atom.segID, 4).strip()
+        return PyUnicode_FromStringAndSize(self._atom.segID, 4).strip('_')
 
     @property
     def element(self):
         """`str`: The element symbol.
         """
         assert self._atom is not NULL
-        return PyUnicode_FromStringAndSize(self._atom.element, 3)
+        return PyUnicode_FromStringAndSize(self._atom.element, 2).strip('_')
 
     @property
     def insertion_code(self):
@@ -315,7 +336,18 @@ cdef class TessAtom:
 
     def __repr__(self):
         cdef str ty = type(self).__name__
-        return f"{ty}(chain_id={self.chain_id!r}, residue_number={self.residue_number!r}, x={self.x!r}, y={self.y!r}, z={self.z!r}, residue_names={self.residue_names!r}, atom_names={self.atom_names!r}, distance_weight={self.distance_weight!r}, match_mode={self.match_mode!r})"
+        return (
+            f"{ty}("
+            f"chain_id={self.chain_id!r}, "
+            f"residue_number={self.residue_number!r}, "
+            f"x={self.x!r}, "
+            f"y={self.y!r}, "
+            f"z={self.z!r}, "
+            f"residue_names={self.residue_names!r}, "
+            f"atom_names={self.atom_names!r}, "
+            f"distance_weight={self.distance_weight!r}, "
+            f"match_mode={self.match_mode!r})"
+        )
 
     @property
     def match_mode(self):
