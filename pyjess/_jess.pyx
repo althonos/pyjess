@@ -280,6 +280,7 @@ cdef class TessAtom:
         self._atom.chainID1, self._atom.chainID2 = map(ord, chain_id.ljust(2))
         self._atom.nameCount = ac
         self._atom.resNameCount = rc
+        self._atom.distWeight = distance_weight
 
         # setup string pointers
         p = &self._atom[1]
@@ -311,6 +312,10 @@ cdef class TessAtom:
             strncpy(self._atom.resName[i], b'___\0', 4)
             for j, c in enumerate(_name):
                 self._atom.resName[i][j] = c
+
+    def __repr__(self):
+        cdef str ty = type(self).__name__
+        return f"{ty}(chain_id={self.chain_id!r}, residue_number={self.residue_number!r}, x={self.x!r}, y={self.y!r}, z={self.z!r}, residue_names={self.residue_names!r}, atom_names={self.atom_names!r}, distance_weight={self.distance_weight!r}, match_mode={self.match_mode!r})"
 
     @property
     def match_mode(self):
