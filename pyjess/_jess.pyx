@@ -30,9 +30,9 @@ cdef class Molecule:
         jess.molecule.Molecule_free(self._mol)
 
     def __init__(
-        self, 
-        object file, 
-        bint ignore_endmdl = False, 
+        self,
+        object file,
+        bint ignore_endmdl = False,
         double conservation_cutoff = 0.0,
     ):
         """Create a new molecule by loading the given file.
@@ -71,7 +71,13 @@ cdef class Molecule:
     @property
     def id(self):
         assert self._mol is not NULL
-        return jess.molecule.Molecule_id(self._mol).decode()
+
+        cdef const char* pdb_id = NULL
+
+        pdb_id = jess.molecule.Molecule_id(self._mol)
+        if pdb_id is NULL:
+            return None
+        return pdb_id.decode()
 
 
 @cython.no_gc_clear
@@ -360,7 +366,7 @@ cdef class Hit:
                 for i in range(3):
                     atom._atom.x[i] = v[i]
                     for j in range(3):
-                        atom._atom.x[i] += M[3*i + j] * (self._atoms[k].x[j] - c[j]) 
+                        atom._atom.x[i] += M[3*i + j] * (self._atoms[k].x[j] - c[j])
 
             atoms.append(atom)
 
@@ -381,7 +387,7 @@ cdef class Jess:
         cdef Template template
         self._jess = jess.jess.Jess_create()
         for template in templates:
-            # NOTE: the Jess storage owns the data, so we make a copy of the 
+            # NOTE: the Jess storage owns the data, so we make a copy of the
             #       template given as argument to avoid a double-free.
             jess.jess.Jess_addTemplate(self._jess, template._tpl.copy(template._tpl))
 
