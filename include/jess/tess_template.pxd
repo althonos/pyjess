@@ -14,6 +14,8 @@ cdef extern from "TessTemplate.h" nogil:
         char* symbol
         int dim
 
+    ctypedef _TessTemplate TessTemplate
+
     int TessTemplate_count(const Template *T)
     int TessTemplate_match(const Template *T,int k,const Atom *A)
     int TessTemplate_range(const Template *T,int i,int j,double *a,double *b)

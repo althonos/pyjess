@@ -16,6 +16,7 @@ from jess.jess cimport JessQuery as _JessQuery
 from jess.molecule cimport Molecule as _Molecule
 from jess.super cimport Superposition as _Superposition
 from jess.template cimport Template as _Template
+from jess.tess_template cimport TessTemplate as _TessTemplate
 
 import os
 
@@ -193,16 +194,18 @@ cdef class Atom:
 
 @cython.no_gc_clear
 cdef class Template:
-    cdef object     owner
-    cdef _Template* _tpl
+    cdef object         owner
+    cdef _Template*     _tpl
+    cdef _TessTemplate* _tess
 
     def __cinit__(self):
         self._tpl  = NULL
+        self._tess = NULL
         self.owner = None
 
     def __dealloc__(self):
         if self.owner is None:
-            self._tpl.free(self._tpl)
+            jess.tess_template.TessTemplate_free(self._tpl)
 
     def __init__(self, str name, object file):
         """Create a new template by loading the given file.
@@ -221,6 +224,7 @@ cdef class Template:
             self._tpl = jess.tess_template.TessTemplate_create(f, name_)
             if self._tpl is NULL:
                 raise ValueError(f"Failed to parse template file from {file!r}")
+            self._tess = <_TessTemplate*> &self._tpl[1]
         finally:
             fclose(f)
 
@@ -232,6 +236,13 @@ cdef class Template:
     def name(self):
         assert self._tpl is not NULL
         return self._tpl.name(self._tpl).decode()
+
+    @property
+    def dimension(self):
+        """`int`: The dimension of the template (i.e. number of residues).
+        """
+        assert self._tess is not NULL
+        return self._tess.dim
 
 
 cdef class JessQuery:
