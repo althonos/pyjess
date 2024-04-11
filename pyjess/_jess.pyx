@@ -10,6 +10,7 @@ cimport jess.jess
 cimport jess.molecule
 cimport jess.super
 cimport jess.tess_template
+cimport jess.tess_atom
 from jess.atom cimport Atom as _Atom
 from jess.jess cimport Jess as _Jess
 from jess.jess cimport JessQuery as _JessQuery
@@ -17,6 +18,7 @@ from jess.molecule cimport Molecule as _Molecule
 from jess.super cimport Superposition as _Superposition
 from jess.template cimport Template as _Template
 from jess.tess_template cimport TessTemplate as _TessTemplate
+from jess.tess_atom cimport TessAtom as _TessAtom
 
 import os
 
@@ -193,6 +195,55 @@ cdef class Atom:
 
 
 @cython.no_gc_clear
+cdef class TessAtom:
+    cdef object owner
+    cdef _TessAtom* _atom
+
+    @property
+    def residue_number(self):
+        """`int`: The residue sequence number.
+        """
+        assert self._atom is not NULL
+        return self._atom.resSeq
+
+    @property
+    def chain_id(self):
+        assert self._atom is not NULL
+        cdef char c1 = jess.tess_atom.TessAtom_chainID1(self._atom)
+        cdef char c2 = jess.tess_atom.TessAtom_chainID1(self._atom)
+        return "{}{}".format(chr(c1), chr(c2)).strip()
+
+    @property
+    def x(self):
+        assert self._atom is not NULL
+        return self._atom.pos[0]
+
+    @property
+    def y(self):
+        assert self._atom is not NULL
+        return self._atom.pos[1]
+
+    @property
+    def z(self):
+        assert self._atom is not NULL
+        return self._atom.pos[2]
+
+    @property
+    def names(self):
+        l = []
+        for i in range(self._atom.nameCount):
+            l.append(self._atom.name[i].replace(b'_', b'').decode())
+        return l
+
+    @property
+    def residue_names(self):
+        l = []
+        for i in range(self._atom.resNameCount):
+            l.append(self._atom.resName[i].replace(b'_', b'').decode())
+        return l
+
+
+@cython.no_gc_clear
 cdef class Template:
     cdef object         owner
     cdef _Template*     _tpl
@@ -230,7 +281,24 @@ cdef class Template:
 
     def __len__(self):
         assert self._tpl is not NULL
-        return self._tpl.count(self._tpl)
+        return self._tess.count
+
+    def __getitem__(self, ssize_t index):
+        assert self._tess is not NULL
+
+        cdef TessAtom atom
+        cdef ssize_t  length = self._tess.count
+        cdef ssize_t  index_ = index
+
+        if index_ < 0:
+            index_ += length
+        if index_ < 0 or index_ >= length:
+            raise IndexError(index)
+
+        atom = TessAtom.__new__(TessAtom)
+        atom.owner = self
+        atom._atom = self._tess.atom[index_]
+        return atom
 
     @property
     def name(self):
@@ -383,7 +451,6 @@ cdef class Hit:
             atoms.append(atom)
 
         return atoms
-
 
 
 cdef class Jess:

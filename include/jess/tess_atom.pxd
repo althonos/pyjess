@@ -3,7 +3,16 @@ from .atom cimport Atom
 cdef extern from "TessAtom.h" nogil:
 
     struct _TessAtom:
-        pass
+        int code
+        int resSeq
+        int nameCount
+        int resNameCount
+        char chainID1
+        char chainID2
+        char **name
+        char **resName
+        double pos[3]
+        double distWeight
 
     ctypedef _TessAtom TessAtom
 
