@@ -226,6 +226,7 @@ cdef class Template:
 
     def __len__(self):
         assert self._tpl is not NULL
+        return self._tpl.count(self._tpl)
 
     @property
     def name(self):
