@@ -23,6 +23,7 @@ except ImportError as err:
 
 # --- Utils ------------------------------------------------------------------
 
+
 def _eprint(*args, **kwargs):
     print(*args, **kwargs, file=sys.stderr)
 
@@ -139,7 +140,7 @@ class build_clib(_build_clib):
     def _apply_patch(cls, s, patch, revert=False):
         # see https://stackoverflow.com/a/40967337
         s = s.splitlines(keepends=True)
-        p = patch.splitlines(keepends=True)[2:]   # ignore `git diff` header
+        p = patch.splitlines(keepends=True)[2:]  # ignore `git diff` header
         t = []
         i = 0
         sl = 0
@@ -248,8 +249,7 @@ class build_clib(_build_clib):
         )
         # manually prepare sources and get the names of object files
         objects = [
-            re.sub(r"(.cpp|.c)$", self.compiler.obj_extension, s)
-            for s in sources
+            re.sub(r"(.cpp|.c)$", self.compiler.obj_extension, s) for s in sources
         ]
         # only compile outdated files
         with multiprocessing.pool.ThreadPool(self.parallel) as pool:
@@ -305,7 +305,7 @@ class build_ext(_build_ext):
         self._clib_cmd.parallel = self.parallel
 
     def _check_getid(self):
-        _eprint('checking whether `PyInterpreterState_GetID` is available')
+        _eprint("checking whether `PyInterpreterState_GetID` is available")
 
         base = "have_getid"
         testfile = os.path.join(self.build_temp, "{}.c".format(base))
@@ -313,7 +313,8 @@ class build_ext(_build_ext):
 
         self.mkpath(self.build_temp)
         with open(testfile, "w") as f:
-            f.write("""
+            f.write(
+                """
             #include <stdint.h>
             #include <stdlib.h>
             #include <Python.h>
@@ -322,7 +323,8 @@ class build_ext(_build_ext):
                 PyInterpreterState_GetID(NULL);
                 return 0;
             }}
-            """)
+            """
+            )
 
         if self.compiler.compiler_type == "msvc":
             flags = ["/WX"]
@@ -345,7 +347,14 @@ class build_ext(_build_ext):
 
     def build_extension(self, ext):
         # show the compiler being used
-        _eprint("building", ext.name, "with", self.compiler.compiler_type, "compiler for platform", self.plat_name)
+        _eprint(
+            "building",
+            ext.name,
+            "with",
+            self.compiler.compiler_type,
+            "compiler for platform",
+            self.plat_name,
+        )
 
         # add debug symbols if we are building in debug mode
         if self.debug:
@@ -487,7 +496,7 @@ setuptools.setup(
                 os.path.join("vendor", "jess", "src", "Template.h"),
                 os.path.join("vendor", "jess", "src", "TessAtom.h"),
                 os.path.join("vendor", "jess", "src", "TessTemplate.h"),
-            ]
+            ],
         ),
     ],
     ext_modules=[
