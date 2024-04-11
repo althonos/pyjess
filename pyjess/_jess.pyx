@@ -154,6 +154,8 @@ cdef class Atom:
 
     @property
     def chain_id(self):
+        """`str`: The identifier of the chain the atom belongs to. 
+        """
         assert self._atom is not NULL
         return "{}{}".format(chr(self._atom.chainID1), chr(self._atom.chainID2)).strip()
 
@@ -200,6 +202,13 @@ cdef class TessAtom:
     cdef _TessAtom* _atom
 
     @property
+    def match_mode(self):
+        """`int`: The match mode for this particular atom.
+        """
+        assert self._atom is not NULL
+        return self._atom.code
+
+    @property
     def residue_number(self):
         """`int`: The residue sequence number.
         """
@@ -208,39 +217,66 @@ cdef class TessAtom:
 
     @property
     def chain_id(self):
+        """`str`: The identifier of the chain the atom belongs to. 
+        """
         assert self._atom is not NULL
         cdef char c1 = jess.tess_atom.TessAtom_chainID1(self._atom)
-        cdef char c2 = jess.tess_atom.TessAtom_chainID1(self._atom)
+        cdef char c2 = jess.tess_atom.TessAtom_chainID2(self._atom)
         return "{}{}".format(chr(c1), chr(c2)).strip()
 
     @property
     def x(self):
+        """`float`: The x coordinate of the atom.
+        """
         assert self._atom is not NULL
         return self._atom.pos[0]
 
     @property
     def y(self):
+        """`float`: The y coordinate of the atom.
+        """
         assert self._atom is not NULL
         return self._atom.pos[1]
 
     @property
     def z(self):
+        """`float`: The z coordinate of the atom.
+        """
         assert self._atom is not NULL
         return self._atom.pos[2]
 
     @property
-    def names(self):
-        l = []
+    def atom_names(self):
+        """`list` of `str`: The different atom names for this atom.
+        """
+        assert self._atom is not NULL
+
+        cdef int  i
+        cdef list l = []
+        
         for i in range(self._atom.nameCount):
             l.append(self._atom.name[i].replace(b'_', b'').decode())
         return l
 
     @property
     def residue_names(self):
-        l = []
+        """`list` of `str`: The different residue names for this atom.
+        """
+        assert self._atom is not NULL
+        
+        cdef int  i
+        cdef list l = []
+
         for i in range(self._atom.resNameCount):
             l.append(self._atom.resName[i].replace(b'_', b'').decode())
         return l
+
+    @property
+    def distance_weight(self):
+        """`float`: The distance weight for this atom.
+        """
+        assert self._atom is not NULL
+        return self._atom.distWeight
 
 
 @cython.no_gc_clear
