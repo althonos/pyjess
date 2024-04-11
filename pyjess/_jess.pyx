@@ -4,7 +4,7 @@ from cpython.unicode cimport PyUnicode_FromStringAndSize
 from libc.math cimport exp
 from libc.stdio cimport FILE, fclose, fdopen, printf
 from libc.stdlib cimport calloc, free, malloc
-from libc.string cimport memcpy
+from libc.string cimport memcpy, strncpy
 
 cimport jess.jess
 cimport jess.molecule
@@ -203,7 +203,7 @@ cdef class TessAtom:
 
     @classmethod
     def load(cls, file):
-        return self.loads(file.read())
+        return cls.loads(file.read())
 
     @classmethod
     def loads(cls, text):
@@ -220,7 +220,11 @@ cdef class TessAtom:
         atom = TessAtom.__new__(TessAtom)
         atom._atom = jess.tess_atom.TessAtom_create(<const char*> b)
         if atom._atom == NULL:
-            return ValueError("invalid template atom")
+            return ValueError("Invalid atom")
+
+        # validate match mode *now* to avoid Jess exiting when it does so later
+        if atom.match_mode not in range(-1, 9) and atom.match_mode not in range(100, 108):
+            raise ValueError(f"Invalid match mode: {atom.match_mode!r}")
 
         return atom
 
@@ -231,6 +235,82 @@ cdef class TessAtom:
     def __dealloc__(self):
         if self.owner is None:
             jess.tess_atom.TessAtom_free(self._atom)
+
+    def __init__(
+        self,
+        *,
+        str chain_id,
+        int residue_number,
+        double x,
+        double y,
+        double z,
+        object residue_names,
+        object atom_names,
+        double distance_weight = 0.0,
+        int match_mode = 0,
+    ):
+        cdef void*  p
+        cdef size_t ac 
+        cdef size_t rc 
+        cdef size_t alloc_size 
+
+        # validate match mode to avoid a potential hard exit later
+        if match_mode not in range(-1, 9) and match_mode not in range(100, 108):
+            raise ValueError(f"Invalid match mode: {match_mode!r}")
+        if len(chain_id) > 2:
+            raise ValueError(f"Invalid chain ID: {chain_id!r}")
+
+        # compute total allocation
+        ac = len(atom_names)
+        rc = len(residue_names)
+        alloc_size = sizeof(_TessAtom) + sizeof(char*) * (ac + rc) + sizeof(char) * (5*ac + 4*rc)
+
+        # allocate base memory
+        self.owner = None
+        self._atom = <_TessAtom*> malloc(alloc_size)
+        if self._atom is NULL:
+            raise MemoryError("failed to allocate atom")
+        
+        # copy base data
+        self._atom.code = match_mode
+        self._atom.resSeq = residue_number
+        self._atom.pos[0] = x
+        self._atom.pos[1] = y
+        self._atom.pos[2] = z
+        self._atom.chainID1, self._atom.chainID2 = map(ord, chain_id.ljust(2))
+        self._atom.nameCount = ac
+        self._atom.resNameCount = rc
+
+        # setup string pointers
+        p = &self._atom[1]
+        self._atom.name = <char**> p
+        p += sizeof(char*)*ac
+        for m in range(ac):
+            self._atom.name[m] = <char*> p
+            p += 5
+        self._atom.resName = <char**> p
+        p += sizeof(char*)*rc
+        for m in range(rc):
+            self._atom.resName[m] = <char*> p
+            p += 4
+
+        # copy atom names
+        for i, name in enumerate(atom_names):
+            _name = name.encode('ascii') if isinstance(name, str) else name
+            if len(_name) > 4:
+                raise ValueError(f"Invalid atom name: {name!r}")
+            strncpy(self._atom.name[i], b'___\0', 5)
+            for j, c in enumerate(_name):
+                self._atom.name[i][j] = c
+
+        # copy residue names
+        for i, name in enumerate(residue_names):
+            _name = name.encode('ascii') if isinstance(name, str) else name
+            if len(_name) > 3:
+                raise ValueError(f"Invalid residue name: {name!r}")
+            strncpy(self._atom.resName[i], b'___\0', 4)
+            for j, c in enumerate(_name):
+                self._atom.resName[i][j] = c
 
     @property
     def match_mode(self):
