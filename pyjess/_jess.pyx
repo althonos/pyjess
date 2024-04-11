@@ -96,6 +96,51 @@ cdef class Atom:
         if self.owner is None:
             free(self._atom)
 
+    def __init__(
+        self,
+        *,
+        int serial,
+        str name,
+        str altloc,
+        str residue_name,
+        str chain_id,
+        int residue_number,
+        str insertion_code,
+        float x,
+        float y,
+        float z,
+        float occupancy,
+        float temperature_factor,
+        str segment,
+        str element,
+        int charge = 0,
+    ):
+        if len(name) > 3:
+            raise ValueError(f"Invalid atom name: {name!r}")
+        if len(chain_id) > 2:
+            raise ValueError(f"Invalid chain ID: {chain_id!r}")
+
+        self._atom = <_Atom*> malloc(sizeof(_Atom))
+        if self._atom is NULL:
+            raise MemoryError("failed to allocate atom")
+
+        self._atom.serial = serial
+        #self._atom.name = name
+        self._atom.altLoc = ord(altloc)
+        # self._atom.residue_name = residue_name
+        self._atom.chainID1 = ord(chain_id[0]) if len(chain_id) > 0 else 0
+        self._atom.chainID2 = ord(chain_id[1]) if len(chain_id) > 1 else ord('0')
+        self._atom.resSeq = residue_number
+        self._atom.iCode = insertion_code
+        self._atom.x[0] = x
+        self._atom.x[1] = y
+        self._atom.x[2] = z
+        self._atom.occupancy = occupancy
+        self._atom.tempFactor = temperature_factor
+        # self._atom.segID = segment
+        # self._atom.element = element
+        self._atom.charge = charge
+
     def __repr__(self):
         cdef str ty = type(self).__name__
         return (
