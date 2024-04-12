@@ -381,18 +381,14 @@ cdef class TemplateAtom:
             _name = name.encode('ascii') if isinstance(name, str) else name
             if len(_name) > 4:
                 raise ValueError(f"Invalid atom name: {name!r}")
-            strncpy(self._atom.name[i], b'___\0', 5)
-            for j, c in enumerate(_name):
-                self._atom.name[i][j] = c
+            copy_token(self._atom.name[i], _name, 4)
 
         # copy residue names
         for i, name in enumerate(residue_names):
             _name = name.encode('ascii') if isinstance(name, str) else name
             if len(_name) > 3:
                 raise ValueError(f"Invalid residue name: {name!r}")
-            strncpy(self._atom.resName[i], b'___\0', 4)
-            for j, c in enumerate(_name):
-                self._atom.resName[i][j] = c
+            copy_token(self._atom.resName[i], _name, 3)
 
     def __repr__(self):
         cdef str ty = type(self).__name__
