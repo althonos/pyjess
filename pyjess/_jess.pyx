@@ -119,6 +119,18 @@ cdef class Molecule:
             return None
         return pdb_id.decode()
 
+    cpdef Molecule conserved(self, double conservation = 0.0):
+        assert self._mol is not NULL
+        return Molecule(
+            id=self.id,
+            atoms=[ 
+                atom 
+                for atom in self 
+                if conservation <= 0.0 
+                or atom.temperature_factor >= conservation
+            ]
+        )
+
 
 cdef class Atom:
     cdef object owner
