@@ -11,4 +11,28 @@ class TestAtom(unittest.TestCase):
         return Atom(**default)
 
     def test_init_invalid_chain_id(self):
-        self.assertRaises(ValueError, self._create_atom, chain_id="hello")
+        self.assertRaises(ValueError, self._create_atom, chain_id="too long")
+
+    def test_init_invalid_name(self):
+        self.assertRaises(ValueError, self._create_atom, name="too long")
+
+    def test_init_invalid_residue_name(self):
+        self.assertRaises(ValueError, self._create_atom, residue_name="too long")
+
+    def test_repr_roundtrip(self):
+        atom = self._create_atom()
+        copy = eval(repr(atom))
+        self.assertEqual(atom.serial, copy.serial)
+        self.assertEqual(atom.altloc, copy.altloc)
+        self.assertEqual(atom.name, copy.name)
+        self.assertEqual(atom.residue_name, copy.residue_name)
+        self.assertEqual(atom.residue_number, copy.residue_number)
+        self.assertEqual(atom.element, copy.element)
+        self.assertEqual(atom.insertion_code, copy.insertion_code)
+        self.assertEqual(atom.chain_id, copy.chain_id)
+        self.assertEqual(atom.occupancy, copy.occupancy)
+        self.assertEqual(atom.temperature_factor, copy.temperature_factor)
+        self.assertEqual(atom.charge, copy.charge)
+        self.assertEqual(atom.x, copy.x)
+        self.assertEqual(atom.y, copy.y)
+        self.assertEqual(atom.z, copy.z)

@@ -23,6 +23,15 @@ from jess.tess_atom cimport TessAtom as _TessAtom
 import os
 
 
+cdef inline void copy_token(char* dst, const char* src, size_t n) noexcept nogil:
+    cdef size_t i
+    strncpy(dst, src, n)
+    for i in range(n):
+        if dst[i] == ord(' ') or dst[i] == 0:
+            dst[i] = ord('_')
+    dst[n] = 0
+
+
 cdef class Molecule:
     cdef _Molecule* _mol
 
@@ -115,8 +124,14 @@ cdef class Atom:
         str element,
         int charge = 0,
     ):
-        if len(name) > 3:
+        if len(name) > 4:
             raise ValueError(f"Invalid atom name: {name!r}")
+        if len(residue_name) > 3:
+            raise ValueError(f"Invalid residue name: {residue_name!r}")
+        if len(segment) > 3:
+            raise ValueError(f"Invalid segment: {segment!r}")
+        if len(element) > 2:
+            raise ValueError(f"Invalid element: {element!r}")
         if len(chain_id) > 2:
             raise ValueError(f"Invalid chain ID: {chain_id!r}")
 
@@ -125,21 +140,21 @@ cdef class Atom:
             raise MemoryError("failed to allocate atom")
 
         self._atom.serial = serial
-        #self._atom.name = name
         self._atom.altLoc = ord(altloc)
-        # self._atom.residue_name = residue_name
         self._atom.chainID1 = ord(chain_id[0]) if len(chain_id) > 0 else 0
         self._atom.chainID2 = ord(chain_id[1]) if len(chain_id) > 1 else ord('0')
         self._atom.resSeq = residue_number
-        self._atom.iCode = insertion_code
+        self._atom.iCode = ord(insertion_code)
         self._atom.x[0] = x
         self._atom.x[1] = y
         self._atom.x[2] = z
         self._atom.occupancy = occupancy
         self._atom.tempFactor = temperature_factor
-        # self._atom.segID = segment
-        # self._atom.element = element
         self._atom.charge = charge
+        copy_token(self._atom.name, name.encode('ascii'), 4)
+        copy_token(self._atom.resName, residue_name.encode('ascii'), 3)
+        copy_token(self._atom.segID, segment.encode('ascii'), 3)
+        copy_token(self._atom.element, element.encode('ascii'), 2)
 
     def __repr__(self):
         cdef str ty = type(self).__name__
@@ -202,7 +217,7 @@ cdef class Atom:
         """`str`: The segment identifier.
         """
         assert self._atom is not NULL
-        return PyUnicode_FromStringAndSize(self._atom.segID, 4).strip('_')
+        return PyUnicode_FromStringAndSize(self._atom.segID, 3).strip('_')
 
     @property
     def element(self):
