@@ -1,14 +1,51 @@
 import os
-from typing import Union, Optional, Sequence, Iterator, List
+from typing import Union, Optional, Sequence, Iterator, Iterable, List, TextIO
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal  # type: ignore
+
+MATCH_MODE = Literal[
+    -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 100, 101, 102, 103, 104, 105, 106, 107
+]
 
 class Molecule(Sequence[Atom]):
-    def __init__(self, file: Union[str, bytes, os.PathLike[str]]): ...
+    @classmethod
+    def load(cls, file: TextIO) -> Molecule: ...
+    @classmethod
+    def loads(cls, text: str) -> Molecule: ...
+    def __init__(self, atoms: Sequence[Atom] = (), id: Optional[str] = None): ...
     def __len__(self) -> int: ...
     def __getitem__(self, index: int) -> Atom: ...
     @property
     def id(self) -> Optional[str]: ...
 
 class Atom:
+    @classmethod
+    def load(cls, file: TextIO) -> Atom: ...
+    @classmethod
+    def loads(cls, text: str) -> Atom: ...
+    def __init__(
+        self,
+        *,
+        serial: int,
+        name: str,
+        altloc: str,
+        residue_name: str,
+        chain_id: str,
+        residue_number: int,
+        insertion_code: str,
+        x: float,
+        y: float,
+        z: float,
+        occupancy: float = 0.0,
+        temperature_factor: float = 0.0,
+        segment: str = "",
+        element: str = "",
+        charge: int = 0,
+    ): ...
+    def __repr__(self) -> str: ...
     @property
     def serial(self) -> int: ...
     @property
@@ -40,9 +77,52 @@ class Atom:
     @property
     def z(self) -> float: ...
 
-class Template:
+class TemplateAtom:
+    @classmethod
+    def load(cls, file: TextIO) -> TemplateAtom: ...
+    @classmethod
+    def loads(cls, text: str) -> TemplateAtom: ...
+    def __init__(
+        self,
+        *,
+        chain_id: str,
+        residue_number: int,
+        x: float,
+        y: float,
+        z: float,
+        residue_names: Sequence[str],
+        atom_names: Sequence[str],
+        distance_weight: float = 0.0,
+        match_mode: MATCH_MODE = 0,
+    ): ...
+    def __repr__(self) -> str: ...
+    @property
+    def match_mode(self) -> MATCH_MODE: ...
+    @property
+    def residue_number(self) -> int: ...
+    @property
+    def chain_id(self) -> int: ...
+    @property
+    def x(self) -> float: ...
+    @property
+    def y(self) -> float: ...
+    @property
+    def z(self) -> float: ...
+    @property
+    def atom_names(self) -> List[str]: ...
+    @property
+    def residue_names(self) -> List[str]: ...
+    @property
+    def distance_weight(self) -> float: ...
+
+class Template(Sequence[TemplateAtom]):
     def __init__(self, name: str, file: Union[str, bytes, os.PathLike[str]]): ...
     def __len__(self) -> int: ...
+    def __getitem__(self, index: int) -> TemplateAtom: ...
+    @property
+    def name(self) -> str: ...
+    @property
+    def dimension(self) -> int: ...
 
 class JessQuery(Iterator[Hit]):
     @property
