@@ -1,5 +1,5 @@
 diff --git a/src/TessAtom.c b/src/TessAtom.c
-index e1cce1a..54bb6d0 100644
+index e1cce1a..f3b02ce 100644
 --- a/src/TessAtom.c
 +++ b/src/TessAtom.c
 @@ -26,21 +26,6 @@
@@ -24,7 +24,7 @@ index e1cce1a..54bb6d0 100644
  // ==================================================================
  // Methods of type TessAtom (ARGGH!!!)
  // ==================================================================
-@@ -258,6 +243,49 @@ TessAtom *TessAtom_create(const char *s)
+@@ -258,6 +243,66 @@ TessAtom *TessAtom_create(const char *s)
  	return A;
  }
  
@@ -69,6 +69,23 @@ index e1cce1a..54bb6d0 100644
 +	}
 +
 +	return B;
++}
++
++double TessAtom_distance(const TessAtom* A1, const TessAtom* A2)
++{
++	int k;
++	double tmp, dist;
++	const double* x = TessAtom_position(A1);
++	const double* y = TessAtom_position(A2);
++
++	dist = 0.0;
++	for(k=0; k<3; k++)
++	{
++		tmp = x[k]-y[k];
++		dist += tmp*tmp;
++	}
++
++	return sqrt(dist);
 +}
 +
  //Riziotis edit

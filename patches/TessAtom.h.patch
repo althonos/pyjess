@@ -1,5 +1,5 @@
 diff --git a/src/TessAtom.h b/src/TessAtom.h
-index 6480d8b..0eb9d00 100644
+index 6480d8b..6377691 100644
 --- a/src/TessAtom.h
 +++ b/src/TessAtom.h
 @@ -17,6 +17,20 @@
@@ -23,11 +23,12 @@ index 6480d8b..0eb9d00 100644
  
  // ==================================================================
  // Methods of type TessAtom
-@@ -39,6 +53,7 @@ extern char TessAtom_chainID1(const TessAtom*);
+@@ -39,6 +53,8 @@ extern char TessAtom_chainID1(const TessAtom*);
  extern char TessAtom_chainID2(const TessAtom*);
  extern double TessAtom_distWeight(const TessAtom*);
  //extern char TessAtom_chainID(const TessAtom*);
 +extern TessAtom* TessAtom_copy(const TessAtom*);
++extern double TessAtom_distance(const TessAtom*, const TessAtom*);
  
  // ==================================================================
  
