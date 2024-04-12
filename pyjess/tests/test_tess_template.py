@@ -24,12 +24,7 @@ TEMPLATE = textwrap.dedent(
 class TestTessTemplate(unittest.TestCase):
 
     def test_load(self):
-
-        with tempfile.NamedTemporaryFile(mode="w") as dst:
-            dst.write(TEMPLATE)
-            dst.flush()
-            template = Template("template", dst.name)
-        
+        template = Template.loads(TEMPLATE)
         self.assertEqual(len(template), 11)
         self.assertEqual(template.dimension, 5)
         self.assertEqual(template[0].residue_names, ["LYS"])

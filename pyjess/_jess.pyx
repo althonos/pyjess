@@ -4,7 +4,7 @@ from cpython.unicode cimport PyUnicode_FromStringAndSize
 from libc.math cimport exp
 from libc.stdio cimport FILE, fclose, fdopen, printf
 from libc.stdlib cimport calloc, free, malloc
-from libc.string cimport memcpy, memset, strncpy
+from libc.string cimport memcpy, memset, strncpy, strdup
 
 cimport jess.atom
 cimport jess.jess
@@ -544,6 +544,18 @@ cdef class Template:
     cdef _Template*     _tpl
     cdef _TessTemplate* _tess
 
+    @classmethod
+    def loads(cls, text):
+        return cls.load(io.StringIO(text))
+
+    @classmethod
+    def load(cls, file, str name = None):
+        atoms = []
+        for line in file:
+            if line.startswith("ATOM"):
+                atoms.append(TemplateAtom.loads(line))
+        return cls(atoms, name=name)
+
     def __cinit__(self):
         self._tpl  = NULL
         self._tess = NULL
@@ -554,26 +566,71 @@ cdef class Template:
         if not self.owned:
             jess.tess_template.TessTemplate_free(self._tpl)
 
-    def __init__(self, str name, object file):
-        """Create a new template by loading the given file.
+    def __init__(self, object atoms = (), str name = None):
+        cdef int          i
+        cdef int          j
+        cdef double       dist
+        cdef TemplateAtom atom
+        cdef size_t       alloc_size
+        cdef int          count      = len(atoms)
+        
+        alloc_size = (
+            sizeof(_Template) + sizeof(_TessTemplate)
+            + count * sizeof(_TessAtom*)
+            + count * sizeof(double*)
+            + count * count * sizeof(double)
+        )
 
-        Arguments:
-            name (`str`): The name of the template.
-            file (`str`, `bytes` or `os.PathLike`): The filename of the file
-                containing the template atoms.
+        self._tpl = <_Template*> calloc(1, alloc_size)
+        if self._tpl is NULL:
+            raise MemoryError("Failed to allocate template")
 
-        """
-        cdef bytes name_  = name.encode()
-        cdef int   fd     = os.open(file, os.O_RDONLY)
-        cdef FILE* f      = fdopen(fd, "r")
+        # setup memory for atoms
+        self._tess = <_TessTemplate*> &self._tpl[1]
+        self._tess.atom = <_TessAtom**> &self._tess[1]
+        for i in range(count):
+            self._tess.atom[i] = NULL
 
-        try:
-            self._tpl = jess.tess_template.TessTemplate_create(f, name_)
-            if self._tpl is NULL:
-                raise ValueError(f"Failed to parse template file from {file!r}")
-            self._tess = <_TessTemplate*> &self._tpl[1]
-        finally:
-            fclose(f)
+        # setup memory and pointers for distances
+        self._tess.distance = <double**> &self._tess.atom[count]
+        self._tess.distance[0] = <double*> &self._tess.distance[count]
+        for i in range(1, count):
+            self._tess.distance[i] = <double*> &self._tess.distance[i-1][count]
+
+        # setup template function pointers
+        self._tpl.free = jess.tess_template.TessTemplate_free
+        self._tpl.match = jess.tess_template.TessTemplate_match
+        self._tpl.position = jess.tess_template.TessTemplate_position
+        self._tpl.count = jess.tess_template.TessTemplate_count
+        self._tpl.range = jess.tess_template.TessTemplate_range
+        self._tpl.check = jess.tess_template.TessTemplate_check
+        self._tpl.name = jess.tess_template.TessTemplate_name
+        self._tpl.logE = jess.tess_template.TessTemplate_logE
+        self._tpl.distWeight = jess.tess_template.TessTemplate_distWeight
+        self._tpl.copy = jess.tess_template.TessTemplate_copy
+
+        # copy name and atom count
+        self._tess.count = count
+        self._tess.symbol = NULL if name is None else strdup(name.encode()) 
+
+        # copy atom data
+        for i, atom in enumerate(atoms):
+            assert i < count
+            self._tess.atom[i] = jess.tess_atom.TessAtom_copy(atom._atom)
+            if self._tess.atom[i] is NULL:
+                raise MemoryError("Failed to allocate template atom")
+        
+        # compute distances
+        for i in range(count):
+            self._tess.distance[i][i] = 0.0
+            for j in range(i+1, count):
+                dist = jess.tess_atom.TessAtom_distance(self._tess.atom[i], self._tess.atom[j])
+                self._tess.distance[i][j] = dist
+                self._tess.distance[j][i] = dist
+
+        # compute dimension
+        residues = { self._tess.atom[i].resSeq for i in range(count) }
+        self._tess.dim = len(residues)
 
     def __len__(self):
         assert self._tpl is not NULL
@@ -718,7 +775,6 @@ cdef class Hit:
         assert self.template._tpl is not NULL
         cdef int n = jess.molecule.Molecule_count(self.molecule._mol)
         return exp(self.template._tpl.logE(self.template._tpl, self.rmsd, n))
-
 
     cpdef list atoms(self, bint transform=True):
         """Get the list of query atoms matching the template.
