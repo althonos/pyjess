@@ -50,7 +50,7 @@ cdef class Molecule:
                 id = line[62:66].strip()
                 if not id:
                     id = None
-            elif line.startswith("ATOM"):
+            elif line.startswith(("ATOM", "HETATM")):
                 atoms.append(Atom.loads(line))
         return cls(atoms, id=id)
 
@@ -119,15 +119,15 @@ cdef class Molecule:
             return None
         return pdb_id.decode()
 
-    cpdef Molecule conserved(self, double conservation = 0.0):
+    cpdef Molecule conserved(self, double cutoff = 0.0):
         assert self._mol is not NULL
         return Molecule(
             id=self.id,
             atoms=[ 
                 atom 
                 for atom in self 
-                if conservation <= 0.0 
-                or atom.temperature_factor >= conservation
+                if cutoff <= 0.0 
+                or atom.temperature_factor >= cutoff
             ]
         )
 
