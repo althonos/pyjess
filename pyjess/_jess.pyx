@@ -6,6 +6,7 @@ from libc.stdio cimport FILE, fclose, fdopen, printf
 from libc.stdlib cimport calloc, free, malloc
 from libc.string cimport memcpy, strncpy
 
+cimport jess.atom
 cimport jess.jess
 cimport jess.molecule
 cimport jess.super
@@ -98,6 +99,32 @@ cdef class Atom:
     cdef bint   owned
     cdef _Atom* _atom
 
+    @classmethod
+    def load(cls, file):
+        return cls.loads(file.read())
+
+    @classmethod
+    def loads(cls, text):
+        cdef bytearray b
+        cdef Atom      atom
+
+        if isinstance(text, str):
+            b = bytearray(text, 'utf-8')
+        else:
+            b = bytearray(text)
+        if not b.endswith(b'\n'):
+            b.append(b'\n')
+
+        atom = cls.__new__(cls)
+        atom._atom = <_Atom*> malloc(sizeof(_Atom))
+        if atom._atom == NULL:
+            raise MemoryError("Failed to allocate atom")
+
+        if not jess.atom.Atom_parse(atom._atom, b):
+            raise ValueError("Failed to parse atom")
+
+        return atom
+
     def __cinit__(self):
         self._atom = NULL
         self.owner = None
@@ -120,10 +147,10 @@ cdef class Atom:
         float x,
         float y,
         float z,
-        float occupancy,
-        float temperature_factor,
-        str segment,
-        str element,
+        float occupancy = 0.0,
+        float temperature_factor = 0.0,
+        str segment = '',
+        str element = '',
         int charge = 0,
     ):
         if len(name) > 4:
@@ -237,7 +264,7 @@ cdef class Atom:
 
     @property
     def chain_id(self):
-        """`str`: The identifier of the chain the atom belongs to. 
+        """`str`: The identifier of the chain the atom belongs to.
         """
         assert self._atom is not NULL
         return "{}{}".format(chr(self._atom.chainID1), chr(self._atom.chainID2)).strip()
@@ -292,18 +319,18 @@ cdef class TemplateAtom:
     def loads(cls, text):
         cdef bytearray    b
         cdef TemplateAtom atom
-        
+
         if isinstance(text, str):
             b = bytearray(text, 'utf-8')
         else:
             b = bytearray(text)
         if not b.endswith(b'\n'):
             b.append(b'\n')
-        
+
         atom = TemplateAtom.__new__(TemplateAtom)
         atom._atom = jess.tess_atom.TessAtom_create(<const char*> b)
         if atom._atom == NULL:
-            return ValueError("Invalid atom")
+            return ValueError("Failed to parse template atom")
 
         # validate match mode *now* to avoid Jess exiting when it does so later
         if atom.match_mode not in range(-1, 9) and atom.match_mode not in range(100, 108):
@@ -334,9 +361,9 @@ cdef class TemplateAtom:
         int match_mode = 0,
     ):
         cdef void*  p
-        cdef size_t ac 
-        cdef size_t rc 
-        cdef size_t alloc_size 
+        cdef size_t ac
+        cdef size_t rc
+        cdef size_t alloc_size
 
         # validate match mode to avoid a potential hard exit later
         if match_mode not in range(-1, 9) and match_mode not in range(100, 108):
@@ -353,7 +380,7 @@ cdef class TemplateAtom:
         self._atom = <_TessAtom*> malloc(alloc_size)
         if self._atom is NULL:
             raise MemoryError("failed to allocate atom")
-        
+
         # copy base data
         self._atom.code = match_mode
         self._atom.resSeq = residue_number
@@ -423,7 +450,7 @@ cdef class TemplateAtom:
 
     @property
     def chain_id(self):
-        """`str`: The identifier of the chain the atom belongs to. 
+        """`str`: The identifier of the chain the atom belongs to.
         """
         assert self._atom is not NULL
         cdef char c1 = jess.tess_atom.TessAtom_chainID1(self._atom)
@@ -459,7 +486,7 @@ cdef class TemplateAtom:
 
         cdef int  i
         cdef list l = []
-        
+
         for i in range(self._atom.nameCount):
             l.append(self._atom.name[i].replace(b'_', b'').decode())
         return l
@@ -469,7 +496,7 @@ cdef class TemplateAtom:
         """`list` of `str`: The different residue names for this atom.
         """
         assert self._atom is not NULL
-        
+
         cdef int  i
         cdef list l = []
 
@@ -671,7 +698,7 @@ cdef class Hit:
                 of hits into template frame.
 
         Returns:
-            `list` of `~pyjess.Atom`: The list of matching atoms. 
+            `list` of `~pyjess.Atom`: The list of matching atoms.
 
         """
         assert self.template._tpl is not NULL
@@ -738,11 +765,11 @@ cdef class Jess:
                 templates to.
             rmsd_threshold (`float`): The RMSD threshold for reporting
                 results.
-            distance_cutoff (`float`): The global distance cutoff 
+            distance_cutoff (`float`): The global distance cutoff
                 used to guide the search.
             max_dynamic_distance (`float`): The maximum template/query
-                dynamic distance after adding the global distance cutoff 
-                and the individual atom distance cutoff defined for each 
+                dynamic distance after adding the global distance cutoff
+                and the individual atom distance cutoff defined for each
                 atom of the template.
 
         Returns:

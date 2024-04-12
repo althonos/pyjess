@@ -10,6 +10,22 @@ class TestAtom(unittest.TestCase):
         default.update(kwargs)
         return Atom(**default)
 
+    def test_load(self):
+        atom = Atom.loads("ATOM     39  CA  PRO A 469     -14.948   2.091  10.228  1.00 27.71           C")
+        self.assertEqual(atom.serial, 39)
+        self.assertEqual(atom.name, 'CA')
+        self.assertEqual(atom.residue_name, 'PRO')
+        self.assertEqual(atom.chain_id, 'A')
+        self.assertEqual(atom.residue_number, 469)
+        self.assertEqual(atom.x, -14.948)
+        self.assertEqual(atom.y, 2.091)
+        self.assertEqual(atom.z, 10.228)
+        self.assertEqual(atom.occupancy, 1.00)
+        self.assertEqual(atom.temperature_factor, 27.71)
+        self.assertEqual(atom.segment, '')
+        self.assertEqual(atom.element, 'C')
+        self.assertEqual(atom.charge, 0)
+        
     def test_init_invalid_chain_id(self):
         self.assertRaises(ValueError, self._create_atom, chain_id="too long")
 
