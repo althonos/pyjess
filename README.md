@@ -1,6 +1,6 @@
 # 🐍 PyJess [![Stars](https://img.shields.io/github/stars/althonos/pyjess.svg?style=social&maxAge=3600&label=Star)](https://github.com/althonos/pyjess/stargazers)
 
-*[Cython](https://cython.org/) bindings and Python interface to [Jess](https://gitlab.ebi.ac.uk/riziotis/jess), a 3D template matching software.*
+*[Cython](https://cython.org/) bindings and Python interface to [Jess](https://github.com/iriziotis/jess), a 3D template matching software.*
 
 <!-- [![Actions](https://img.shields.io/github/actions/workflow/status/althonos/pyjess/test.yml?branch=main&logo=github&style=flat-square&maxAge=300)](https://github.com/althonos/pyjess/actions) -->
 <!-- [![Coverage](https://img.shields.io/codecov/c/gh/althonos/pyjess?style=flat-square&maxAge=3600&logo=codecov)](https://codecov.io/gh/althonos/pyjess/) -->
@@ -19,7 +19,19 @@
 <!-- [![Downloads](https://img.shields.io/pypi/dm/pyjess?style=flat-square&color=303f9f&maxAge=86400&label=downloads)](https://pepy.tech/project/pyjess) -->
 
 
-<!-- ## 🗺️ Overview -->
+## 🗺️ Overview
+
+Jess is an algorithm for constraint-based structural template matching
+proposed by Barker *et al.*[\[1\]](#ref1). It can be used to identify
+catalytic residues from a known template inside a protein structure. Jess
+is an evolution of TESS, a geometric hashing algorithm developed by
+Wallace *et al.*[\[2\]](#ref2), removing some pre-computation and structural
+requirements from the original algorithm.
+
+PyJess is a Python module that provides bindings to Jess using
+[Cython](https://cython.org/). It allows creating templates, querying them
+with protein structures, and retrieving the hits using a Python API without
+performing any external I/O.
 
 
 ## 🔧 Installing
@@ -27,7 +39,7 @@
 PyJess is available for all modern Python versions (3.6+).
 
 <!-- It can be installed directly from [PyPI](https://pypi.org/project/pyjess/),
-which hosts some pre-built x86-64 wheels for Linux, MacOS, and Windows, 
+which hosts some pre-built x86-64 wheels for Linux, MacOS, and Windows,
 as well as the code required to compile from source with Cython:
 ```console
 $ pip install pyjess
@@ -52,8 +64,8 @@ import pyjess
 
 templates = []
 for path in sorted(glob.iglob("vendor/jess/examples/template_*.qry")):
-    filename = os.path.basename(path)
-    templates.append(Template(filename, path))
+    with open(path) as f:
+        templates.append(Template.load(f, id=os.path.basename(path)))
 ```
 
 Create a `Jess` instance and use it to query a molecule (a PDB structure)
@@ -61,8 +73,9 @@ against the stored templates:
 
 ```python
 jess = Jess(templates)
-molecule = Molecule("vendor/jess/examples/test_pdbs/pdb1a0p.ent")
-query = jess.query(molecule, rmsd_threshold=2.0, distance_cutoff=3.0, max_dynamic_distance=3.0)
+with open("vendor/jess/examples/test_pdbs/pdb1a0p.ent") as f:
+    mol = Molecule(f)
+query = jess.query(mol, rmsd_threshold=2.0, distance_cutoff=3.0, max_dynamic_distance=3.0)
 ```
 
 The hits are computed iteratively, and the different output statistics are
@@ -70,13 +83,27 @@ computed on-the-fly when requested:
 
 ```python
 for hit in query:
-    print(hit.molecule.id, hit.template.name, hit.rmsd, hit.log_evalue)
+    print(hit.molecule.id, hit.template.id, hit.rmsd, hit.log_evalue)
     for atom in hit.atoms():
         print(atom.name, atom.x, atom.y, atom.z)
 ```
 
 
-<!-- ## 🧶 Thread-safety -->
+## 🧶 Thread-safety
+
+Once a `Jess` instance has been created, the templates cannot be edited anymore,
+making the `Jess.query` method re-entrant. This allows querying several
+molecules against the same templates in parallel using a thread pool:
+
+```python
+molecules = []
+for path in glob.glob("vendor/jess/examples/test_pdbs/*.ent"):
+    with open(path) as f:
+        molecules.append(Molecule.load(f))
+
+with multiprocessing.ThreadPool() as pool:
+    hits = pool.map(jess.query, molecules)
+```
 
 <!-- ## ⏱️ Benchmarks -->
 
@@ -107,11 +134,11 @@ in the [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) format.
 
 ## ⚖️ License
 
-The Cython code and the patches for building the Jess code are provided 
+The Cython code and the patches for building the Jess code are provided
 under the [MIT license](https://choosealicense.com/licenses/mit/).
 
-*⚠️ The JESS code does not have clear licensing. The 2003 paper describing the 
-implementation states the the authors intention to **release Jess under a restricted open source license in the near future**, but the repository 
+*⚠️ The JESS code does not have clear licensing. The 2003 paper describing the
+implementation states the the authors intention to **release Jess under a restricted open source license in the near future**, but the repository
 hosting the code still does not have a license as of March 2024. At the moment
 this prevents redistribution of the Jess source on [PyPI](https://pypi.org/).*
 
@@ -124,5 +151,5 @@ the [Zeller team](https://github.com/zellerlab).*
 
 ## 📚 References
 
-- <a id="ref1">\[1\]</a> Jonathan A. Barker, Janet M. Thornton, An algorithm for constraint-based structural template matching: application to 3D templates with statistical analysis, Bioinformatics, Volume 19, Issue 13, September 2003, Pages 1644–1649, [doi:10.1093/bioinformatics/btg226](https://doi.org/10.1093/bioinformatics/btg226).
-
+- <a id="ref1">\[1\]</a> Barker, J. A., & Thornton, J. M. (2003). An algorithm for constraint-based structural template matching: application to 3D templates with statistical analysis. Bioinformatics (Oxford, England), 19(13), 1644–1649. [doi:10.1093/bioinformatics/btg226](https://doi.org/10.1093/bioinformatics/btg226).
+- <a id="ref2">\[2\]</a> Wallace, A. C., Borkakoti, N., & Thornton, J. M. (1997). TESS: a geometric hashing algorithm for deriving 3D coordinate templates for searching structural databases. Application to enzyme active sites. Protein science : a publication of the Protein Society, 6(11), 2308–2323. [doi:10.1002/pro.5560061104](https://doi.org/10.1002/pro.5560061104).

@@ -76,9 +76,9 @@ cdef class Molecule:
         for i in range(count):
             self._mol.atom[i] = NULL
         if id is None:
-            memset(self._mol.id, 0, 5)
+            memset(self._mol.id, 0, 4)
         else:
-            strncpy(self._mol.id, id.encode('ascii'), 5)
+            strncpy(self._mol.id, id.encode('ascii'), 4)
 
         for i, atom in enumerate(atoms):
             self._mol.atom[i] = <_Atom*> malloc(sizeof(_Atom))
