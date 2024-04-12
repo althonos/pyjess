@@ -1,12 +1,14 @@
 from . import (
-    test_atom, 
+    test_atom,
+    test_jess,
     test_molecule,
-    test_tess_atom, 
+    test_tess_atom,
     test_tess_template
 )
 
 def load_tests(loader, suite, pattern):
     suite.addTests(loader.loadTestsFromModule(test_atom))
+    suite.addTests(loader.loadTestsFromModule(test_jess))
     suite.addTests(loader.loadTestsFromModule(test_molecule))
     suite.addTests(loader.loadTestsFromModule(test_tess_atom))
     suite.addTests(loader.loadTestsFromModule(test_tess_template))
