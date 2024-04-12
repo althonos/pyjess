@@ -77,6 +77,7 @@ cdef class Molecule:
 
         atom = Atom.__new__(Atom)
         atom.owner = self
+        atom.owned = True
         atom._atom = jess.molecule.Molecule_atom(self._mol, index_)
         return atom
 
@@ -92,17 +93,18 @@ cdef class Molecule:
         return pdb_id.decode()
 
 
-@cython.no_gc_clear
 cdef class Atom:
     cdef object owner
+    cdef bint   owned
     cdef _Atom* _atom
 
     def __cinit__(self):
         self._atom = NULL
         self.owner = None
+        self.owned = False
 
     def __dealloc__(self):
-        if self.owner is None:
+        if not self.owned:
             free(self._atom)
 
     def __init__(
@@ -277,9 +279,9 @@ cdef class Atom:
         return self._atom.x[2]
 
 
-@cython.no_gc_clear
 cdef class TemplateAtom:
-    cdef object owner
+    cdef object     owner
+    cdef bint       owned
     cdef _TessAtom* _atom
 
     @classmethod
@@ -311,10 +313,11 @@ cdef class TemplateAtom:
 
     def __cinit__(self):
         self.owner = None
+        self.owned = False
         self._atom = NULL
 
     def __dealloc__(self):
-        if self.owner is None:
+        if not self.owned:
             jess.tess_atom.TessAtom_free(self._atom)
 
     def __init__(
@@ -347,7 +350,6 @@ cdef class TemplateAtom:
         alloc_size = sizeof(_TessAtom) + sizeof(char*) * (ac + rc) + sizeof(char) * (5*ac + 4*rc)
 
         # allocate base memory
-        self.owner = None
         self._atom = <_TessAtom*> malloc(alloc_size)
         if self._atom is NULL:
             raise MemoryError("failed to allocate atom")
@@ -483,9 +485,9 @@ cdef class TemplateAtom:
         return self._atom.distWeight
 
 
-@cython.no_gc_clear
 cdef class Template:
     cdef object         owner
+    cdef bint           owned
     cdef _Template*     _tpl
     cdef _TessTemplate* _tess
 
@@ -493,9 +495,10 @@ cdef class Template:
         self._tpl  = NULL
         self._tess = NULL
         self.owner = None
+        self.owned = False
 
     def __dealloc__(self):
-        if self.owner is None:
+        if not self.owned:
             jess.tess_template.TessTemplate_free(self._tpl)
 
     def __init__(self, str name, object file):
@@ -537,6 +540,7 @@ cdef class Template:
 
         atom = TemplateAtom.__new__(TemplateAtom)
         atom.owner = self
+        atom.owned = True
         atom._atom = self._tess.atom[index_]
         return atom
 
@@ -569,7 +573,6 @@ cdef class JessQuery:
 
     def __dealloc__(self):
         jess.jess.JessQuery_free(self._jq)
-        self._jq = NULL
 
     def __iter__(self):
         return self
@@ -616,6 +619,7 @@ cdef class JessQuery:
                 hit.template = Template.__new__(Template)
                 hit.template._tpl = tpl
                 hit.template.owner = self.jess
+                hit.template.owned = True
                 return hit
             # free superposition items that are not used for hits
             jess.super.Superposition_free(sup)
@@ -660,7 +664,15 @@ cdef class Hit:
 
 
     cpdef list atoms(self, bint transform=True):
-        """Get the list of atoms.
+        """Get the list of query atoms matching the template.
+
+        Arguments:
+            transform (`bool`): Whether or not to transform coordinates
+                of hits into template frame.
+
+        Returns:
+            `list` of `~pyjess.Atom`: The list of matching atoms. 
+
         """
         assert self.template._tpl is not NULL
         assert self._sup is not NULL
@@ -719,6 +731,24 @@ cdef class Jess:
         int max_candidates = 1000,
         bint ignore_chain = False,
     ):
+        """Scan for templates matching the given molecule.
+
+        Arguments:
+            molecule (`~pyjess.Molecule`): The protein to match the
+                templates to.
+            rmsd_threshold (`float`): The RMSD threshold for reporting
+                results.
+            distance_cutoff (`float`): The global distance cutoff 
+                used to guide the search.
+            max_dynamic_distance (`float`): The maximum template/query
+                dynamic distance after adding the global distance cutoff 
+                and the individual atom distance cutoff defined for each 
+                atom of the template.
+
+        Returns:
+            `~pyjess.JessQuery`: An iterator over the query hits.
+
+        """
         cdef JessQuery query = JessQuery.__new__(JessQuery)
         query.ignore_chain = ignore_chain
         query.max_candidates = max_candidates
