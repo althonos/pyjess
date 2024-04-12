@@ -21,6 +21,7 @@ from jess.template cimport Template as _Template
 from jess.tess_template cimport TessTemplate as _TessTemplate
 from jess.tess_atom cimport TessAtom as _TessAtom
 
+import io
 import os
 
 
@@ -36,6 +37,23 @@ cdef inline void copy_token(char* dst, const char* src, size_t n) noexcept nogil
 cdef class Molecule:
     cdef _Molecule* _mol
 
+    @classmethod
+    def loads(cls, text):
+        return cls.load(io.StringIO(text))
+
+    @classmethod
+    def load(cls, file):
+        atoms = []
+        id = None
+        for line in file:
+            if line.startswith("HEADER"):
+                id = line[62:66].strip()
+                if not id:
+                    id = None
+            elif line.startswith("ATOM"):
+                atoms.append(Atom.loads(line))
+        return cls(atoms, id=id)
+
     def __cinit__(self):
         self._mol = NULL
 
@@ -47,8 +65,8 @@ cdef class Molecule:
         cdef int i
         cdef int count = len(atoms)
 
-        if id is not None and len(id) > 4:
-            raise ValueError(f"Invalid ID: {id!r}")
+        if id is not None and len(id) != 4:
+            raise ValueError(f"Invalid PDB ID: {id!r}")
 
         self._mol = <_Molecule*> malloc(sizeof(_Molecule) + count * sizeof(_Atom*))
         if self._mol is NULL:
