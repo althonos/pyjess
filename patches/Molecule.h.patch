@@ -1,0 +1,17 @@
+diff --git a/src/Molecule.h b/src/Molecule.h
+index d838488..7f88d3a 100644
+--- a/src/Molecule.h
++++ b/src/Molecule.h
+@@ -18,6 +18,12 @@
+ // ==================================================================
+ 
+ typedef struct _Molecule Molecule;
++struct _Molecule
++{
++	int count;
++	char id[5];
++	Atom *atom[0];
++};
+ 
+ // ==================================================================
+ // Methods of type Molecule

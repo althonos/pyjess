@@ -6,7 +6,9 @@ from .atom cimport Atom
 cdef extern from "Molecule.h" nogil:
 
     cdef struct _Molecule:
-        pass
+        int count
+        char[5] id
+        Atom[0]* atom
 
     ctypedef _Molecule Molecule
 

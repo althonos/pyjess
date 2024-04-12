@@ -1,0 +1,18 @@
+diff --git a/src/Molecule.c b/src/Molecule.c
+index d6c327e..5e80f5f 100644
+--- a/src/Molecule.c
++++ b/src/Molecule.c
+@@ -33,13 +33,6 @@ struct _Node
+ // atom[k]				Pointer to kth atom in the molecule
+ // ==================================================================
+ 
+-struct _Molecule
+-{
+-	int count;
+-	char id[5];
+-	Atom *atom[0];
+-};
+-
+ // ==================================================================
+ // Methods of type Molecule;
+ // ==================================================================

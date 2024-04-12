@@ -62,13 +62,13 @@ cdef class Molecule:
 
     def __len__(self):
         assert self._mol is not NULL
-        return jess.molecule.Molecule_count(self._mol)
+        return self._mol.count
 
     def __getitem__(self, ssize_t index):
         assert self._mol is not NULL
 
         cdef Atom    atom
-        cdef ssize_t length = jess.molecule.Molecule_count(self._mol)
+        cdef ssize_t length = self._mol.count
         cdef ssize_t index_ = index
 
         if index_ < 0:
