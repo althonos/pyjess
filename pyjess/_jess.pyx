@@ -549,12 +549,12 @@ cdef class Template:
         return cls.load(io.StringIO(text))
 
     @classmethod
-    def load(cls, file, str name = None):
+    def load(cls, file, str id = None):
         atoms = []
         for line in file:
             if line.startswith("ATOM"):
                 atoms.append(TemplateAtom.loads(line))
-        return cls(atoms, name=name)
+        return cls(atoms, id=id)
 
     def __cinit__(self):
         self._tpl  = NULL
@@ -566,7 +566,7 @@ cdef class Template:
         if not self.owned:
             jess.tess_template.TessTemplate_free(self._tpl)
 
-    def __init__(self, object atoms = (), str name = None):
+    def __init__(self, object atoms = (), str id = None):
         cdef int          i
         cdef int          j
         cdef double       dist
@@ -611,7 +611,7 @@ cdef class Template:
 
         # copy name and atom count
         self._tess.count = count
-        self._tess.symbol = NULL if name is None else strdup(name.encode()) 
+        self._tess.symbol = NULL if id is None else strdup(id.encode()) 
 
         # copy atom data
         for i, atom in enumerate(atoms):
@@ -655,7 +655,7 @@ cdef class Template:
         return atom
 
     @property
-    def name(self):
+    def id(self):
         assert self._tpl is not NULL
 
         cdef const char* name = self._tpl.name(self._tpl)
