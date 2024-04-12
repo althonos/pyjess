@@ -600,7 +600,11 @@ cdef class Template:
     @property
     def name(self):
         assert self._tpl is not NULL
-        return self._tpl.name(self._tpl).decode()
+
+        cdef const char* name = self._tpl.name(self._tpl)
+        if name is NULL:
+            return None
+        return name.decode()
 
     @property
     def dimension(self):

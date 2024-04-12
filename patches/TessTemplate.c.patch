@@ -193,7 +193,7 @@ index 1eb6914..152d308 100644
 +
 +	// Copy data fields
 +
-+	J2->symbol=strdup(J->symbol);
++	J2->symbol=(J->symbol==NULL)?NULL:strdup(J->symbol);
 +	J2->count=J->count;
 +	J2->dim=J->dim;
 +
