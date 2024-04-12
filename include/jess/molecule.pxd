@@ -8,7 +8,7 @@ cdef extern from "Molecule.h" nogil:
     cdef struct _Molecule:
         int count
         char[5] id
-        Atom[0]* atom
+        Atom** atom
 
     ctypedef _Molecule Molecule
 

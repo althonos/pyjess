@@ -4,7 +4,7 @@ from cpython.unicode cimport PyUnicode_FromStringAndSize
 from libc.math cimport exp
 from libc.stdio cimport FILE, fclose, fdopen, printf
 from libc.stdlib cimport calloc, free, malloc
-from libc.string cimport memcpy, strncpy
+from libc.string cimport memcpy, memset, strncpy
 
 cimport jess.atom
 cimport jess.jess
@@ -42,23 +42,31 @@ cdef class Molecule:
     def __dealloc__(self):
         jess.molecule.Molecule_free(self._mol)
 
-    def __init__(
-        self,
-        object file,
-        bint ignore_endmdl = False,
-        double conservation_cutoff = 0.0,
-    ):
-        """Create a new molecule by loading the given file.
-        """
-        cdef int   fd = os.open(file, os.O_RDONLY)
-        cdef FILE* f  = fdopen(fd, "r")
+    def __init__(self, object atoms = (), str id = None):
+        cdef Atom atom
+        cdef int i
+        cdef int count = len(atoms)
 
-        try:
-            self._mol = jess.molecule.Molecule_create(f, ignore_endmdl, conservation_cutoff)
-            if self._mol is NULL:
-                raise ValueError(f"Failed to parse molecule file from {file!r}")
-        finally:
-            fclose(f)
+        if id is not None and len(id) > 4:
+            raise ValueError(f"Invalid ID: {id!r}")
+
+        self._mol = <_Molecule*> malloc(sizeof(_Molecule) + count * sizeof(_Atom*))
+        if self._mol is NULL:
+            raise MemoryError("Failed to allocate molecule")
+
+        self._mol.count = count
+        for i in range(count):
+            self._mol.atom[i] = NULL
+        if id is None:
+            memset(self._mol.id, 0, 5)
+        else:
+            strncpy(self._mol.id, id.encode('ascii'), 5)
+
+        for i, atom in enumerate(atoms):
+            self._mol.atom[i] = <_Atom*> malloc(sizeof(_Atom))
+            if self._mol.atom[i] is NULL:
+                raise MemoryError("Failed to allocate atom")
+            memcpy(self._mol.atom[i], atom._atom, sizeof(_Atom))
 
     def __len__(self):
         assert self._mol is not NULL
@@ -166,7 +174,7 @@ cdef class Atom:
 
         self._atom = <_Atom*> malloc(sizeof(_Atom))
         if self._atom is NULL:
-            raise MemoryError("failed to allocate atom")
+            raise MemoryError("Failed to allocate atom")
 
         self._atom.serial = serial
         self._atom.altLoc = ord(altloc)
@@ -379,7 +387,7 @@ cdef class TemplateAtom:
         # allocate base memory
         self._atom = <_TessAtom*> malloc(alloc_size)
         if self._atom is NULL:
-            raise MemoryError("failed to allocate atom")
+            raise MemoryError("Failed to allocate template atom")
 
         # copy base data
         self._atom.code = match_mode
