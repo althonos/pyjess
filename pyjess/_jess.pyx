@@ -218,10 +218,14 @@ cdef class Atom:
         self._atom.occupancy = occupancy
         self._atom.tempFactor = temperature_factor
         self._atom.charge = charge
-        copy_token(self._atom.name, name.encode('ascii'), 4)
         copy_token(self._atom.resName, residue_name.encode('ascii'), 3)
         copy_token(self._atom.segID, segment.encode('ascii'), 3)
         copy_token(self._atom.element, element.encode('ascii'), 2)
+
+        _name = bytearray(name, 'ascii')
+        if len(_name) < 4:
+            _name.insert(0, ord('_'))
+        copy_token(self._atom.name, _name, 4)
 
     def __repr__(self):
         cdef str ty = type(self).__name__
@@ -445,9 +449,14 @@ cdef class TemplateAtom:
 
         # copy atom names
         for i, name in enumerate(atom_names):
-            _name = name.encode('ascii') if isinstance(name, str) else name
+            if isinstance(name, str):
+                _name = bytearray(name, 'ascii')
+            else:
+                _name = bytearray(name)
             if len(_name) > 4:
                 raise ValueError(f"Invalid atom name: {name!r}")
+            elif len(_name) < 3:
+                _name.insert(0, ord('_'))
             copy_token(self._atom.name[i], _name, 4)
 
         # copy residue names
