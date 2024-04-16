@@ -22,11 +22,13 @@
 ## 🗺️ Overview
 
 Jess is an algorithm for constraint-based structural template matching
-proposed by Barker *et al.*[\[1\]](#ref1). It can be used to identify
+proposed by Jonathan Barker *et al.*[\[1\]](#ref1). It can be used to identify
 catalytic residues from a known template inside a protein structure. Jess
 is an evolution of TESS, a geometric hashing algorithm developed by
-Wallace *et al.*[\[2\]](#ref2), removing some pre-computation and structural
-requirements from the original algorithm.
+Andrew Wallace *et al.*[\[2\]](#ref2), removing some pre-computation and 
+structural requirements from the original algorithm. Jess was further 
+updated and maintained by [Ioannis Riziotis](https://github.com/iriziotis)
+during his PhD in the [Thornton group](https://www.ebi.ac.uk/research/thornton/).
 
 PyJess is a Python module that provides bindings to Jess using
 [Cython](https://cython.org/). It allows creating templates, querying them
@@ -134,13 +136,7 @@ in the [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) format.
 
 ## ⚖️ License
 
-The Cython code and the patches for building the Jess code are provided
-under the [MIT license](https://choosealicense.com/licenses/mit/).
-
-*⚠️ The JESS code does not have clear licensing. The 2003 paper describing the
-implementation states the the authors intention to **release Jess under a restricted open source license in the near future**, but the repository
-hosting the code still does not have a license as of March 2024. At the moment
-this prevents redistribution of the Jess source on [PyPI](https://pypi.org/).*
+This library is provided under the [MIT License](https://choosealicense.com/licenses/mit/). The JESS code is distributed under the [MIT License](https://choosealicense.com/licenses/mit/) as well.
 
 *This project is in no way not affiliated, sponsored, or otherwise endorsed
 by the JESS authors. It was developed
