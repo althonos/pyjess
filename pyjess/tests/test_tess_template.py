@@ -32,3 +32,8 @@ class TestTessTemplate(unittest.TestCase):
         self.assertEqual(template[1].atom_names, ["CG"])
         self.assertEqual(template[2].residue_number, 1132)
         self.assertEqual(template[-1].residue_number, 1150)
+
+    def test_init_empty(self):
+        template = Template()
+        self.assertEqual(len(template), 0)
+        self.assertFalse(bool(template))

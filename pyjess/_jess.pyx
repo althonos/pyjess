@@ -605,7 +605,8 @@ cdef class Template:
 
         # setup memory and pointers for distances
         self._tess.distance = <double**> &self._tess.atom[count]
-        self._tess.distance[0] = <double*> &self._tess.distance[count]
+        if count > 0:
+            self._tess.distance[0] = <double*> &self._tess.distance[count]
         for i in range(1, count):
             self._tess.distance[i] = <double*> &self._tess.distance[i-1][count]
 
