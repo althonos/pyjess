@@ -1,10 +1,10 @@
-# 🐍 PyJess [![Stars](https://img.shields.io/github/stars/althonos/pyjess.svg?style=social&maxAge=3600&label=Star)](https://github.com/althonos/pyjess/stargazers)
+# 🔍🐍 PyJess [![Stars](https://img.shields.io/github/stars/althonos/pyjess.svg?style=social&maxAge=3600&label=Star)](https://github.com/althonos/pyjess/stargazers)
 
 *[Cython](https://cython.org/) bindings and Python interface to [Jess](https://github.com/iriziotis/jess), a 3D template matching software.*
 
-<!-- [![Actions](https://img.shields.io/github/actions/workflow/status/althonos/pyjess/test.yml?branch=main&logo=github&style=flat-square&maxAge=300)](https://github.com/althonos/pyjess/actions) -->
-<!-- [![Coverage](https://img.shields.io/codecov/c/gh/althonos/pyjess?style=flat-square&maxAge=3600&logo=codecov)](https://codecov.io/gh/althonos/pyjess/) -->
-<!-- [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&maxAge=2678400)](https://choosealicense.com/licenses/mit/) -->
+[![Actions](https://img.shields.io/github/actions/workflow/status/althonos/pyjess/test.yml?branch=main&logo=github&style=flat-square&maxAge=300)](https://github.com/althonos/pyjess/actions)
+[![Coverage](https://img.shields.io/codecov/c/gh/althonos/pyjess?style=flat-square&maxAge=3600&logo=codecov)](https://codecov.io/gh/althonos/pyjess/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&maxAge=2678400)](https://choosealicense.com/licenses/mit/)
 <!-- [![PyPI](https://img.shields.io/pypi/v/pyjess.svg?style=flat-square&maxAge=3600&logo=PyPI)](https://pypi.org/project/pyjess) -->
 <!-- [![Bioconda](https://img.shields.io/conda/vn/bioconda/pyjess?style=flat-square&maxAge=3600&logo=anaconda)](https://anaconda.org/bioconda/pyjess) -->
 <!-- [![AUR](https://img.shields.io/aur/version/python-pyjess?logo=archlinux&style=flat-square&maxAge=3600)](https://aur.archlinux.org/packages/python-pyjess) -->
