@@ -1,8 +1,17 @@
 diff --git a/src/TessAtom.c b/src/TessAtom.c
-index e1cce1a..f3b02ce 100644
+index e1cce1a..b6ef7be 100644
 --- a/src/TessAtom.c
 +++ b/src/TessAtom.c
-@@ -26,21 +26,6 @@
+@@ -7,6 +7,8 @@
+ 
+ #include "TessAtom.h"
+ #include "Atom.h"
++
++#include <math.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <string.h>
+@@ -26,21 +28,6 @@
  // distWeight[k]			kth atom distance threshold modifier (weight)
  // ==================================================================
  
@@ -24,7 +33,7 @@ index e1cce1a..f3b02ce 100644
  // ==================================================================
  // Methods of type TessAtom (ARGGH!!!)
  // ==================================================================
-@@ -258,6 +243,66 @@ TessAtom *TessAtom_create(const char *s)
+@@ -258,6 +245,66 @@ TessAtom *TessAtom_create(const char *s)
  	return A;
  }
  
