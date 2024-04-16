@@ -218,14 +218,14 @@ cdef class Atom:
         self._atom.occupancy = occupancy
         self._atom.tempFactor = temperature_factor
         self._atom.charge = charge
-        copy_token(self._atom.resName, residue_name.encode('ascii'), 3)
-        copy_token(self._atom.segID, segment.encode('ascii'), 3)
-        copy_token(self._atom.element, element.encode('ascii'), 2)
+        copy_token(self._atom.resName, residue_name.encode('ascii').ljust(3, b'\0'), 3)
+        copy_token(self._atom.segID, segment.encode('ascii').ljust(3, b'\0'), 3)
+        copy_token(self._atom.element, element.encode('ascii').ljust(2, b'\0'), 2)
 
         _name = bytearray(name, 'ascii')
         if len(_name) < 4:
             _name.insert(0, ord('_'))
-        copy_token(self._atom.name, _name, 4)
+        copy_token(self._atom.name, _name.ljust(4, b'\0'), 4)
 
     def __repr__(self):
         cdef str ty = type(self).__name__
@@ -267,14 +267,14 @@ cdef class Atom:
         """`str`: The atom name.
         """
         assert self._atom is not NULL
-        return PyUnicode_FromStringAndSize(self._atom.name, 4).strip("_")
+        return self._atom.name[:4].decode('ascii').strip("_")
 
     @property
     def residue_name(self):
         """`str`: The residue name.
         """
         assert self._atom is not NULL
-        return PyUnicode_FromStringAndSize(self._atom.resName, 3).strip("_")
+        return self._atom.resName[:3].decode('ascii').strip("_")
 
     @property
     def residue_number(self):
@@ -288,14 +288,14 @@ cdef class Atom:
         """`str`: The segment identifier.
         """
         assert self._atom is not NULL
-        return PyUnicode_FromStringAndSize(self._atom.segID, 3).strip('_')
+        return self._atom.segID[:3].decode('ascii').strip('_')
 
     @property
     def element(self):
         """`str`: The element symbol.
         """
         assert self._atom is not NULL
-        return PyUnicode_FromStringAndSize(self._atom.element, 2).strip('_')
+        return self._atom.element[:2].decode('ascii').strip('_')
 
     @property
     def insertion_code(self):
@@ -457,14 +457,14 @@ cdef class TemplateAtom:
                 raise ValueError(f"Invalid atom name: {name!r}")
             elif len(_name) < 3:
                 _name.insert(0, ord('_'))
-            copy_token(self._atom.name[i], _name, 4)
+            copy_token(self._atom.name[i], _name.ljust(4, b'\0'), 4)
 
         # copy residue names
         for i, name in enumerate(residue_names):
             _name = name.encode('ascii') if isinstance(name, str) else name
             if len(_name) > 3:
                 raise ValueError(f"Invalid residue name: {name!r}")
-            copy_token(self._atom.resName[i], _name, 3)
+            copy_token(self._atom.resName[i], _name.ljust(3, b'\0'), 3)
 
     def __repr__(self):
         cdef str ty = type(self).__name__
