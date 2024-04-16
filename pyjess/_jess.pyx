@@ -566,8 +566,8 @@ cdef class Template:
     cdef _TessTemplate* _tess
 
     @classmethod
-    def loads(cls, text):
-        return cls.load(io.StringIO(text))
+    def loads(cls, text, str id = None):
+        return cls.load(io.StringIO(text), id=id)
 
     @classmethod
     def load(cls, file, str id = None):
