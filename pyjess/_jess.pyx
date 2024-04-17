@@ -755,7 +755,19 @@ cdef class Template:
 cdef class Query:
     """A query over templates with a given molecule.
 
-    Jess iterates over the templates and 
+    Jess iterates over the templates and attempt matches the query
+    molecule, so the hits can actually be generated iteratively. This
+    class allows accessing the hits as a Python iterator.
+
+    Attributes:
+        jess (`~pyjess.Jess`): The templates this object is currently
+            scanning.
+        molecule (`~pyjess.Molecule`): The query molecule to align to
+            the templates.
+        rmsd_threshold (`float`): The RMSD threshold for reporting
+            results.
+        max_candidates (`int`): The maximum number of candidate hits 
+            to report.
 
     """
     cdef _JessQuery* _jq
@@ -804,7 +816,7 @@ cdef class Query:
                 hit = Hit.__new__(Hit)
                 hit.rmsd = rmsd
                 # record superposition object
-                # (TODO: expose as a Superposition object)
+                # (TODO: expose as a Superposition object?)
                 hit._sup = sup
                 # copy atoms (the pointer will be invalidated on the next
                 # call of JessQuery_next)
@@ -829,6 +841,15 @@ cdef class Query:
 
 
 cdef class Hit:
+    """A hit identified between a query molecule and a target template.
+
+    Attributes:
+        rmsd (`float`): The RMSD between the aligned structures.
+        template (`~pyjess.Template`): The template that matched the 
+            query molecule.
+        molecule (`~pyjess.Molecule`): The query molecule.
+
+    """
     cdef _Superposition* _sup
     cdef _Atom*          _atoms
 
@@ -905,6 +926,8 @@ cdef class Hit:
 
 
 cdef class Jess:
+    """A handle to run Jess over a list of templates.
+    """
     cdef _Jess* _jess
 
     def __cinit__(self):
