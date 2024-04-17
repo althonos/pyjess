@@ -78,6 +78,7 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.extlinks",
     "sphinx_bootstrap_theme",
+    "sphinxcontrib.jquery",
     "nbsphinx",
     "recommonmark",
     "IPython.sphinxext.ipython_console_highlighting",
