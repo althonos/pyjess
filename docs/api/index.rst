@@ -14,14 +14,33 @@ API Reference
     jess <jess>
 
 
+Molecule
+--------
+
 .. autosummary::
     :nosignatures:
 
     pyjess.Atom
     pyjess.Molecule
+
+
+Template
+--------
+
+.. autosummary::
+    :nosignatures:
+
     pyjess.TemplateAtom
     pyjess.Template
-    pyjess.JessQuery
+
+
+Jess
+----
+
+.. autosummary::
+    :nosignatures:
+
+    pyjess.Query
     pyjess.Hit
     pyjess.Jess
 
