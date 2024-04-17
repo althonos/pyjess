@@ -1,3 +1,22 @@
+# coding: utf-8
+# cython: language_level=3, linetrace=True
+"""Bindings to Jess, a 3D template matching software.
+
+References:
+    - Barker, J. A., & Thornton, J. M. (2003). &An algorithm for
+      constraint-based structural template matching: application to
+      3D templates with statistical analysis*. Bioinformatics (Oxford,
+      England), 19(13), 1644–1649. :doi:`10.1093/bioinformatics/btg226`.
+    - Wallace, A. C., Borkakoti, N., & Thornton, J. M. (1997).
+      *TESS: a geometric hashing algorithm for deriving 3D coordinate
+      templates for searching structural databases. Application to enzyme
+      active sites*. Protein science : a publication of the Protein
+      Society, 6(11), 2308–2323. :doi:`10.1002/pro.5560061104`.
+
+"""
+
+# --- C imports --------------------------------------------------------------
+
 cimport cython
 from cpython.unicode cimport PyUnicode_FromStringAndSize
 
@@ -21,9 +40,12 @@ from jess.template cimport Template as _Template
 from jess.tess_template cimport TessTemplate as _TessTemplate
 from jess.tess_atom cimport TessAtom as _TessAtom
 
+# --- Python imports ---------------------------------------------------------
+
 import io
 import os
 
+# --- Utils ------------------------------------------------------------------
 
 cdef inline void copy_token(char* dst, const char* src, size_t n) noexcept nogil:
     cdef size_t i
@@ -33,8 +55,11 @@ cdef inline void copy_token(char* dst, const char* src, size_t n) noexcept nogil
             dst[i] = ord('_')
     dst[n] = 0
 
+# --- Classes ----------------------------------------------------------------
 
 cdef class Molecule:
+    """A molecule structure, as a sequence of `Atom` objects.
+    """
     cdef _Molecule* _mol
 
     @classmethod
@@ -123,26 +148,42 @@ cdef class Molecule:
         assert self._mol is not NULL
         return Molecule(
             id=self.id,
-            atoms=[ 
-                atom 
-                for atom in self 
-                if cutoff <= 0.0 
+            atoms=[
+                atom
+                for atom in self
+                if cutoff <= 0.0
                 or atom.temperature_factor >= cutoff
             ]
         )
 
 
 cdef class Atom:
+    """A single atom in a molecule.
+    """
     cdef object owner
     cdef bint   owned
     cdef _Atom* _atom
 
     @classmethod
     def load(cls, file):
+        """Load an atom from the given file.
+
+        Arguments:
+            file (file-like object): A file-like object opened in text 
+                mode to read the atom from.
+
+        """
         return cls.loads(file.read())
 
     @classmethod
     def loads(cls, text):
+        """Load an atom from the given string.
+
+        Arguments:
+            text (`str`, `bytes` or `bytearray`): The atom line to read the
+                atom metadata from.
+
+        """
         cdef bytearray b
         cdef Atom      atom
 
@@ -349,16 +390,32 @@ cdef class Atom:
 
 
 cdef class TemplateAtom:
+    """A single template atom.
+    """
     cdef object     owner
     cdef bint       owned
     cdef _TessAtom* _atom
 
     @classmethod
     def load(cls, file):
+        """Load a template atom from the given file.
+
+        Arguments:
+            file (file-like object): A file-like object opened in 
+                text mode to read the template atom from.
+
+        """
         return cls.loads(file.read())
 
     @classmethod
     def loads(cls, text):
+        """Load a template atom from the given string.
+
+        Arguments:
+            text (`str`, `bytes` or `bytearray`): The atom line to read the
+                atom metadata from.
+
+        """
         cdef bytearray    b
         cdef TemplateAtom atom
 
@@ -560,6 +617,8 @@ cdef class TemplateAtom:
 
 
 cdef class Template:
+    """A template, as a sequence of `TemplateAtom` objects.
+    """
     cdef object         owner
     cdef bint           owned
     cdef _Template*     _tpl
@@ -594,7 +653,7 @@ cdef class Template:
         cdef TemplateAtom atom
         cdef size_t       alloc_size
         cdef int          count      = len(atoms)
-        
+
         alloc_size = (
             sizeof(_Template) + sizeof(_TessTemplate)
             + count * sizeof(_TessAtom*)
@@ -633,7 +692,7 @@ cdef class Template:
 
         # copy name and atom count
         self._tess.count = count
-        self._tess.symbol = NULL if id is None else strdup(id.encode()) 
+        self._tess.symbol = NULL if id is None else strdup(id.encode())
 
         # copy atom data
         for i, atom in enumerate(atoms):
@@ -641,7 +700,7 @@ cdef class Template:
             self._tess.atom[i] = jess.tess_atom.TessAtom_copy(atom._atom)
             if self._tess.atom[i] is NULL:
                 raise MemoryError("Failed to allocate template atom")
-        
+
         # compute distances
         for i in range(count):
             self._tess.distance[i][i] = 0.0
