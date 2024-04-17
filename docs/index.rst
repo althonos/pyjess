@@ -1,10 +1,10 @@
-`pyjess` |Stars|
-================
+PyJess |Stars|
+==============
 
 .. |Stars| image:: https://img.shields.io/github/stars/althonos/pyjess.svg?style=social&maxAge=3600&label=Star
-   :target: https://github.com/althonos/pyrodigal/stargazers
+   :target: https://github.com/althonos/pyjess/stargazers
 
-*A Python interface to* ``gb-io``, *a fast GenBank parser and serializer written in Rust.*
+*A Python interface to Jess, a 3D template matching software.*
 
 |Actions| |Coverage| |PyPI| |Bioconda| |AUR| |Wheel| |Versions| |Implementations| |License| |Source| |Mirror| |Issues| |Docs| |Changelog| |Downloads|
 
@@ -14,23 +14,23 @@
 .. |Coverage| image:: https://img.shields.io/codecov/c/gh/althonos/pyjess?style=flat-square&maxAge=600
    :target: https://codecov.io/gh/althonos/pyjess/
 
-.. |PyPI| image:: https://img.shields.io/pypi/v/gb-io.svg?style=flat-square&maxAge=3600
-   :target: https://pypi.python.org/pypi/gb-io
+.. |PyPI| image:: https://img.shields.io/pypi/v/pyjess.svg?style=flat-square&maxAge=3600
+   :target: https://pypi.python.org/pypi/pyjess
 
-.. |Bioconda| image:: https://img.shields.io/conda/vn/bioconda/gb-io?style=flat-square&maxAge=3600
-   :target: https://anaconda.org/bioconda/gb-io
+.. |Bioconda| image:: https://img.shields.io/conda/vn/bioconda/pyjess?style=flat-square&maxAge=3600
+   :target: https://anaconda.org/bioconda/pyjess
 
-.. |AUR| image:: https://img.shields.io/aur/version/python-gb-io?logo=archlinux&style=flat-square&maxAge=3600
-   :target: https://aur.archlinux.org/packages/python-gb-io
+.. |AUR| image:: https://img.shields.io/aur/version/python-pyjess?logo=archlinux&style=flat-square&maxAge=3600
+   :target: https://aur.archlinux.org/packages/python-pyjess
 
-.. |Wheel| image:: https://img.shields.io/pypi/wheel/gb-io?style=flat-square&maxAge=3600
-   :target: https://pypi.org/project/gb-io/#files
+.. |Wheel| image:: https://img.shields.io/pypi/wheel/pyjess?style=flat-square&maxAge=3600
+   :target: https://pypi.org/project/pyjess/#files
 
-.. |Versions| image:: https://img.shields.io/pypi/pyversions/gb-io.svg?style=flat-square&maxAge=3600
-   :target: https://pypi.org/project/gb-io/#files
+.. |Versions| image:: https://img.shields.io/pypi/pyversions/pyjess.svg?style=flat-square&maxAge=3600
+   :target: https://pypi.org/project/pyjess/#files
 
-.. |Implementations| image:: https://img.shields.io/pypi/implementation/gb-io.svg?style=flat-square&maxAge=3600&label=impl
-   :target: https://pypi.org/project/gb-io/#files
+.. |Implementations| image:: https://img.shields.io/pypi/implementation/pyjess.svg?style=flat-square&maxAge=3600&label=impl
+   :target: https://pypi.org/project/pyjess/#files
 
 .. |License| image:: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&maxAge=3600
    :target: https://choosealicense.com/licenses/mit/
@@ -44,14 +44,14 @@
 .. |Issues| image:: https://img.shields.io/github/issues/althonos/pyjess.svg?style=flat-square&maxAge=600
    :target: https://github.com/althonos/pyjess/issues
 
-.. |Docs| image:: https://img.shields.io/readthedocs/gb-io?style=flat-square&maxAge=3600
-   :target: http://gb-io.readthedocs.io/en/stable/?badge=stable
+.. |Docs| image:: https://img.shields.io/readthedocs/pyjess?style=flat-square&maxAge=3600
+   :target: http://pyjess.readthedocs.io/en/stable/?badge=stable
 
 .. |Changelog| image:: https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square
    :target: https://github.com/althonos/pyjess/blob/main/CHANGELOG.md
 
-.. |Downloads| image:: https://img.shields.io/pypi/dm/gb-io?style=flat-square&color=303f9f&maxAge=86400&label=downloads
-   :target: https://pepy.tech/project/gb-io
+.. |Downloads| image:: https://img.shields.io/pypi/dm/pyjess?style=flat-square&color=303f9f&maxAge=86400&label=downloads
+   :target: https://pepy.tech/project/pyjess
 
 
 Overview
