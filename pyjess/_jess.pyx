@@ -752,7 +752,12 @@ cdef class Template:
         return self._tess.dim
 
 
-cdef class JessQuery:
+cdef class Query:
+    """A query over templates with a given molecule.
+
+    Jess iterates over the templates and 
+
+    """
     cdef _JessQuery* _jq
     cdef int         _candidates
 
@@ -916,7 +921,7 @@ cdef class Jess:
             #       template given as argument to avoid a double-free.
             jess.jess.Jess_addTemplate(self._jess, template._tpl.copy(template._tpl))
 
-    cpdef JessQuery query(
+    cpdef Query query(
         self,
         Molecule molecule,
         double rmsd_threshold,
@@ -940,10 +945,10 @@ cdef class Jess:
                 atom of the template.
 
         Returns:
-            `~pyjess.JessQuery`: An iterator over the query hits.
+            `~pyjess.Query`: An iterator over the query hits.
 
         """
-        cdef JessQuery query = JessQuery.__new__(JessQuery)
+        cdef Query query = Query.__new__(Query)
         query.ignore_chain = ignore_chain
         query.max_candidates = max_candidates
         query.rmsd_threshold = rmsd_threshold

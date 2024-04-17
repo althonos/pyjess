@@ -8,7 +8,7 @@ Jess
    :special-members: __init__
    :members:
 
-.. autoclass:: pyjess.JessQuery
+.. autoclass:: pyjess.Query
    :special-members: __iter__, __next__
    :members:
 

@@ -129,7 +129,7 @@ class Template(Sequence[TemplateAtom]):
     @property
     def dimension(self) -> int: ...
 
-class JessQuery(Iterator[Hit]):
+class Query(Iterator[Hit]):
     @property
     def jess(self) -> Jess: ...
     @property
