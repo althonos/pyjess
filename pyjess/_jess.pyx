@@ -194,6 +194,7 @@ cdef class Atom:
             b = bytearray(text)
         if not b.endswith(b'\n'):
             b.append(b'\n')
+        b.append(b'\0')
 
         atom = cls.__new__(cls)
         atom._atom = <_Atom*> malloc(sizeof(_Atom))
