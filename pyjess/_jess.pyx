@@ -201,7 +201,7 @@ cdef class Atom:
             raise MemoryError("Failed to allocate atom")
 
         if not jess.atom.Atom_parse(atom._atom, b):
-            raise ValueError("Failed to parse atom")
+            raise ValueError(f"Failed to parse atom: {text!r}")
 
         return atom
 
@@ -430,7 +430,7 @@ cdef class TemplateAtom:
         atom = TemplateAtom.__new__(TemplateAtom)
         atom._atom = jess.tess_atom.TessAtom_create(<const char*> b)
         if atom._atom == NULL:
-            raise ValueError("Failed to parse template atom")
+            raise ValueError(f"Failed to parse template atom: {text!r}")
 
         # validate match mode *now* to avoid Jess exiting when it does so later
         if atom.match_mode not in range(-1, 9) and atom.match_mode not in range(100, 108):
