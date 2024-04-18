@@ -133,6 +133,14 @@ cdef class Molecule:
         atom._atom = <_Atom*> jess.molecule.Molecule_atom(self._mol, index_)
         return atom
 
+    def __sizeof__(self):
+        assert self._mol is not NULL
+        return (
+            sizeof(self)
+            + sizeof(_Molecule)
+            + self._mol.count*(sizeof(_Atom*) + sizeof(_Atom))
+        )
+
     @property
     def id(self):
         assert self._mol is not NULL
@@ -170,7 +178,7 @@ cdef class Atom:
         """Load an atom from the given file.
 
         Arguments:
-            file (file-like object): A file-like object opened in text 
+            file (file-like object): A file-like object opened in text
                 mode to read the atom from.
 
         """
@@ -291,6 +299,12 @@ cdef class Atom:
             f"element={self.element!r})"
         )
 
+    def __sizeof__(self):
+        cdef size_t size = sizeof(self)
+        if not self.owned:
+            size += sizeof(_Atom)
+        return size
+
     @property
     def serial(self):
         """`int`: The atom serial number.
@@ -403,7 +417,7 @@ cdef class TemplateAtom:
         """Load a template atom from the given file.
 
         Arguments:
-            file (file-like object): A file-like object opened in 
+            file (file-like object): A file-like object opened in
                 text mode to read the template atom from.
 
         """
@@ -541,6 +555,21 @@ cdef class TemplateAtom:
             f"distance_weight={self.distance_weight!r}, "
             f"match_mode={self.match_mode!r})"
         )
+
+    def __sizeof__(self):
+        assert self._atom is not NULL
+
+        cdef size_t ac   = self._atom.nameCount
+        cdef size_t rc   = self._atom.resNameCount
+        cdef size_t size = sizeof(self)
+
+        if not self.owned:
+            size += (
+                sizeof(_TessAtom)
+                + sizeof(char*) * (ac + rc)
+                + sizeof(char) * (5*ac + 4*rc)
+            )
+        return size
 
     @property
     def match_mode(self):
@@ -739,6 +768,33 @@ cdef class Template:
         atom._atom = self._tess.atom[index_]
         return atom
 
+    def __sizeof__(self):
+        assert self._tess is not NULL
+
+        cdef size_t     i
+        cdef size_t     ac
+        cdef size_t     rc
+        cdef _TessAtom* atom
+        cdef size_t     size = sizeof(self)
+
+        size = (
+            sizeof(_Template)
+            + sizeof(_TessTemplate)
+            + self._tess.count * sizeof(_TessAtom*)
+            + self._tess.count * sizeof(double*)
+            + self._tess.count * self._tess.count * sizeof(double)
+        )
+        for i in range(self._tess.count):
+            atom = self._tess.atom[i]
+            ac = atom.nameCount
+            rc = atom.resNameCount
+            size += (
+                sizeof(_TessAtom)
+                + sizeof(char*) * (ac + rc)
+                + sizeof(char) * (5*ac + 4*rc)
+            )
+        return size
+
     @property
     def id(self):
         assert self._tpl is not NULL
@@ -770,7 +826,7 @@ cdef class Query:
             the templates.
         rmsd_threshold (`float`): The RMSD threshold for reporting
             results.
-        max_candidates (`int`): The maximum number of candidate hits 
+        max_candidates (`int`): The maximum number of candidate hits
             to report.
 
     """
@@ -843,7 +899,7 @@ cdef class Hit:
 
     Attributes:
         rmsd (`float`): The RMSD between the aligned structures.
-        template (`~pyjess.Template`): The template that matched the 
+        template (`~pyjess.Template`): The template that matched the
             query molecule.
         molecule (`~pyjess.Molecule`): The query molecule.
 
