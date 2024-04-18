@@ -1,0 +1,28 @@
+diff --git a/src/Atom.h b/src/Atom.h
+index 9e127fe..2e75110 100644
+--- a/src/Atom.h
++++ b/src/Atom.h
+@@ -28,6 +28,9 @@ typedef struct _Atom Atom;
+ 
+ struct _Atom
+ {
++	double x[3];
++	float occupancy;
++	float tempFactor;
+ 	int serial;
+ 	char name[5];
+ 	char altLoc;
+@@ -38,12 +41,9 @@ struct _Atom
+ 	//char chainID;
+ 	int resSeq;
+ 	char iCode;
+-	double x[3];
+-	double occupancy;
+-	double tempFactor;
+ 	char segID[4];
+ 	char element[3];
+-	int charge;
++	char charge;
+ };
+ 
+ // ==================================================================
