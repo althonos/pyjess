@@ -52,8 +52,8 @@ package:
 $ conda install -c bioconda pyjess
 ``` -->
 
-<!-- Check the [*install* page](https://pyjess.readthedocs.io/en/stable/install.html)
-of the documentation for other ways to install PyJess on your machine. -->
+Check the [*install* page](https://pyjess.readthedocs.io/en/stable/install.html)
+of the documentation for other ways to install PyJess on your machine.
 
 ## 💡 Example
 
@@ -65,8 +65,7 @@ import pyjess
 
 templates = []
 for path in sorted(glob.iglob("vendor/jess/examples/template_*.qry")):
-    with open(path) as f:
-        templates.append(Template.load(f, id=os.path.basename(path)))
+    templates.append(Template.load(path, id=os.path.basename(path)))
 ```
 
 Create a `Jess` instance and use it to query a molecule (a PDB structure)
@@ -74,8 +73,7 @@ against the stored templates:
 
 ```python
 jess = Jess(templates)
-with open("vendor/jess/examples/test_pdbs/pdb1a0p.ent") as f:
-    mol = Molecule(f)
+mol = Molecule("vendor/jess/examples/test_pdbs/pdb1a0p.ent")
 query = jess.query(mol, rmsd_threshold=2.0, distance_cutoff=3.0, max_dynamic_distance=3.0)
 ```
 
@@ -99,8 +97,7 @@ molecules against the same templates in parallel using a thread pool:
 ```python
 molecules = []
 for path in glob.glob("vendor/jess/examples/test_pdbs/*.ent"):
-    with open(path) as f:
-        molecules.append(Molecule.load(f))
+    molecules.append(Molecule.load(path))
 
 with multiprocessing.ThreadPool() as pool:
     hits = pool.map(jess.query, molecules)
