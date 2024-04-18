@@ -1,5 +1,5 @@
 diff --git a/src/Super.c b/src/Super.c
-index 777b693..22ad326 100644
+index 777b693..76784b0 100644
 --- a/src/Super.c
 +++ b/src/Super.c
 @@ -29,8 +29,8 @@ struct _Node
@@ -13,7 +13,7 @@ index 777b693..22ad326 100644
  
  // ==================================================================
  // type Superposition
-@@ -61,7 +61,7 @@ struct _Superposition
+@@ -61,23 +61,19 @@ struct _Superposition
  // compute(S)		Compute the superposition
  // ==================================================================
  
@@ -22,7 +22,11 @@ index 777b693..22ad326 100644
  
  // ==================================================================
  // Local procedures
-@@ -73,11 +73,11 @@ static void Superposition_compute(Superposition*);
+ // ==================================================================
+-// min(a,b)				Returns min(a,b)
+-// max(a,b)				Returns max(a,b)
+ // rotate()				Used by subroutine jacobi()
+ // jacobi(M,P,v)		Computes diag(v) = P^T M P (M in, P,v out)
  // superpose(a,b,n,M)	Computes superposition of arrays
  // ==================================================================
  
@@ -31,11 +35,56 @@ index 777b693..22ad326 100644
 -static void rotate(double*,double*,int,int);
 -static int jacobi(double*,double*,double*);
 -static double superpose(double*,double*,int,double*);
-+static double min(double a, double b);
-+static double max(double a, double b);
 +static void rotate(double* W, double* P, int ip, int iq);
 +static int jacobi(double* M,double* P,double* V);
 +static double superpose(double* a, double* b, int n, double* M);
  
  // ==================================================================
  // Methods of type Superposition
+@@ -237,16 +233,6 @@ const double *Superposition_rotation(Superposition *S)
+ // The superposition algorithm stuff
+ // ==================================================================
+ 
+-static double min(double a, double b)
+-{
+-	return a<b ? a:b;
+-}
+-
+-static double max(double a, double b)
+-{
+-	return a>b ? a:b;
+-}
+-
+ static const double PRECISION = 1e-12;
+ 
+ static void rotate(double *W, double *P, int ip, int iq)
+@@ -480,16 +466,16 @@ static double superpose(double *a,double *b, int n, double *M)
+ 
+ 	jacobi(XX,P,e);
+ 
+-	e[0]=max(e[0],0);
+-	e[1]=max(e[1],0);
+-	e[2]=max(e[2],0);
++	e[0]=fmax(e[0],0);
++	e[1]=fmax(e[1],0);
++	e[2]=fmax(e[2],0);
+ 
+ 
+ 	sumE = sqrt(e[0]) + sqrt(e[1]) + sqrt(e[2]);
+ 
+ 	if(detX<1e-8)
+ 	{
+-		sumE -= (double)2*sqrt(min(e[0],min(e[1],e[2])));
++		sumE -= (double)2*sqrt(fmin(e[0],fmin(e[1],e[2])));
+ 		flag=1;
+ 	}
+ 	else
+@@ -498,7 +484,7 @@ static double superpose(double *a,double *b, int n, double *M)
+ 	}
+ 
+ 	rmsd = sumA + sumB - (double)2*sumE;
+-	rmsd = sqrt(max(rmsd,0)/(double)n);
++	rmsd = sqrt(fmax(rmsd,0)/(double)n);
+ 
+ 	// Compute the transform and return the rmsd.
+ 	// This will fail if XX has rank<3. I need to
