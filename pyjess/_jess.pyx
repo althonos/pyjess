@@ -426,6 +426,7 @@ cdef class TemplateAtom:
             b = bytearray(text)
         if not b.endswith(b'\n'):
             b.append(b'\n')
+        b.append(b'\0')
 
         atom = TemplateAtom.__new__(TemplateAtom)
         atom._atom = jess.tess_atom.TessAtom_create(<const char*> b)
