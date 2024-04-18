@@ -1,8 +1,8 @@
 diff --git a/src/TessAtom.c b/src/TessAtom.c
-index e1cce1a..d1fe4fb 100644
+index e1cce1a..2a8ed28 100644
 --- a/src/TessAtom.c
 +++ b/src/TessAtom.c
-@@ -7,6 +7,8 @@
+@@ -7,11 +7,18 @@
  
  #include "TessAtom.h"
  #include "Atom.h"
@@ -11,7 +11,17 @@ index e1cce1a..d1fe4fb 100644
  #include <stdlib.h>
  #include <stdio.h>
  #include <string.h>
-@@ -26,21 +28,6 @@
+ #include <ctype.h>
+ 
++#ifdef _MSC_VER 
++#define strncasecmp _strnicmp
++#define strcasecmp _stricmp
++#endif
++
+ // ==================================================================
+ // Local type TessAtom
+ // ==================================================================
+@@ -26,21 +33,6 @@
  // distWeight[k]			kth atom distance threshold modifier (weight)
  // ==================================================================
  
@@ -33,7 +43,7 @@ index e1cce1a..d1fe4fb 100644
  // ==================================================================
  // Methods of type TessAtom (ARGGH!!!)
  // ==================================================================
-@@ -91,7 +78,7 @@ TessAtom *TessAtom_create(const char *s)
+@@ -91,7 +83,7 @@ TessAtom *TessAtom_create(const char *s)
  	int rq;
  	const char *q;
  	const char *tmp;
@@ -42,7 +52,7 @@ index e1cce1a..d1fe4fb 100644
  
  
  	// 0. Parse the record as a standard PDB atom. We must
-@@ -258,6 +245,66 @@ TessAtom *TessAtom_create(const char *s)
+@@ -258,6 +250,66 @@ TessAtom *TessAtom_create(const char *s)
  	return A;
  }
  
@@ -52,7 +62,7 @@ index e1cce1a..d1fe4fb 100644
 +	int rc;
 +	int rq;
 +	int m;
-+	void* p;
++	char* p;
 +	TessAtom* B;
 +
 +	// get allocation size
