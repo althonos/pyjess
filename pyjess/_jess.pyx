@@ -42,6 +42,7 @@ from jess.tess_atom cimport TessAtom as _TessAtom
 
 # --- Python imports ---------------------------------------------------------
 
+import contextlib
 import io
 import os
 
@@ -54,6 +55,10 @@ cdef inline void copy_token(char* dst, const char* src, size_t n) noexcept nogil
         if dst[i] == ord(' ') or dst[i] == 0:
             dst[i] = ord('_')
     dst[n] = 0
+
+@contextlib.contextmanager
+def nullcontext(return_value=None):
+    yield return_value
 
 # --- Classes ----------------------------------------------------------------
 
@@ -68,15 +73,20 @@ cdef class Molecule:
 
     @classmethod
     def load(cls, file):
-        atoms = []
-        id = None
-        for line in file:
-            if line.startswith("HEADER"):
-                id = line[62:66].strip()
-                if not id:
-                    id = None
-            elif line.startswith(("ATOM", "HETATM")):
-                atoms.append(Atom.loads(line))
+        try:
+            handle = open(file)
+        except TypeError:
+            handle = nullcontext(file)
+        with handle as f:
+            atoms = []
+            id = None
+            for line in f:
+                if line.startswith("HEADER"):
+                    id = line[62:66].strip()
+                    if not id:
+                        id = None
+                elif line.startswith(("ATOM", "HETATM")):
+                    atoms.append(Atom.loads(line))
         return cls(atoms, id=id)
 
     def __cinit__(self):
@@ -663,10 +673,15 @@ cdef class Template:
 
     @classmethod
     def load(cls, file, str id = None):
-        atoms = []
-        for line in file:
-            if line.startswith("ATOM"):
-                atoms.append(TemplateAtom.loads(line))
+        try:
+            handle = open(file)
+        except TypeError:
+            handle = nullcontext(file)
+        with handle as f:
+            atoms = []
+            for line in f:
+                if line.startswith("ATOM"):
+                    atoms.append(TemplateAtom.loads(line))
         return cls(atoms, id=id)
 
     def __cinit__(self):
