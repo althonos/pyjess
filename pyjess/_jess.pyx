@@ -1012,20 +1012,26 @@ cdef class Jess:
     """A handle to run Jess over a list of templates.
     """
     cdef _Jess* _jess
+    cdef size_t length
 
     def __cinit__(self):
         self._jess = NULL
+        self.length = 0
 
     def __dealloc__(self):
         jess.jess.Jess_free(self._jess)
 
-    def __init__(self, object templates):
+    def __init__(self, object templates = ()):
         cdef Template template
         self._jess = jess.jess.Jess_create()
         for template in templates:
             # NOTE: the Jess storage owns the data, so we make a copy of the
             #       template given as argument to avoid a double-free.
             jess.jess.Jess_addTemplate(self._jess, template._tpl.copy(template._tpl))
+            self.length += 1
+
+    def __len__(self):
+        return self.length
 
     cpdef Query query(
         self,

@@ -1,5 +1,5 @@
 import os
-from typing import Any, Union, Optional, Sequence, Iterator, Iterable, List, TextIO
+from typing import Any, Union, Optional, Sequence, Iterator, Iterable, List, TextIO, Sized
 
 try:
     from typing import Literal
@@ -158,8 +158,9 @@ class Hit:
     def evalue(self) -> float: ...
     def atoms(self, transform: bool = True) -> List[Atom]: ...
 
-class Jess:
-    def __init__(self, templates: Iterable[Template]): ...
+class Jess(Sized):
+    def __init__(self, templates: Iterable[Template] = ()): ...
+    def __len__(self) -> int: ...
     def query(
         self,
         molecule: Molecule,

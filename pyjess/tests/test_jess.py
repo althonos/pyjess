@@ -5,15 +5,24 @@ from .utils import files
 from . import data
 
 
-class TestAtom(unittest.TestCase):
+class TestJess(unittest.TestCase):
+
+    def test_init_empty(self):
+        jess = Jess()
+        self.assertEqual(len(jess), 0)
+        self.assertFalse(bool(jess))
+
+    def test_query_empty(self):
+        mol = Molecule()
+        jess = Jess()
+        hits = jess.query(mol, 2, 2, 4)
+        self.assertRaises(StopIteration, next, hits)
 
     @unittest.skipUnless(files, "importlib.resources not available")
     def test_query(self):
-
         with files(data).joinpath("template_01.qry").open() as f:
             template = Template.load(f)
             jess = Jess([template])
-
         with files(data).joinpath("pdb1lnb.pdb").open() as f:
             molecule = Molecule.load(f)
 
@@ -52,14 +61,11 @@ class TestAtom(unittest.TestCase):
 
     @unittest.skipUnless(files, "importlib.resources not available")
     def test_mcsa_query(self):
-
         with files(data).joinpath("1.3.3.tpl").open() as f:
             template = Template.load(f)
             jess = Jess([template])
-
         with files(data).joinpath("1AMY.pdb").open() as f:
             molecule = Molecule.load(f)
-
         with files(data).joinpath("1AMY+1.3.3.txt").open() as f:
             results = list(filter(None, f.read().split("REMARK")))
 
