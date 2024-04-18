@@ -1,22 +1,21 @@
-# 🔍🐍 PyJess [![Stars](https://img.shields.io/github/stars/althonos/pyjess.svg?style=social&maxAge=3600&label=Star)](https://github.com/althonos/pyjess/stargazers)
+# 🐍🔍 PyJess [![Stars](https://img.shields.io/github/stars/althonos/pyjess.svg?style=social&maxAge=3600&label=Star)](https://github.com/althonos/pyjess/stargazers)
 
 *[Cython](https://cython.org/) bindings and Python interface to [Jess](https://github.com/iriziotis/jess), a 3D template matching software.*
 
 [![Actions](https://img.shields.io/github/actions/workflow/status/althonos/pyjess/test.yml?branch=main&logo=github&style=flat-square&maxAge=300)](https://github.com/althonos/pyjess/actions)
 [![Coverage](https://img.shields.io/codecov/c/gh/althonos/pyjess?style=flat-square&maxAge=3600&logo=codecov)](https://codecov.io/gh/althonos/pyjess/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&maxAge=2678400)](https://choosealicense.com/licenses/mit/)
-<!-- [![PyPI](https://img.shields.io/pypi/v/pyjess.svg?style=flat-square&maxAge=3600&logo=PyPI)](https://pypi.org/project/pyjess) -->
-<!-- [![Bioconda](https://img.shields.io/conda/vn/bioconda/pyjess?style=flat-square&maxAge=3600&logo=anaconda)](https://anaconda.org/bioconda/pyjess) -->
-<!-- [![AUR](https://img.shields.io/aur/version/python-pyjess?logo=archlinux&style=flat-square&maxAge=3600)](https://aur.archlinux.org/packages/python-pyjess) -->
-<!-- [![Wheel](https://img.shields.io/pypi/wheel/pyjess.svg?style=flat-square&maxAge=3600)](https://pypi.org/project/pyjess/#files) -->
-<!-- [![Python Versions](https://img.shields.io/pypi/pyversions/pyjess.svg?style=flat-square&maxAge=600&logo=python)](https://pypi.org/project/pyjess/#files) -->
-<!-- [![Python Implementations](https://img.shields.io/pypi/implementation/pyjess.svg?style=flat-square&maxAge=600&label=impl)](https://pypi.org/project/pyjess/#files) -->
+[![PyPI](https://img.shields.io/pypi/v/pyjess.svg?style=flat-square&maxAge=3600&logo=PyPI)](https://pypi.org/project/pyjess)
+[![Bioconda](https://img.shields.io/conda/vn/bioconda/pyjess?style=flat-square&maxAge=3600&logo=anaconda)](https://anaconda.org/bioconda/pyjess)
+[![AUR](https://img.shields.io/aur/version/python-pyjess?logo=archlinux&style=flat-square&maxAge=3600)](https://aur.archlinux.org/packages/python-pyjess)
+[![Wheel](https://img.shields.io/pypi/wheel/pyjess.svg?style=flat-square&maxAge=3600)](https://pypi.org/project/pyjess/#files)
+[![Python Versions](https://img.shields.io/pypi/pyversions/pyjess.svg?style=flat-square&maxAge=600&logo=python)](https://pypi.org/project/pyjess/#files)
+[![Python Implementations](https://img.shields.io/pypi/implementation/pyjess.svg?style=flat-square&maxAge=600&label=impl)](https://pypi.org/project/pyjess/#files)
 [![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/pyjess/)
-<!-- [![Mirror](https://img.shields.io/badge/mirror-EMBL-009f4d?style=flat-square&maxAge=2678400)](https://git.embl.de/larralde/pyjess/) -->
-<!-- [![Issues](https://img.shields.io/github/issues/althonos/pyjess.svg?style=flat-square&maxAge=600)](https://github.com/althonos/pyjess/issues) -->
-<!-- [![Docs](https://img.shields.io/readthedocs/pyjess/latest?style=flat-square&maxAge=600)](https://pyjess.readthedocs.io) -->
-<!-- [![Changelog](https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/pyjess/blob/main/CHANGELOG.md) -->
-<!-- [![Downloads](https://img.shields.io/pypi/dm/pyjess?style=flat-square&color=303f9f&maxAge=86400&label=downloads)](https://pepy.tech/project/pyjess) -->
+[![Issues](https://img.shields.io/github/issues/althonos/pyjess.svg?style=flat-square&maxAge=600)](https://github.com/althonos/pyjess/issues)
+[![Docs](https://img.shields.io/readthedocs/pyjess/latest?style=flat-square&maxAge=600)](https://pyjess.readthedocs.io)
+[![Changelog](https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/pyjess/blob/main/CHANGELOG.md)
+[![Downloads](https://img.shields.io/pypi/dm/pyjess?style=flat-square&color=303f9f&maxAge=86400&label=downloads)](https://pepy.tech/project/pyjess)
 
 
 ## 🗺️ Overview
@@ -40,12 +39,12 @@ performing any external I/O.
 
 PyJess is available for all modern Python versions (3.6+).
 
-<!-- It can be installed directly from [PyPI](https://pypi.org/project/pyjess/),
+It can be installed directly from [PyPI](https://pypi.org/project/pyjess/),
 which hosts some pre-built x86-64 wheels for Linux, MacOS, and Windows,
 as well as the code required to compile from source with Cython:
 ```console
 $ pip install pyjess
-``` -->
+```
 
 <!-- Otherwise, PyJess is also available as a [Bioconda](https://bioconda.github.io/)
 package:
