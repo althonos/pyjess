@@ -1,3 +1,4 @@
+import os
 import unittest
 import tempfile
 import textwrap
@@ -23,7 +24,7 @@ TEMPLATE = textwrap.dedent(
 
 class TestTemplate(unittest.TestCase):
 
-    def test_load(self):
+    def test_loads(self):
         template = Template.loads(TEMPLATE)
         self.assertEqual(len(template), 11)
         self.assertEqual(template.dimension, 5)
@@ -32,6 +33,33 @@ class TestTemplate(unittest.TestCase):
         self.assertEqual(template[1].atom_names, ["CG"])
         self.assertEqual(template[2].residue_number, 1132)
         self.assertEqual(template[-1].residue_number, 1150)
+
+    def test_load_filename(self):
+        with tempfile.NamedTemporaryFile("w", suffix=".pdb") as f:
+            f.write(TEMPLATE)
+            f.flush()
+            template = Template.load(f.name)
+        self.assertEqual(template[0].residue_names, ["LYS"])
+        self.assertEqual(template[0].atom_names, ["NZ"])
+        self.assertEqual(template[1].atom_names, ["CG"])
+        self.assertEqual(template[2].residue_number, 1132)
+        self.assertEqual(template[-1].residue_number, 1150)
+
+    def test_load_file(self):
+        with tempfile.NamedTemporaryFile("r+", suffix=".pdb") as f:
+            f.write(TEMPLATE)
+            f.flush()
+            f.seek(0)
+            template = Template.load(f)
+        self.assertEqual(template[0].residue_names, ["LYS"])
+        self.assertEqual(template[0].atom_names, ["NZ"])
+        self.assertEqual(template[1].atom_names, ["CG"])
+        self.assertEqual(template[2].residue_number, 1132)
+        self.assertEqual(template[-1].residue_number, 1150)
+
+    def test_load_error(self):
+        self.assertRaises(FileNotFoundError, Template.load, "/some/nonsensical/file")
+        self.assertRaises(IsADirectoryError, Template.load, os.path.dirname(__file__))
 
     def test_init_empty(self):
         template = Template()
