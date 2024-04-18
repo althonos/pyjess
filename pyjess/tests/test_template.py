@@ -21,7 +21,7 @@ TEMPLATE = textwrap.dedent(
 ).strip()
 
 
-class TestTessTemplate(unittest.TestCase):
+class TestTemplate(unittest.TestCase):
 
     def test_load(self):
         template = Template.loads(TEMPLATE)

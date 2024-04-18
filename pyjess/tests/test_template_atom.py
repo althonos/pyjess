@@ -3,7 +3,7 @@ import unittest
 from .._jess import TemplateAtom
 
 
-class TestTessAtom(unittest.TestCase):
+class TestTemplateAtom(unittest.TestCase):
 
     def test_load(self):
         atom = TemplateAtom.loads("ATOM      1  NE  ARG A1136       3.953   0.597  -1.721 K")
