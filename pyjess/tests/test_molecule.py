@@ -30,6 +30,7 @@ class TestMolecule(unittest.TestCase):
         self.assertEqual(len(molecule), 5)
         self.assertEqual(molecule.id, '1A0P')
 
+    @unittest.skipIf(os.name == "nt", "permission errors on Windows")
     def test_load_filename(self):
         with tempfile.NamedTemporaryFile("w", suffix=".pdb") as f:
             f.write(MOLECULE)
@@ -38,6 +39,7 @@ class TestMolecule(unittest.TestCase):
         self.assertEqual(len(molecule), 5)
         self.assertEqual(molecule.id, '1A0P')
 
+    @unittest.skipIf(os.name == "nt", "permission errors on Windows")
     def test_load_file(self):
         with tempfile.NamedTemporaryFile("r+", suffix=".pdb") as f:
             f.write(MOLECULE)

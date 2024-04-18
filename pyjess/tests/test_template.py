@@ -34,6 +34,7 @@ class TestTemplate(unittest.TestCase):
         self.assertEqual(template[2].residue_number, 1132)
         self.assertEqual(template[-1].residue_number, 1150)
 
+    @unittest.skipIf(os.name == "nt", "permission errors on Windows")
     def test_load_filename(self):
         with tempfile.NamedTemporaryFile("w", suffix=".pdb") as f:
             f.write(TEMPLATE)
@@ -45,6 +46,7 @@ class TestTemplate(unittest.TestCase):
         self.assertEqual(template[2].residue_number, 1132)
         self.assertEqual(template[-1].residue_number, 1150)
 
+    @unittest.skipIf(os.name == "nt", "permission errors on Windows")
     def test_load_file(self):
         with tempfile.NamedTemporaryFile("r+", suffix=".pdb") as f:
             f.write(TEMPLATE)
