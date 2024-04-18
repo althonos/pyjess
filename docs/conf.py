@@ -29,6 +29,11 @@ project_dir = os.path.dirname(docssrc_dir)
 if os.getenv("READTHEDOCS", "False") != "True":
     sys.path.insert(0, project_dir)
 
+# -- Sphinx Setup ------------------------------------------------------------
+
+def setup(app):
+    # Add custom stylesheet
+    app.add_css_file("css/main.css")
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
