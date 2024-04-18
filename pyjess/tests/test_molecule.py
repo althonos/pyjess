@@ -49,6 +49,7 @@ class TestMolecule(unittest.TestCase):
         self.assertEqual(len(molecule), 5)
         self.assertEqual(molecule.id, '1A0P')
 
+    @unittest.skipIf(os.name == "nt", "permission errors on Windows")
     def test_load_error(self):
         self.assertRaises(FileNotFoundError, Molecule.load, "/some/nonsensical/file")
         self.assertRaises(IsADirectoryError, Molecule.load, os.path.dirname(__file__))

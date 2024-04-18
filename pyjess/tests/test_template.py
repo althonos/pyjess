@@ -59,6 +59,7 @@ class TestTemplate(unittest.TestCase):
         self.assertEqual(template[2].residue_number, 1132)
         self.assertEqual(template[-1].residue_number, 1150)
 
+    @unittest.skipIf(os.name == "nt", "permission errors on Windows")
     def test_load_error(self):
         self.assertRaises(FileNotFoundError, Template.load, "/some/nonsensical/file")
         self.assertRaises(IsADirectoryError, Template.load, os.path.dirname(__file__))

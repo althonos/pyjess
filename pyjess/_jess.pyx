@@ -849,6 +849,8 @@ cdef class Query:
             results.
         max_candidates (`int`): The maximum number of candidate hits
             to report.
+        ignore_chain (`bool`): Whether to check or ignore the chain of
+            the atoms to match.
 
     """
     cdef _JessQuery* _jq
@@ -938,6 +940,8 @@ cdef class Hit:
 
     @property
     def determinant(self):
+        """`float`: The determinant of the rotation matrix.
+        """
         assert self._sup is not NULL
         cdef const double* p = jess.super.Superposition_rotation(self._sup)
         cdef double det = 0.0
@@ -948,12 +952,16 @@ cdef class Hit:
 
     @property
     def log_evalue(self):
+        """`float`: The logarithm of the E-value estimated for the hit.
+        """
         assert self.template._tpl is not NULL
         cdef int n = jess.molecule.Molecule_count(self.molecule._mol)
         return self.template._tpl.logE(self.template._tpl, self.rmsd, n)
 
     @property
     def evalue(self):
+        """`float`: The E-value estimated for the hit.
+        """
         assert self.template._tpl is not NULL
         cdef int n = jess.molecule.Molecule_count(self.molecule._mol)
         return exp(self.template._tpl.logE(self.template._tpl, self.rmsd, n))
