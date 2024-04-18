@@ -167,6 +167,7 @@ class Jess(Sized):
         rmsd_threshold: float,
         distance_cutoff: float,
         max_dynamic_distance: float,
+        *,
         max_candidates: int = 1000,
         ignore_chain: bool = False,
     ) -> Query: ...

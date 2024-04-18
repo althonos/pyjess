@@ -1033,12 +1033,13 @@ cdef class Jess:
     def __len__(self):
         return self.length
 
-    cpdef Query query(
+    def query(
         self,
         Molecule molecule,
         double rmsd_threshold,
         double distance_cutoff,
         double max_dynamic_distance,
+        *,
         int max_candidates = 1000,
         bint ignore_chain = False,
     ):
