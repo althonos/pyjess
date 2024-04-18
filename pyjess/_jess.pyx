@@ -130,14 +130,14 @@ cdef class Molecule:
         atom = Atom.__new__(Atom)
         atom.owner = self
         atom.owned = True
-        atom._atom = jess.molecule.Molecule_atom(self._mol, index_)
+        atom._atom = <_Atom*> jess.molecule.Molecule_atom(self._mol, index_)
         return atom
 
     @property
     def id(self):
         assert self._mol is not NULL
 
-        cdef const char* pdb_id = NULL
+        cdef const char* pdb_id
 
         pdb_id = jess.molecule.Molecule_id(self._mol)
         if pdb_id is NULL:
@@ -146,13 +146,14 @@ cdef class Molecule:
 
     cpdef Molecule conserved(self, double cutoff = 0.0):
         assert self._mol is not NULL
+        cdef Atom atom
         return Molecule(
             id=self.id,
             atoms=[
                 atom
                 for atom in self
                 if cutoff <= 0.0
-                or atom.temperature_factor >= cutoff
+                or atom._atom.tempFactor >= cutoff
             ]
         )
 
@@ -459,7 +460,8 @@ cdef class TemplateAtom:
         double distance_weight = 0.0,
         int match_mode = 0,
     ):
-        cdef void*  p
+        cdef size_t m
+        cdef char*  p
         cdef size_t ac
         cdef size_t rc
         cdef size_t alloc_size
@@ -492,7 +494,7 @@ cdef class TemplateAtom:
         self._atom.distWeight = distance_weight
 
         # setup string pointers
-        p = &self._atom[1]
+        p = <char*> &self._atom[1]
         self._atom.name = <char**> p
         p += sizeof(char*)*ac
         for m in range(ac):
@@ -505,7 +507,7 @@ cdef class TemplateAtom:
             p += 4
 
         # copy atom names
-        for i, name in enumerate(atom_names):
+        for m, name in enumerate(atom_names):
             if isinstance(name, str):
                 _name = bytearray(name, 'ascii')
             else:
@@ -514,14 +516,14 @@ cdef class TemplateAtom:
                 raise ValueError(f"Invalid atom name: {name!r}")
             elif len(_name) < 3:
                 _name.insert(0, ord('_'))
-            copy_token(self._atom.name[i], _name.ljust(4, b'\0'), 4)
+            copy_token(self._atom.name[m], _name.ljust(4, b'\0'), 4)
 
         # copy residue names
-        for i, name in enumerate(residue_names):
+        for m, name in enumerate(residue_names):
             _name = name.encode('ascii') if isinstance(name, str) else name
             if len(_name) > 3:
                 raise ValueError(f"Invalid residue name: {name!r}")
-            copy_token(self._atom.resName[i], _name.ljust(3, b'\0'), 3)
+            copy_token(self._atom.resName[m], _name.ljust(3, b'\0'), 3)
 
     def __repr__(self):
         cdef str ty = type(self).__name__
@@ -792,16 +794,10 @@ cdef class Query:
     def __next__(self):
         assert self._jq is not NULL
 
-        cdef _Template*      tpl   = NULL
-        cdef _Superposition* sup   = NULL
-        cdef _Atom**         atoms = NULL
-        cdef double*         p     = NULL
-        cdef const double*   c     = NULL
-        cdef const double*   v     = NULL
-        cdef double          det
-        cdef double          logE
+        cdef _Template*      tpl
+        cdef _Superposition* sup
+        cdef _Atom**         atoms
         cdef double          rmsd
-        cdef int             kill_switch = 0
         cdef Hit             hit
 
         while jess.jess.JessQuery_next(self._jq, self.ignore_chain) and self._candidates < self.max_candidates:
