@@ -289,25 +289,29 @@ cdef class Atom:
         copy_token(self._atom.name, _name.ljust(4, b'\0'), 4)
 
     def __repr__(self):
-        cdef str ty = type(self).__name__
-        return (
-            f"{ty}("
-            f"serial={self.serial!r}, "
-            f"name={self.name!r}, "
-            f"altloc={self.altloc!r}, "
-            f"residue_name={self.residue_name!r}, "
-            f"chain_id={self.chain_id!r}, "
-            f"residue_number={self.residue_number!r}, "
-            f"x={self.x!r}, "
-            f"y={self.y!r}, "
-            f"z={self.z!r}, "
-            f"segment={self.segment!r}, "
-            f"insertion_code={self.insertion_code!r}, "
-            f"occupancy={self.occupancy!r}, "
-            f"temperature_factor={self.temperature_factor!r}, "
-            f"charge={self.charge!r}, "
-            f"element={self.element!r})"
-        )
+        cdef str  ty   = type(self).__name__
+        cdef list args = [
+            f"serial={self.serial!r}",
+            f"name={self.name!r}",
+            f"altloc={self.altloc!r}",
+            f"residue_name={self.residue_name!r}",
+            f"chain_id={self.chain_id!r}",
+            f"residue_number={self.residue_number!r}",
+            f"x={self.x!r}",
+            f"y={self.y!r}",
+            f"z={self.z!r}",
+            f"segment={self.segment!r}",
+            f"insertion_code={self.insertion_code!r}",
+        ]
+        if self.occupancy:
+            args.append(f"occupancy={self.occupancy!r}")
+        if self.temperature_factor:
+            args.append(f"temperature_factor={self.temperature_factor!r}")
+        if self.element:
+            args.append(f"element={self.element!r}")
+        if self.charge:
+            args.append(f"charge={self.charge!r}")
+        return f"{ty}({', '.join(args)})"
 
     def __sizeof__(self):
         cdef size_t size = sizeof(self)
@@ -552,19 +556,21 @@ cdef class TemplateAtom:
             copy_token(self._atom.resName[m], _name.ljust(3, b'\0'), 3)
 
     def __repr__(self):
-        cdef str ty = type(self).__name__
-        return (
-            f"{ty}("
-            f"chain_id={self.chain_id!r}, "
-            f"residue_number={self.residue_number!r}, "
-            f"x={self.x!r}, "
-            f"y={self.y!r}, "
-            f"z={self.z!r}, "
-            f"residue_names={self.residue_names!r}, "
-            f"atom_names={self.atom_names!r}, "
-            f"distance_weight={self.distance_weight!r}, "
-            f"match_mode={self.match_mode!r})"
-        )
+        cdef str  ty   = type(self).__name__
+        cdef list args = [
+            f"chain_id={self.chain_id!r}",
+            f"residue_number={self.residue_number!r}",
+            f"x={self.x!r}",
+            f"y={self.y!r}",
+            f"z={self.z!r}",
+            f"residue_names={self.residue_names!r}",
+            f"atom_names={self.atom_names!r}",
+        ]
+        if self.distance_weight:
+            args.append(f"distance_weight={self.distance_weight!r}")
+        if self.match_mode:
+            args.append(f"match_mode={self.match_mode!r}") 
+        return f"{ty}({', '.join(args)})"
 
     def __sizeof__(self):
         assert self._atom is not NULL
