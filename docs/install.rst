@@ -68,19 +68,19 @@ Steps to install on ArchLinux depend on your `AUR helper <https://wiki.archlinux
 ..     $ pacman -S python-pyjess
 
 
-.. Piwheels
-.. ^^^^^^^^
+Piwheels
+^^^^^^^^
 
-.. ``pyjess`` works on Raspberry Pi computers, and pre-built wheels are compiled 
-.. for `armv7l` platforms on piwheels. Run the following command to install these 
-.. instead of compiling from source:
+``pyjess`` works on Raspberry Pi computers, and pre-built wheels are compiled 
+for `armv7l` platforms on piwheels. Run the following command to install these 
+instead of compiling from source:
 
-.. .. code:: console
+.. code:: console
 
-..    $ pip3 install pyjess --extra-index-url https://www.piwheels.org/simple
+   $ pip3 install pyjess --extra-index-url https://www.piwheels.org/simple
 
-.. Check the `piwheels documentation <https://www.piwheels.org/faq.html>`_ for 
-.. more information.
+Check the `piwheels documentation <https://www.piwheels.org/faq.html>`_ for 
+more information.
 
 
 GitHub + ``pip``
