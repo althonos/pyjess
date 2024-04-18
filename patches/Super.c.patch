@@ -1,0 +1,41 @@
+diff --git a/src/Super.c b/src/Super.c
+index 777b693..22ad326 100644
+--- a/src/Super.c
++++ b/src/Super.c
+@@ -29,8 +29,8 @@ struct _Node
+ // Methods of local type Node
+ // ==================================================================
+ 
+-static Node *Node_create(const double*, const double*);
+-static void Node_free(Node*);
++static Node *Node_create(const double* x, const double* y);
++static void Node_free(Node* n);
+ 
+ // ==================================================================
+ // type Superposition
+@@ -61,7 +61,7 @@ struct _Superposition
+ // compute(S)		Compute the superposition
+ // ==================================================================
+ 
+-static void Superposition_compute(Superposition*);
++static void Superposition_compute(Superposition* S);
+ 
+ // ==================================================================
+ // Local procedures
+@@ -73,11 +73,11 @@ static void Superposition_compute(Superposition*);
+ // superpose(a,b,n,M)	Computes superposition of arrays
+ // ==================================================================
+ 
+-static double min(double,double);
+-static double max(double,double);
+-static void rotate(double*,double*,int,int);
+-static int jacobi(double*,double*,double*);
+-static double superpose(double*,double*,int,double*);
++static double min(double a, double b);
++static double max(double a, double b);
++static void rotate(double* W, double* P, int ip, int iq);
++static int jacobi(double* M,double* P,double* V);
++static double superpose(double* a, double* b, int n, double* M);
+ 
+ // ==================================================================
+ // Methods of type Superposition
