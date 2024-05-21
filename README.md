@@ -12,6 +12,7 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/pyjess.svg?style=flat-square&maxAge=600&logo=python)](https://pypi.org/project/pyjess/#files)
 [![Python Implementations](https://img.shields.io/pypi/implementation/pyjess.svg?style=flat-square&maxAge=600&label=impl)](https://pypi.org/project/pyjess/#files)
 [![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/pyjess/)
+[![Mirror](https://img.shields.io/badge/mirror-LUMC-003EAA.svg?maxAge=2678400&style=flat-square)](https://git.lumc.nl/mflarralde/pyjess/)
 [![Issues](https://img.shields.io/github/issues/althonos/pyjess.svg?style=flat-square&maxAge=600)](https://github.com/althonos/pyjess/issues)
 [![Docs](https://img.shields.io/readthedocs/pyjess/latest?style=flat-square&maxAge=600)](https://pyjess.readthedocs.io)
 [![Changelog](https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/pyjess/blob/main/CHANGELOG.md)
