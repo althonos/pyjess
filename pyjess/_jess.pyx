@@ -688,6 +688,8 @@ cdef class Template:
             for line in f:
                 if line.startswith("ATOM"):
                     atoms.append(TemplateAtom.loads(line))
+                elif id is None and line.startswith("REMARK PDB_ID"):
+                    id = line.split(" ", maxsplit=2)[2].strip()
         return cls(atoms, id=id)
 
     def __cinit__(self):

@@ -68,3 +68,9 @@ class TestTemplate(unittest.TestCase):
         template = Template()
         self.assertEqual(len(template), 0)
         self.assertFalse(bool(template))
+
+    def test_loads_id(self):
+        template = Template.loads(TEMPLATE)
+        self.assertIs(template.id, None)
+        template = Template.loads("REMARK PDB_ID 2bw4\n" + TEMPLATE)
+        self.assertEqual(template.id, "2bw4")
