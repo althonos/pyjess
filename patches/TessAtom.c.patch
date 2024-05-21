@@ -3,7 +3,7 @@ index e1cce1a..2a8ed28 100644
 --- a/src/TessAtom.c
 +++ b/src/TessAtom.c
 @@ -7,11 +7,18 @@
- 
+
  #include "TessAtom.h"
  #include "Atom.h"
 +
@@ -12,8 +12,8 @@ index e1cce1a..2a8ed28 100644
  #include <stdio.h>
  #include <string.h>
  #include <ctype.h>
- 
-+#ifdef _MSC_VER 
+
++#ifdef _MSC_VER
 +#define strncasecmp _strnicmp
 +#define strcasecmp _stricmp
 +#endif
@@ -24,7 +24,7 @@ index e1cce1a..2a8ed28 100644
 @@ -26,21 +33,6 @@
  // distWeight[k]			kth atom distance threshold modifier (weight)
  // ==================================================================
- 
+
 -struct _TessAtom
 -{
 -	int code;
@@ -33,7 +33,7 @@ index e1cce1a..2a8ed28 100644
 -	int resNameCount;
 -	char chainID1; //Riziotis edit
 -	char chainID2;
--	//char chainID; 
+-	//char chainID;
 -	char **name;
 -	char **resName;
 -	double pos[3];
@@ -43,19 +43,39 @@ index e1cce1a..2a8ed28 100644
  // ==================================================================
  // Methods of type TessAtom (ARGGH!!!)
  // ==================================================================
-@@ -91,7 +83,7 @@ TessAtom *TessAtom_create(const char *s)
+@@ -91,7 +83,7 @@
  	int rq;
  	const char *q;
  	const char *tmp;
 -	void *p;
 +	char *p;
- 
- 
+
+
  	// 0. Parse the record as a standard PDB atom. We must
-@@ -258,6 +250,66 @@ TessAtom *TessAtom_create(const char *s)
+@@ -157,8 +157,8 @@
+        // Set up all the pointers to the
+        // residue name and atom name fields
+
+-       p=&A[1];
+-       A->name=p;
++       p=(void*)&A[1];
++       A->name=(char**)p;
+        p+=sizeof(char*)*ac;
+        for(m=0; m<ac; m++)
+        {
+@@ -166,7 +166,7 @@
+                p+=5;
+        }
+
+-       A->resName=p;
++       A->resName=(char**)p;
+        p+=sizeof(char*)*rc;
+        for(m=0; m<rc; m++)
+        {
+@@ -258,6 +250,66 @@
  	return A;
  }
- 
+
 +TessAtom *TessAtom_copy(const TessAtom *A)
 +{
 +	int ac;
@@ -79,8 +99,8 @@ index e1cce1a..2a8ed28 100644
 +	memcpy(B, A, rq);
 +
 +	// set pointers to string data
-+	p=&B[1];
-+	B->name=p;
++	p=(char*) &B[1];
++	B->name=(char**)p;
 +	p+=sizeof(char*)*ac;
 +	for(m=0; m<ac; m++)
 +	{
@@ -88,7 +108,7 @@ index e1cce1a..2a8ed28 100644
 +		p+=5;
 +	}
 +
-+	B->resName=p;
++	B->resName=(char**)p;
 +	p+=sizeof(char*)*rc;
 +	for(m=0; m<rc; m++)
 +	{
