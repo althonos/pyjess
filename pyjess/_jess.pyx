@@ -1,5 +1,5 @@
 # coding: utf-8
-# cython: language_level=3, linetrace=True
+# cython: language_level=3, linetrace=True, binding=True
 """Bindings to Jess, a 3D template matching software.
 
 References:
@@ -68,25 +68,66 @@ cdef class Molecule:
     cdef _Molecule* _mol
 
     @classmethod
-    def loads(cls, text):
-        return cls.load(io.StringIO(text))
+    def loads(cls, text, str id = None, bint ignore_endmdl = False):
+        """Load a molecule from a PDB string.
+
+        Arguments:
+            file (`str`, `os.PathLike`, or file-like object): Either the path
+                to a file, or a file-like object opened in **text mode**
+                containing a PDB molecule.
+            id (`str`, optional): The identifier of the molecule. If `None`
+                given, the parser will attempt to extract it from the
+                ``HEADER`` line.
+            ignore_endmdl (`bool`): Pass `True` to make the parser read all
+                the atoms from the PDB file. By default, the parser only
+                reads the atoms of the first model, and stops at the first
+                ``ENDMDL`` line.
+
+        Returns:
+            `~pyjess.Molecule`: The molecule parsed from the PDB file.
+
+        See Also:
+            `Molecule.load` to load a PDB molecule from a file-like
+            object or from a path.
+
+        """
+        return cls.load(io.StringIO(text), id=id, ignore_endmdl=ignore_endmdl)
 
     @classmethod
-    def load(cls, file):
+    def load(cls, file, str id = None, bint ignore_endmdl = False):
+        """Load a molecule from a PDB file.
+
+        Arguments:
+            file (`str`, `os.PathLike`, or file-like object): Either the path
+                to a file, or a file-like object opened in **text mode**
+                containing a PDB molecule.
+            id (`str`, optional): The identifier of the molecule. If `None`
+                given, the parser will attempt to extract it from the
+                ``HEADER`` line.
+            ignore_endmdl (`bool`): Pass `True` to make the parser read all
+                the atoms from the PDB file. By default, the parser only
+                reads the atoms of the first model, and stops at the first
+                ``ENDMDL`` line.
+
+        Returns:
+            `~pyjess.Molecule`: The molecule parsed from the PDB file.
+
+        """
         try:
             handle = open(file)
         except TypeError:
             handle = nullcontext(file)
         with handle as f:
             atoms = []
-            id = None
             for line in f:
                 if line.startswith("HEADER"):
-                    id = line[62:66].strip()
-                    if not id:
-                        id = None
+                    if id is None:
+                        id = line[62:66].strip() or None
                 elif line.startswith(("ATOM", "HETATM")):
                     atoms.append(Atom.loads(line))
+                elif line.startswith("ENDMDL"):
+                    if not ignore_endmdl:
+                        break
         return cls(atoms, id=id)
 
     def __cinit__(self):
@@ -569,7 +610,7 @@ cdef class TemplateAtom:
         if self.distance_weight:
             args.append(f"distance_weight={self.distance_weight!r}")
         if self.match_mode:
-            args.append(f"match_mode={self.match_mode!r}") 
+            args.append(f"match_mode={self.match_mode!r}")
         return f"{ty}({', '.join(args)})"
 
     def __sizeof__(self):
