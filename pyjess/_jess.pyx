@@ -20,7 +20,7 @@ References:
 cimport cython
 from cpython.unicode cimport PyUnicode_FromStringAndSize
 
-from libc.math cimport exp
+from libc.math cimport exp, INFINITY
 from libc.stdio cimport FILE, fclose, fdopen, printf
 from libc.stdlib cimport calloc, free, malloc
 from libc.string cimport memcpy, memset, strncpy, strdup
@@ -894,20 +894,25 @@ cdef class Query:
             to report.
         ignore_chain (`bool`): Whether to check or ignore the chain of
             the atoms to match.
+        best_match (`bool`): Whether the query will return only the
+            best match to each template.
 
     """
     cdef _JessQuery* _jq
+    cdef bint        _partial
     cdef int         _candidates
 
     cdef readonly Jess     jess
     cdef readonly Molecule molecule
     cdef readonly bint     ignore_chain
+    cdef readonly bint     best_match
     cdef readonly double   rmsd_threshold
     cdef readonly int      max_candidates
 
     def __cinit__(self):
         self._jq = NULL
         self._candidates = 0
+        self._partial = False
 
     def __dealloc__(self):
         jess.jess.JessQuery_free(self._jq)
@@ -915,48 +920,87 @@ cdef class Query:
     def __iter__(self):
         return self
 
+    cdef bint _advance(self):
+        if self._partial:
+            self._partial = False
+            return True
+        return jess.jess.JessQuery_next(self._jq, self.ignore_chain)
+
+    cdef bint _rewind(self):
+        self._partial = True
+
+    cdef Hit _create_hit(self, _Template* tpl, _Superposition* sup):
+        assert self._jq is not NULL
+
+        cdef _Atom** atoms = jess.jess.JessQuery_atoms(self._jq)
+        cdef int     count = tpl.count(tpl)
+        cdef Hit     hit   = Hit.__new__(Hit)
+        
+        # create a new hit
+        hit.rmsd = jess.super.Superposition_rmsd(sup)
+        # record superposition object
+        # (TODO: expose as a Superposition object?)
+        hit._sup = sup
+        # copy atoms (the pointer will be invalidated on the next
+        # call of JessQuery_next)
+        hit._atoms = <_Atom*> calloc(count, sizeof(_Atom))
+        for i in range(count):
+            memcpy(&hit._atoms[i], atoms[i], sizeof(_Atom))
+        # record molecule from which we got the hit (the query molecule)
+        hit.molecule = self.molecule
+        # create a new object to wrap the template that got a hit
+        # (no need to copy, we keep a reference to the template
+        # list from the original Jess object).
+        hit.template = Template.__new__(Template)
+        hit.template._tpl = tpl
+        hit.template.owner = self.jess
+        hit.template.owned = True
+        return hit
+
     def __next__(self):
         assert self._jq is not NULL
 
-        cdef _Template*      tpl
-        cdef _Superposition* sup
-        cdef _Atom**         atoms
         cdef double          rmsd
-        cdef Hit             hit
+        cdef _Template*      tpl  = NULL
+        cdef _Superposition* sup  = NULL
+        cdef Hit             hit  = None
 
-        while jess.jess.JessQuery_next(self._jq, self.ignore_chain) and self._candidates < self.max_candidates:
+        while self._advance() and self._candidates < self.max_candidates:
+            # load current iteration template, and check that the hit 
+            # was obtained with the current template and not with the 
+            # previous one
             tpl = jess.jess.JessQuery_template(self._jq)
-            count = tpl.count(tpl)
-            sup = jess.jess.JessQuery_superposition(self._jq)
-            atoms = jess.jess.JessQuery_atoms(self._jq)
-            rmsd = jess.super.Superposition_rmsd(sup)
-            # check that the candidate passes threshold
-            if rmsd <= self.rmsd_threshold:
-                # create a new hit
-                hit = Hit.__new__(Hit)
-                hit.rmsd = rmsd
-                # record superposition object
-                # (TODO: expose as a Superposition object?)
-                hit._sup = sup
-                # copy atoms (the pointer will be invalidated on the next
-                # call of JessQuery_next)
-                hit._atoms = <_Atom*> calloc(count, sizeof(_Atom))
-                for i in range(count):
-                    memcpy(&hit._atoms[i], atoms[i], sizeof(_Atom))
-                # record molecule from which we got the hit (the query molecule)
-                hit.molecule = self.molecule
-                # create a new object to wrap the template that got a hit
-                # (no need to copy, we keep a reference to the template
-                # list from the original Jess object).
-                hit.template = Template.__new__(Template)
-                hit.template._tpl = tpl
-                hit.template.owner = self.jess
-                hit.template.owned = True
+            if hit is not None and hit.template._tpl != tpl:
+                self._rewind()
                 return hit
-            # free superposition items that are not used for hits
-            jess.super.Superposition_free(sup)
-            self._candidates += 1
 
+            # load superposition and compute RMSD for the current iteration
+            sup = jess.jess.JessQuery_superposition(self._jq)
+            rmsd = jess.super.Superposition_rmsd(sup)
+            keep_sup = False
+
+            # check that the candidate passes threshold, and return it
+            # if not in best match, otherwise record it until the next
+            # template is reached (or the iterator finished)
+            if rmsd <= self.rmsd_threshold:
+                if hit is None:
+                    hit = self._create_hit(tpl, sup)
+                elif rmsd < hit.rmsd:
+                    jess.super.Superposition_free(hit._sup)
+                    hit._sup = sup
+                    hit.rmsd = rmsd
+                    
+            # free superposition items that are not used in a hit, and
+            # return hits immediately if we are not in best match mode
+            self._candidates += 1
+            if hit is None or hit._sup != sup:
+                jess.super.Superposition_free(sup)
+            if hit is not None and not self.best_match:
+                return hit
+
+        # return last best hit if any
+        if hit is not None:
+            return hit
         raise StopIteration
 
 
@@ -1085,6 +1129,7 @@ cdef class Jess:
         *,
         int max_candidates = 1000,
         bint ignore_chain = False,
+        bint best_match = False,
     ):
         """Scan for templates matching the given molecule.
 
@@ -1099,6 +1144,10 @@ cdef class Jess:
                 dynamic distance after adding the global distance cutoff
                 and the individual atom distance cutoff defined for each
                 atom of the template.
+            ignore_chain (`bool`): Whether to check or ignore the chain of
+                the atoms to match.
+            best_match (`bool`): Pass `True` to return only the best match
+                to each template.
 
         Returns:
             `~pyjess.Query`: An iterator over the query hits.
@@ -1108,6 +1157,7 @@ cdef class Jess:
         query.ignore_chain = ignore_chain
         query.max_candidates = max_candidates
         query.rmsd_threshold = rmsd_threshold
+        query.best_match = best_match
         query.molecule = molecule
         query.jess = self
         query._jq = jess.jess.Jess_query(

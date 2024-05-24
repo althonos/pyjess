@@ -60,6 +60,21 @@ class TestJess(unittest.TestCase):
         self.assertAlmostEqual(hits[0].log_evalue, -2.10, places=1)
 
     @unittest.skipUnless(files, "importlib.resources not available")
+    def test_query_best_match(self):
+        with files(data).joinpath("template_01.qry").open() as f:
+            template = Template.load(f)
+        jess = Jess([template, template, template])
+        with files(data).joinpath("pdb1lnb.pdb").open() as f:
+            molecule = Molecule.load(f)
+
+        hits = list(jess.query(molecule, 2, 5, 5, best_match=True))
+        self.assertEqual(len(hits), 3)
+        for hit in hits:
+            self.assertAlmostEqual(hit.rmsd, 0.555, places=3)
+            self.assertAlmostEqual(hit.determinant, 1.0, places=3)
+            self.assertAlmostEqual(hit.log_evalue, -2.04, places=1)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
     def test_mcsa_query(self):
         with files(data).joinpath("1.3.3.tpl").open() as f:
             template = Template.load(f)
