@@ -126,7 +126,7 @@ jobs:
 
   # wheel-macos-aarch64:
   #   name: Build MacOS wheels (Aarch64)
-  #   runs-on: macOS-11
+  #   runs-on: macOS-12
   #   strategy:
   #     matrix:
   #       python-tag:
