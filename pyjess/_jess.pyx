@@ -920,13 +920,13 @@ cdef class Query:
     def __iter__(self):
         return self
 
-    cdef bint _advance(self):
+    cdef bint _advance(self) noexcept nogil:
         if self._partial:
             self._partial = False
             return True
         return jess.jess.JessQuery_next(self._jq, self.ignore_chain)
 
-    cdef bint _rewind(self):
+    cdef bint _rewind(self) noexcept nogil:
         self._partial = True
 
     cdef Hit _create_hit(self, _Template* tpl, _Superposition* sup):
@@ -965,43 +965,45 @@ cdef class Query:
         cdef _Superposition* sup  = NULL
         cdef Hit             hit  = None
 
-        while self._advance() and self._candidates < self.max_candidates:
-            # load current iteration template, and check that the hit 
-            # was obtained with the current template and not with the 
-            # previous one
-            tpl = jess.jess.JessQuery_template(self._jq)
-            if hit is not None and hit.template._tpl != tpl:
-                self._rewind()
-                return hit
+        with nogil:
+            while self._advance() and self._candidates < self.max_candidates:
+                # load current iteration template, and check that the hit 
+                # was obtained with the current template and not with the 
+                # previous one
+                tpl = jess.jess.JessQuery_template(self._jq)
+                if hit is not None and hit.template._tpl != tpl:
+                    self._rewind()
+                    break
 
-            # load superposition and compute RMSD for the current iteration
-            sup = jess.jess.JessQuery_superposition(self._jq)
-            rmsd = jess.super.Superposition_rmsd(sup)
-            keep_sup = False
+                # load superposition and compute RMSD for the current iteration
+                sup = jess.jess.JessQuery_superposition(self._jq)
+                rmsd = jess.super.Superposition_rmsd(sup)
+                keep_sup = False
 
-            # check that the candidate passes threshold, and return it
-            # if not in best match, otherwise record it until the next
-            # template is reached (or the iterator finished)
-            if rmsd <= self.rmsd_threshold:
-                if hit is None:
-                    hit = self._create_hit(tpl, sup)
-                elif rmsd < hit.rmsd:
-                    jess.super.Superposition_free(hit._sup)
-                    hit._sup = sup
-                    hit.rmsd = rmsd
-                    
-            # free superposition items that are not used in a hit, and
-            # return hits immediately if we are not in best match mode
-            self._candidates += 1
-            if hit is None or hit._sup != sup:
-                jess.super.Superposition_free(sup)
-            if hit is not None and not self.best_match:
-                return hit
+                # check that the candidate passes threshold, and return it
+                # if not in best match, otherwise record it until the next
+                # template is reached (or the iterator finished)
+                if rmsd <= self.rmsd_threshold:
+                    if hit is None:
+                        with gil:
+                            hit = self._create_hit(tpl, sup)
+                    elif rmsd < hit.rmsd:
+                        jess.super.Superposition_free(hit._sup)
+                        hit._sup = sup
+                        hit.rmsd = rmsd
+                        
+                # free superposition items that are not used in a hit, and
+                # return hits immediately if we are not in best match mode
+                self._candidates += 1
+                if hit is None or hit._sup != sup:
+                    jess.super.Superposition_free(sup)
+                if hit is not None and not self.best_match:
+                    break
 
-        # return last best hit if any
-        if hit is not None:
-            return hit
-        raise StopIteration
+        if hit is None:
+            raise StopIteration
+
+        return hit
 
 
 cdef class Hit:
