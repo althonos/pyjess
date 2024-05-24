@@ -20,9 +20,9 @@ References:
 cimport cython
 from cpython.unicode cimport PyUnicode_FromStringAndSize
 
-from libc.math cimport exp, INFINITY
+from libc.math cimport exp, INFINITY, NAN
 from libc.stdio cimport FILE, fclose, fdopen, printf
-from libc.stdlib cimport calloc, free, malloc
+from libc.stdlib cimport calloc, realloc, free, malloc
 from libc.string cimport memcpy, memset, strncpy, strdup
 
 cimport jess.atom
@@ -929,33 +929,16 @@ cdef class Query:
     cdef bint _rewind(self) noexcept nogil:
         self._partial = True
 
-    cdef Hit _create_hit(self, _Template* tpl, _Superposition* sup):
-        assert self._jq is not NULL
-
+    cdef int _copy_atoms(self, _Template* tpl, Hit hit) except -1 nogil:
         cdef _Atom** atoms = jess.jess.JessQuery_atoms(self._jq)
         cdef int     count = tpl.count(tpl)
-        cdef Hit     hit   = Hit.__new__(Hit)
-        
-        # create a new hit
-        hit.rmsd = jess.super.Superposition_rmsd(sup)
-        # record superposition object
-        # (TODO: expose as a Superposition object?)
-        hit._sup = sup
-        # copy atoms (the pointer will be invalidated on the next
-        # call of JessQuery_next)
-        hit._atoms = <_Atom*> calloc(count, sizeof(_Atom))
+
+        hit._atoms = <_Atom*> realloc(hit._atoms, count * sizeof(_Atom))
+        if hit._atoms is NULL:
+            raise MemoryError("Failed to allocate hit atoms")
         for i in range(count):
             memcpy(&hit._atoms[i], atoms[i], sizeof(_Atom))
-        # record molecule from which we got the hit (the query molecule)
-        hit.molecule = self.molecule
-        # create a new object to wrap the template that got a hit
-        # (no need to copy, we keep a reference to the template
-        # list from the original Jess object).
-        hit.template = Template.__new__(Template)
-        hit.template._tpl = tpl
-        hit.template.owner = self.jess
-        hit.template.owned = True
-        return hit
+        return count
 
     def __next__(self):
         assert self._jq is not NULL
@@ -963,15 +946,26 @@ cdef class Query:
         cdef double          rmsd
         cdef _Template*      tpl  = NULL
         cdef _Superposition* sup  = NULL
-        cdef Hit             hit  = None
+        cdef Hit             hit  = Hit.__new__(Hit)
 
+        # prepare the hit to be returned
+        hit._sup = NULL
+        hit._atoms = NULL
+        hit.rmsd = INFINITY
+        hit.molecule = self.molecule
+        hit.template = Template.__new__(Template)
+        hit.template._tpl = NULL
+        hit.template.owner = self.jess
+        hit.template.owned = True
+
+        # search the next hit without the GIL to allow parallel queries.
         with nogil:
             while self._advance() and self._candidates < self.max_candidates:
-                # load current iteration template, and check that the hit 
-                # was obtained with the current template and not with the 
+                # load current iteration template, and check that the hit
+                # was obtained with the current template and not with the
                 # previous one
                 tpl = jess.jess.JessQuery_template(self._jq)
-                if hit is not None and hit.template._tpl != tpl:
+                if hit._sup != NULL and hit.template._tpl != tpl:
                     self._rewind()
                     break
 
@@ -980,27 +974,31 @@ cdef class Query:
                 rmsd = jess.super.Superposition_rmsd(sup)
                 keep_sup = False
 
+                # NB(@althonos): we don't need to compute the E-value to get the
+                #                best match by molecule/template pair since the
+                #                logE-value for a fixed pair varies by the RMSD
+                #                term only (see `TessTemplate_logE`)
+
                 # check that the candidate passes threshold, and return it
                 # if not in best match, otherwise record it until the next
                 # template is reached (or the iterator finished)
-                if rmsd <= self.rmsd_threshold:
-                    if hit is None:
-                        with gil:
-                            hit = self._create_hit(tpl, sup)
-                    elif rmsd < hit.rmsd:
+                if rmsd <= self.rmsd_threshold and rmsd < hit.rmsd:
+                    if hit._sup != NULL:
                         jess.super.Superposition_free(hit._sup)
-                        hit._sup = sup
-                        hit.rmsd = rmsd
-                        
+                    self._copy_atoms(tpl, hit)
+                    hit._sup = sup
+                    hit.rmsd = rmsd
+                    hit.template._tpl = tpl
+
                 # free superposition items that are not used in a hit, and
                 # return hits immediately if we are not in best match mode
                 self._candidates += 1
-                if hit is None or hit._sup != sup:
+                if hit._sup != sup:
                     jess.super.Superposition_free(sup)
-                if hit is not None and not self.best_match:
+                if hit._sup != NULL and not self.best_match:
                     break
 
-        if hit is None:
+        if hit._sup == NULL:
             raise StopIteration
 
         return hit
