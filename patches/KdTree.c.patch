@@ -1,0 +1,62 @@
+diff --git a/src/KdTree.c b/src/KdTree.c
+index 5d8d783..4b8661e 100644
+--- a/src/KdTree.c
++++ b/src/KdTree.c
+@@ -10,6 +10,10 @@
+ #include <string.h>
+ #include <stdio.h>
+ 
++#ifdef _WIN32
++#define qsort_r qsort_s
++#endif
++
+ // ==================================================================
+ // Forward declarations of local types
+ // ==================================================================
+@@ -87,9 +91,12 @@ struct _KdTreeQuery
+ // data,index			Static globals (see KdTreeNode_create)
+ // ==================================================================
+ 
+-static int KdTree_compare(const void*,const void*);
+-static double **KdTree_data;
+-static int KdTree_index;
++static int KdTree_compare(const void*, const void*, void*);
++struct _KdTreeCompareData 
++{
++	double** data;
++	int index;
++};
+ 
+ // ==================================================================
+ // Local functions
+@@ -248,12 +255,13 @@ void KdTreeQuery_free(KdTreeQuery *Q)
+ // Private methods of type KdTree
+ // ==================================================================
+ 
+-static int KdTree_compare(const void *pa, const void *pb)
++static int KdTree_compare(const void *pa, const void *pb, void* data)
+ {
++	struct _KdTreeCompareData _data  = *((struct _KdTreeCompareData*) data);
+ 	const int a = *((const int*)pa);
+ 	const int b = *((const int*)pb);
+-	double c = KdTree_data[a][KdTree_index];
+-	double d = KdTree_data[b][KdTree_index];
++	double c = _data.data[a][_data.index];
++	double d = _data.data[b][_data.index];
+ 
+ 	return c<d ? -1 : c>d ? 1 : 0;
+ }
+@@ -297,9 +305,10 @@ static KdTreeNode *KdTreeNode_create(int *idx,int n,int type,double **u,int dim)
+ 	// is used because it's not possible to pass extra
+ 	// parameters to qsort.
+ 
+-	KdTree_data=u;
+-	KdTree_index=type;
+-	qsort(idx,n,sizeof(int),KdTree_compare);
++	// KdTree_data=u;
++	// KdTree_index=type;
++	struct _KdTreeCompareData _data = { u, type };
++	qsort_r(idx,n,sizeof(int),KdTree_compare, &_data);
+ 
+ 	// 3. The recursive case. Find [n/2] and split the array into
+ 	// two pieces. Create a node whose splitting value is the median.

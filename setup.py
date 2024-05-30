@@ -221,6 +221,10 @@ class build_clib(_build_clib):
         if self.compiler.compiler_type == "msvc":
             library.define_macros.append(("WIN32", 1))
 
+        # add Linux flags
+        if self.compiler.compiler_type == "unix":
+            library.define_macros.append(("_GNU_SOURCE", 1))
+
         # copy and patch headers to build directory
         for header in library.depends:
             output = os.path.join(self.build_clib, os.path.basename(header))
