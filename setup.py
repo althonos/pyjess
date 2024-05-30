@@ -222,7 +222,7 @@ class build_clib(_build_clib):
             library.define_macros.append(("WIN32", 1))
 
         # add Linux flags
-        if self.compiler.compiler_type == "unix":
+        if platform.system() == "Linux":
             library.define_macros.append(("_GNU_SOURCE", 1))
 
         # copy and patch headers to build directory
