@@ -104,6 +104,9 @@ with multiprocessing.ThreadPool() as pool:
     hits = pool.map(jess.query, molecules)
 ```
 
+*⚠️ Prior to PyJess `v0.2.1`, the Jess code was running some thread-unsafe operations which have now been patched. 
+If running Jess in parallel, make sure to use `v0.2.1` or later to use the code patched with re-entrant functions*.
+
 <!-- ## ⏱️ Benchmarks -->
 
 
