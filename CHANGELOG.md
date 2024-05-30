@@ -6,7 +6,15 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.2.1...HEAD
+
+
+## [v0.2.1] - 2024-05-30
+[v0.2.1]: https://github.com/althonos/pyjess/compare/v0.2.0...v0.2.1
+
+### Fixed
+- Type hints for `Molecule.load` and `Template.load` not marked as accepting paths.
+- Thread-unsafe use of `qsort` in Jess code, replaced with `qsort_r` or `qsort_s` to allow multithreading.
 
 
 ## [v0.2.0] - 2024-05-24
