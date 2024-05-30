@@ -40,7 +40,7 @@ index 5d8d783..4e09630 100644
  
 -static int KdTree_compare(const void *pa, const void *pb)
 +#ifdef _GNU_SOURCE
-+static int KdTree_compare(const void* pa, const void* pb, void* data);
++static int KdTree_compare(const void* pa, const void* pb, void* data)
 +#else
 +static int KdTree_compare(void* data, const void *pa, const void *pb)
 +#endif
