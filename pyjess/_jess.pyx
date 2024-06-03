@@ -64,8 +64,13 @@ def nullcontext(return_value=None):
 
 cdef class Molecule:
     """A molecule structure, as a sequence of `Atom` objects.
+
+    .. versionchanged:: 0.2.2
+       Support identifiers of arbitrary length.
+
     """
     cdef _Molecule* _mol
+    cdef str        _id
 
     @classmethod
     def loads(cls, text, str id = None, bint ignore_endmdl = False):
@@ -141,9 +146,6 @@ cdef class Molecule:
         cdef int i
         cdef int count = len(atoms)
 
-        if id is not None and len(id) != 4:
-            raise ValueError(f"Invalid PDB ID: {id!r}")
-
         self._mol = <_Molecule*> malloc(sizeof(_Molecule) + count * sizeof(_Atom*))
         if self._mol is NULL:
             raise MemoryError("Failed to allocate molecule")
@@ -151,10 +153,8 @@ cdef class Molecule:
         self._mol.count = count
         for i in range(count):
             self._mol.atom[i] = NULL
-        if id is None:
-            memset(self._mol.id, 0, 5)
-        else:
-            strncpy(self._mol.id, id.encode('ascii'), 5)
+        memset(self._mol.id, b' ', 5)
+        self._id = id
 
         for i, atom in enumerate(atoms):
             self._mol.atom[i] = <_Atom*> malloc(sizeof(_Atom))
@@ -194,14 +194,7 @@ cdef class Molecule:
 
     @property
     def id(self):
-        assert self._mol is not NULL
-
-        cdef const char* pdb_id
-
-        pdb_id = jess.molecule.Molecule_id(self._mol)
-        if pdb_id is NULL:
-            return None
-        return pdb_id.decode()
+        return self._id
 
     cpdef Molecule conserved(self, double cutoff = 0.0):
         assert self._mol is not NULL

@@ -54,10 +54,6 @@ class TestMolecule(unittest.TestCase):
         self.assertRaises(FileNotFoundError, Molecule.load, "/some/nonsensical/file")
         self.assertRaises(IsADirectoryError, Molecule.load, os.path.dirname(__file__))
 
-    def test_init_invalid_id(self):
-        self.assertRaises(ValueError, Molecule, atoms=[], id="too long")
-        self.assertRaises(ValueError, Molecule, atoms=[], id="x")
-
     def test_init(self):
         atoms = [
             self._create_atom(serial=1, name='N'),
@@ -71,3 +67,6 @@ class TestMolecule(unittest.TestCase):
         self.assertEqual(molecule[2].name, 'C')
         self.assertEqual(molecule[3].name, 'O')
 
+    def test_init_long_id(self):
+        mol = Molecule.loads(MOLECULE, id="long identifier")
+        self.assertEqual(mol.id, "long identifier")
