@@ -74,3 +74,8 @@ class TestTemplate(unittest.TestCase):
         self.assertIs(template.id, None)
         template = Template.loads("REMARK PDB_ID 2bw4\n" + TEMPLATE)
         self.assertEqual(template.id, "2bw4")
+
+    def test_getitem_slicing(self):
+        tpl1 = Template.loads(TEMPLATE, id="tpl1")
+        tpl2 = tpl1[1:4]
+        self.assertEqual(len(tpl2), 3)

@@ -70,3 +70,11 @@ class TestMolecule(unittest.TestCase):
     def test_init_long_id(self):
         mol = Molecule.loads(MOLECULE, id="long identifier")
         self.assertEqual(mol.id, "long identifier")
+
+    def test_getitem_slicing(self):
+        mol = Molecule.loads(MOLECULE)
+        mol2 = mol[1:3]
+        self.assertEqual(mol2.id, mol.id)
+        self.assertEqual(len(mol2), 2)
+        self.assertEqual(mol2[0].name, "CA")
+        self.assertEqual(mol2[1].name, "C")

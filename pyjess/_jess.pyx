@@ -166,23 +166,27 @@ cdef class Molecule:
         assert self._mol is not NULL
         return self._mol.count
 
-    def __getitem__(self, ssize_t index):
+    def __getitem__(self, object index):
         assert self._mol is not NULL
 
         cdef Atom    atom
+        cdef ssize_t index_
         cdef ssize_t length = self._mol.count
-        cdef ssize_t index_ = index
 
-        if index_ < 0:
-            index_ += length
-        if index_ < 0 or index_ >= length:
-            raise IndexError(index)
-
-        atom = Atom.__new__(Atom)
-        atom.owner = self
-        atom.owned = True
-        atom._atom = <_Atom*> jess.molecule.Molecule_atom(self._mol, index_)
-        return atom
+        if isinstance(index, slice):
+            indices = range(*index.indices(length))
+            return type(self)(atoms=[self[i] for i in indices], id=self.id)
+        else:
+            index_ = index
+            if index_ < 0:
+                index_ += length
+            if index_ < 0 or index_ >= length:
+                raise IndexError(index)
+            atom = Atom.__new__(Atom)
+            atom.owner = self
+            atom.owned = True
+            atom._atom = <_Atom*> jess.molecule.Molecule_atom(self._mol, index_)
+            return atom
 
     def __sizeof__(self):
         assert self._mol is not NULL
@@ -807,23 +811,27 @@ cdef class Template:
         assert self._tpl is not NULL
         return self._tess.count
 
-    def __getitem__(self, ssize_t index):
+    def __getitem__(self, object index):
         assert self._tess is not NULL
 
         cdef TemplateAtom atom
         cdef ssize_t      length = self._tess.count
-        cdef ssize_t      index_ = index
+        cdef ssize_t      index_
 
-        if index_ < 0:
-            index_ += length
-        if index_ < 0 or index_ >= length:
-            raise IndexError(index)
-
-        atom = TemplateAtom.__new__(TemplateAtom)
-        atom.owner = self
-        atom.owned = True
-        atom._atom = self._tess.atom[index_]
-        return atom
+        if isinstance(index, slice):
+            indices = range(*index.indices(length))
+            return type(self)(atoms=[self[i] for i in indices], id=self.id)
+        else:
+            index_ = index
+            if index_ < 0:
+                index_ += length
+            if index_ < 0 or index_ >= length:
+                raise IndexError(index)
+            atom = TemplateAtom.__new__(TemplateAtom)
+            atom.owner = self
+            atom.owned = True
+            atom._atom = self._tess.atom[index_]
+            return atom
 
     def __sizeof__(self):
         assert self._tess is not NULL
@@ -1124,17 +1132,18 @@ cdef class Jess:
         return self.length
 
     def __getitem__(self, object index):
-        cdef ssize_t _index
+        cdef ssize_t index_
 
         if isinstance(index, slice):
             indices = range(*index.indices(self.length))
-            return Jess(map(self.__getitem__, indices))
+            return type(self)(map(self.__getitem__, indices))
         else:
-            if _index < 0:
-                _index += self.length
-            if _index < 0 or _index >= self.length:
+            index_ = index
+            if index_ < 0:
+                index_ += self.length
+            if index_ < 0 or index_ >= self.length:
                 raise IndexError(index)
-            return self._templates[_index]
+            return self._templates[index_]
 
     def query(
         self,
