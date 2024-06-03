@@ -937,19 +937,17 @@ cdef class Query:
         assert self._jq is not NULL
 
         cdef double          rmsd
-        cdef _Template*      tpl  = NULL
-        cdef _Superposition* sup  = NULL
-        cdef Hit             hit  = Hit.__new__(Hit)
+        cdef _Template*      tpl     = NULL
+        cdef _Template*      hit_tpl = NULL
+        cdef _Superposition* sup     = NULL
+        cdef Hit             hit     = Hit.__new__(Hit)
 
         # prepare the hit to be returned
         hit._sup = NULL
         hit._atoms = NULL
         hit.rmsd = INFINITY
         hit.molecule = self.molecule
-        hit.template = Template.__new__(Template)
-        hit.template._tpl = NULL
-        hit.template.owner = self.jess
-        hit.template.owned = True
+        hit_tpl = NULL
 
         # search the next hit without the GIL to allow parallel queries.
         with nogil:
@@ -958,7 +956,7 @@ cdef class Query:
                 # was obtained with the current template and not with the
                 # previous one
                 tpl = jess.jess.JessQuery_template(self._jq)
-                if hit._sup != NULL and hit.template._tpl != tpl:
+                if hit._sup != NULL and hit_tpl != tpl:
                     self._rewind()
                     break
 
@@ -981,7 +979,7 @@ cdef class Query:
                     self._copy_atoms(tpl, hit)
                     hit._sup = sup
                     hit.rmsd = rmsd
-                    hit.template._tpl = tpl
+                    hit_tpl = tpl
 
                 # free superposition items that are not used in a hit, and
                 # return hits immediately if we are not in best match mode
@@ -994,6 +992,8 @@ cdef class Query:
         if hit._sup == NULL:
             raise StopIteration
 
+        # get the template object for the hit
+        hit.template = self.jess._templates[self.jess._indices[<size_t> hit_tpl]]
         return hit
 
 
@@ -1092,6 +1092,8 @@ cdef class Jess:
     """A handle to run Jess over a list of templates.
     """
     cdef _Jess* _jess
+    cdef dict   _indices
+    cdef list   _templates
     cdef size_t length
 
     def __cinit__(self):
@@ -1102,12 +1104,20 @@ cdef class Jess:
         jess.jess.Jess_free(self._jess)
 
     def __init__(self, object templates = ()):
-        cdef Template template
+        cdef Template   template
+        cdef _Template* tpl
+        
         self._jess = jess.jess.Jess_create()
+        self._indices = {}
+        self._templates = []
+
         for template in templates:
             # NOTE: the Jess storage owns the data, so we make a copy of the
             #       template given as argument to avoid a double-free.
-            jess.jess.Jess_addTemplate(self._jess, template._tpl.copy(template._tpl))
+            tpl = template._tpl.copy(template._tpl)
+            jess.jess.Jess_addTemplate(self._jess, tpl)
+            self._indices[<size_t> tpl] = self.length
+            self._templates.append(template)
             self.length += 1
 
     def __len__(self):
