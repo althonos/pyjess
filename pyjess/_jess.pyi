@@ -1,4 +1,5 @@
 import os
+import typing
 from typing import Any, Generic, Union, Optional, Sequence, Iterator, Iterable, List, TextIO, Sized, TypeVar
 
 try:
@@ -165,7 +166,12 @@ class Hit(Generic[_T]):
 class Jess(Generic[_T], Sequence[_T]):
     def __init__(self, templates: Iterable[_T] = ()): ...
     def __len__(self) -> int: ...
+    @typing.overload
     def __getitem__(self, index: int) -> _T: ...
+    @typing.overload
+    def __getitem__(self, index: slice) -> Jess[_T]: ...
+    @typing.overload
+    def __getitem__(self, index: Union[int, slice]) -> Union[_T, Jess[_T]]: ...
     def query(
         self,
         molecule: Molecule,
