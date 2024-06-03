@@ -203,7 +203,7 @@ cdef class Molecule:
     cpdef Molecule conserved(self, double cutoff = 0.0):
         assert self._mol is not NULL
         cdef Atom atom
-        return Molecule(
+        return type(self)(
             id=self.id,
             atoms=[
                 atom
