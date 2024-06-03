@@ -1123,6 +1123,14 @@ cdef class Jess:
     def __len__(self):
         return self.length
 
+    def __getitem__(self, ssize_t index):
+        cdef ssize_t _index = index
+        if _index < 0:
+            _index += self.length
+        if _index < 0 or _index >= self.length:
+            raise IndexError(index)
+        return self._templates[_index]
+
     def query(
         self,
         Molecule molecule,
