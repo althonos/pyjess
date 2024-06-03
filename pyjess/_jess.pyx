@@ -20,7 +20,7 @@ References:
 cimport cython
 from cpython.unicode cimport PyUnicode_FromStringAndSize
 
-from libc.math cimport exp, INFINITY, NAN
+from libc.math cimport isnan, exp, INFINITY, NAN
 from libc.stdio cimport FILE, fclose, fdopen, printf
 from libc.stdlib cimport calloc, realloc, free, malloc
 from libc.string cimport memcpy, memset, strncpy, strdup
@@ -45,6 +45,7 @@ from jess.tess_atom cimport TessAtom as _TessAtom
 import contextlib
 import io
 import os
+import warnings
 
 # --- Utils ------------------------------------------------------------------
 
@@ -945,6 +946,7 @@ cdef class Query:
         assert self._jq is not NULL
 
         cdef double          rmsd
+        cdef const double*   rot       
         cdef _Template*      tpl     = NULL
         cdef _Template*      hit_tpl = NULL
         cdef _Superposition* sup     = NULL
@@ -982,12 +984,26 @@ cdef class Query:
                 # if not in best match, otherwise record it until the next
                 # template is reached (or the iterator finished)
                 if rmsd <= self.rmsd_threshold and rmsd < hit.rmsd:
-                    if hit._sup != NULL:
-                        jess.super.Superposition_free(hit._sup)
-                    self._copy_atoms(tpl, hit)
-                    hit._sup = sup
-                    hit.rmsd = rmsd
-                    hit_tpl = tpl
+                    # check if the rotation matrix contains NaN values
+                    rot = jess.super.Superposition_rotation(sup)
+                    nan = False
+                    for i in range(9):
+                        nan |= isnan(rot[i])
+
+                    if nan:
+                        with gil:
+                            warnings.warn(
+                                "Jess returned a superposition matrix with NaN values",
+                                UserWarning,
+                                stacklevel=2,
+                            )
+                    else:
+                        if hit._sup != NULL:
+                            jess.super.Superposition_free(hit._sup)
+                        self._copy_atoms(tpl, hit)
+                        hit._sup = sup
+                        hit.rmsd = rmsd
+                        hit_tpl = tpl
 
                 # free superposition items that are not used in a hit, and
                 # return hits immediately if we are not in best match mode
