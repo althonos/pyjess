@@ -6,7 +6,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.3.0...HEAD
+
+
+## [v0.3.0] - 2024-06-11
+[v0.3.0]: https://github.com/althonos/pyjess/compare/v0.2.1...v0.3.0
+
+### Added
+- Slicing for `Template`, `Molecule` and `Jess` objects.
+
+### Fixed
+- Typing for `chain_id` property of `TemplateAtom`.
+- `Query.__next__` ignores and raises a warning on `NaN` matrices caused by planar molecule coordinates.
+
+### Changed
+- Make `Jess` generic over the internal template class to allow `Template` subclasses as inputs and `Hit` outputs attribute.
+- Make `Molecule.conserved` return an instance of the caller class rather than a `Molecule` object.
 
 
 ## [v0.2.1] - 2024-05-30
