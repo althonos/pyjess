@@ -1095,11 +1095,14 @@ cdef class Hit:
         """`float`: The determinant of the rotation matrix.
         """
         assert self._sup is not NULL
-        cdef const double* p = jess.super.Superposition_rotation(self._sup)
-        cdef double det = 0.0
-        det += p[0] * (p[4] * p[8] - p[5] * p[7])
-        det -= p[1] * (p[3] * p[8] - p[5] * p[6])
-        det += p[2] * (p[3] * p[7] - p[4] * p[6])
+        cdef const double* p
+        cdef double        det = 0.0
+
+        with nogil:
+            p = jess.super.Superposition_rotation(self._sup)
+            det += p[0] * (p[4] * p[8] - p[5] * p[7])
+            det -= p[1] * (p[3] * p[8] - p[5] * p[6])
+            det += p[2] * (p[3] * p[7] - p[4] * p[6])
         return det
 
     @property
@@ -1107,16 +1110,26 @@ cdef class Hit:
         """`float`: The logarithm of the E-value estimated for the hit.
         """
         assert self.template._tpl is not NULL
-        cdef int n = jess.molecule.Molecule_count(self.molecule._mol)
-        return self.template._tpl.logE(self.template._tpl, self.rmsd, n)
+
+        cdef int    n
+        cdef double e
+
+        with nogil:
+            n = jess.molecule.Molecule_count(self.molecule._mol)
+            e = self.template._tpl.logE(self.template._tpl, self.rmsd, n)
+        return e
 
     @property
     def evalue(self):
         """`float`: The E-value estimated for the hit.
         """
-        assert self.template._tpl is not NULL
-        cdef int n = jess.molecule.Molecule_count(self.molecule._mol)
-        return exp(self.template._tpl.logE(self.template._tpl, self.rmsd, n))
+        cdef int    n
+        cdef double e
+
+        with nogil:
+            n = jess.molecule.Molecule_count(self.molecule._mol)
+            e = exp(self.template._tpl.logE(self.template._tpl, self.rmsd, n))
+        return e
 
     cpdef list atoms(self, bint transform=True):
         """Get the list of query atoms matching the template.
