@@ -1,7 +1,7 @@
 User Guide
 ==========
 
-This section contains guides and documents about PyJesss usage.
+This section contains guides and documents about PyJess usage.
 
 .. toctree::
    :maxdepth: 1

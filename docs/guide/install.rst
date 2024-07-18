@@ -3,11 +3,10 @@ Installation
 
 .. note::
 
-    Wheels are provided for Windows, Linux and OSX x86-64 platforms, as well as 
-    Linux and OSX Aarch64 platforms. Other machines will have to build the wheel 
+    Wheels are provided for Windows, Linux and MacOS x86-64 platforms, as well as 
+    Linux and MacOS Aarch64 platforms. Other machines will have to build the wheel 
     from the source distribution. Building ``pyjess`` involves compiling the 
     Jess code, which requires a C compiler to be available.
-
 
 
 PyPi

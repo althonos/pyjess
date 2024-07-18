@@ -3,6 +3,7 @@ PyJess |Stars|
 
 .. |Stars| image:: https://img.shields.io/github/stars/althonos/pyjess.svg?style=social&maxAge=3600&label=Star
    :target: https://github.com/althonos/pyjess/stargazers
+   :class: dark-light
 
 *A Python interface to Jess, a 3D template matching software.*
 
@@ -10,45 +11,59 @@ PyJess |Stars|
 
 .. |Actions| image:: https://img.shields.io/github/actions/workflow/status/althonos/pyjess/test.yml?branch=main&logo=github&style=flat-square&maxAge=300
    :target: https://github.com/althonos/pyjess/actions
+   :class: dark-light
 
 .. |Coverage| image:: https://img.shields.io/codecov/c/gh/althonos/pyjess?style=flat-square&maxAge=600
    :target: https://codecov.io/gh/althonos/pyjess/
+   :class: dark-light
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/pyjess.svg?style=flat-square&maxAge=3600
    :target: https://pypi.python.org/pypi/pyjess
+   :class: dark-light
 
 .. |Bioconda| image:: https://img.shields.io/conda/vn/bioconda/pyjess?style=flat-square&maxAge=3600
    :target: https://anaconda.org/bioconda/pyjess
+   :class: dark-light
 
 .. |AUR| image:: https://img.shields.io/aur/version/python-pyjess?logo=archlinux&style=flat-square&maxAge=3600
    :target: https://aur.archlinux.org/packages/python-pyjess
+   :class: dark-light
 
 .. |Wheel| image:: https://img.shields.io/pypi/wheel/pyjess?style=flat-square&maxAge=3600
    :target: https://pypi.org/project/pyjess/#files
+   :class: dark-light
 
 .. |Versions| image:: https://img.shields.io/pypi/pyversions/pyjess.svg?style=flat-square&maxAge=3600
    :target: https://pypi.org/project/pyjess/#files
+   :class: dark-light
 
 .. |Implementations| image:: https://img.shields.io/pypi/implementation/pyjess.svg?style=flat-square&maxAge=3600&label=impl
    :target: https://pypi.org/project/pyjess/#files
+   :class: dark-light
 
 .. |License| image:: https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&maxAge=3600
    :target: https://choosealicense.com/licenses/mit/
+   :class: dark-light
 
-.. |Source| image:: https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square
+.. |Source| image:: https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=3600&style=flat-square
    :target: https://github.com/althonos/pyjess/
+   :class: dark-light
 
 .. |Issues| image:: https://img.shields.io/github/issues/althonos/pyjess.svg?style=flat-square&maxAge=600
    :target: https://github.com/althonos/pyjess/issues
+   :class: dark-light
 
 .. |Docs| image:: https://img.shields.io/readthedocs/pyjess?style=flat-square&maxAge=3600
    :target: http://pyjess.readthedocs.io/en/stable/?badge=stable
+   :class: dark-light
 
-.. |Changelog| image:: https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square
+.. |Changelog| image:: https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=3600&style=flat-square
    :target: https://github.com/althonos/pyjess/blob/main/CHANGELOG.md
+   :class: dark-light
 
-.. |Downloads| image:: https://img.shields.io/pypi/dm/pyjess?style=flat-square&color=303f9f&maxAge=86400&label=downloads
+.. |Downloads| image:: https://img.shields.io/pypi/dm/pyjess?style=flat-square&color=303f9f&maxAge=3600&label=downloads
    :target: https://pepy.tech/project/pyjess
+   :class: dark-light
 
 
 Overview
