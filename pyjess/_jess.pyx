@@ -143,6 +143,19 @@ cdef class Molecule:
         jess.molecule.Molecule_free(self._mol)
 
     def __init__(self, object atoms = (), str id = None):
+        """__init__(self, atoms=(), id=None)\n--\n
+
+        Create a new molecule.
+
+        Arguments:
+            atoms (sequence of `~pyjess.Atom`): The atoms of the molecule.
+            id (`str`, optional): The identifier of the molecule.
+
+        Raises:
+            `MemoryError`: When the system allocator fails to allocate
+                enough memory for the molecule storage.
+
+        """
         cdef Atom atom
         cdef int i
         cdef int count = len(atoms)
@@ -291,6 +304,18 @@ cdef class Atom:
         str element = '',
         int charge = 0,
     ):
+        """__init__(self, *, serial, name, altloc, residue_name, chain_id, residue_number, insertion_code, x, y, z, occupancy=0.0, temperature_factor=0.0, segment='', element='', charge=0)\n--\n
+
+        Create a new atom.
+
+        Raises:
+            `MemoryError`: When the system allocator fails to allocate
+                enough memory for the atom storage.
+            `ValueError`: When either of the ``name``, ``residue_name``,
+                ``segment``, ``element`` or ``chain_id`` strings is too
+                long.
+
+        """
         if len(name) > 4:
             raise ValueError(f"Invalid atom name: {name!r}")
         if len(residue_name) > 3:
@@ -529,6 +554,15 @@ cdef class TemplateAtom:
         double distance_weight = 0.0,
         int match_mode = 0,
     ):
+        """__init__(self, *, chain_id, residue_number, x, y, z, residue_names, atom_names, distance_weight=0.0, match_mode=0)\n--\n
+
+        Create a new template atom.
+
+        Raises:
+            `MemoryError`: When the system allocator fails to allocate
+                enough memory for the template atom storage.
+
+        """
         cdef size_t m
         cdef char*  p
         cdef size_t ac
@@ -742,6 +776,20 @@ cdef class Template:
             jess.tess_template.TessTemplate_free(self._tpl)
 
     def __init__(self, object atoms = (), str id = None):
+        """__init__(self, atoms=(), id=None)\n--\n
+
+        Create a new template.
+
+        Arguments:
+            atoms (sequence of `~pyjess.TemplateAtom`): The atoms of the
+                templates.
+            id (`str`, optional): The identifier of the template.
+
+        Raises:
+            `MemoryError`: When the system allocator fails to allocate
+                enough memory for the template storage.
+
+        """
         cdef int          i
         cdef int          j
         cdef double       dist
@@ -946,7 +994,7 @@ cdef class Query:
         assert self._jq is not NULL
 
         cdef double          rmsd
-        cdef const double*   rot       
+        cdef const double*   rot
         cdef _Template*      tpl     = NULL
         cdef _Template*      hit_tpl = NULL
         cdef _Superposition* sup     = NULL
@@ -1128,9 +1176,24 @@ cdef class Jess:
         jess.jess.Jess_free(self._jess)
 
     def __init__(self, object templates = ()):
+        """__init__(self, templates=())\n--\n
+
+        Create a new Jess database containing the given templates.
+
+        Arguments:
+            templates (sequence of `~pyjess.Template`): The templates to
+                index in the database for further querying.
+
+        Caution:
+            The `~pyjess.Template` objects given in argument will be copied
+            because the internal C data structure requires ownership of the
+            data. Modification to the original `~pyjess.Template` objects will
+            not have an effect on the newly created `~pyjess.Jess` templates.
+
+        """
         cdef Template   template
         cdef _Template* tpl
-        
+
         self._jess = jess.jess.Jess_create()
         self._indices = {}
         self._templates = []
