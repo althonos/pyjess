@@ -5,15 +5,6 @@ API Reference
 
 .. automodule:: pyjess
 
-
-.. toctree::
-   :hidden:
-
-    molecule <molecule>
-    template <template>
-    jess <jess>
-
-
 Molecule
 --------
 
@@ -22,6 +13,12 @@ Molecule
 
     pyjess.Atom
     pyjess.Molecule
+
+.. toctree::
+    :maxdepth: 1
+    :hidden:
+
+    molecule
 
 
 Template
@@ -34,6 +31,13 @@ Template
     pyjess.Template
 
 
+.. toctree::
+    :maxdepth: 1
+    :hidden:
+
+    template
+
+
 Jess
 ----
 
@@ -44,6 +48,11 @@ Jess
     pyjess.Hit
     pyjess.Jess
 
+.. toctree::
+    :maxdepth: 1
+    :hidden:
+
+    jess
 
 
 
