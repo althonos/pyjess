@@ -83,12 +83,7 @@ updated and maintained by `Ioannis Riziotis <https://github.com/iriziotis>`_
 during his PhD in the `Thornton group <https://www.ebi.ac.uk/research/thornton/>`_.
 
 PyJess is a Python module that provides bindings to Jess using
-`Cython <https://cython.org/>`_. It allows creating templates, querying them
-with protein structures, and retrieving the hits using a Python API without
-performing any external I/O.
-
-PyJess is available for all modern Python versions (3.6+).
-
+`Cython <https://cython.org/>`_:
 
 .. grid:: 1 2 3 3
    :gutter: 1
@@ -100,8 +95,8 @@ PyJess is available for all modern Python versions (3.6+).
 
    .. grid-item-card:: :fas:`screwdriver-wrench` Flexible
 
-      Load a `~pyjess.Molecule` from a PDB file or create it
-      programmatically through the :doc:`Python API <api/index>`.
+      Load a `~pyjess.Molecule` from a :wiki:`.pdb` file or create 
+      it programmatically through the :doc:`Python API <api/index>`.
 
    .. grid-item-card:: :fas:`gears` Practical
 
@@ -127,6 +122,8 @@ PyJess is available for all modern Python versions (3.6+).
 
 Setup
 -----
+
+PyJess is available for all modern Python versions (3.6+).
 
 Run ``pip install pyjess`` in a shell to download the latest release from PyPI,
 or have a look at the :doc:`Installation page <guide/install>` to find other ways 

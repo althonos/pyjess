@@ -224,4 +224,5 @@ extlinks = {
     'pmid': ('https://pubmed.ncbi.nlm.nih.gov/%s', 'PMID:%s'),
     'pmc': ('https://www.ncbi.nlm.nih.gov/pmc/articles/PMC%s', 'PMC%s'),
     'isbn': ('https://www.worldcat.org/isbn/%s', 'ISBN:%s'),
+    'wiki': ('https://en.wikipedia.org/wiki/%s', '%s'),
 }
