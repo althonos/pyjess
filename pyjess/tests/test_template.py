@@ -2,6 +2,7 @@ import os
 import unittest
 import tempfile
 import textwrap
+import sys
 
 from .._jess import Template
 
@@ -63,6 +64,11 @@ class TestTemplate(unittest.TestCase):
     def test_load_error(self):
         self.assertRaises(FileNotFoundError, Template.load, "/some/nonsensical/file")
         self.assertRaises(IsADirectoryError, Template.load, os.path.dirname(__file__))
+
+    @unittest.skipUnless(sys.implementation.name == "cpython", "only available on CPython")
+    def test_sizeof(self):
+        template = Template.loads(TEMPLATE)
+        self.assertGreater(sys.getsizeof(template), 0)
 
     def test_init_empty(self):
         template = Template()

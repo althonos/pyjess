@@ -2,6 +2,7 @@ import os
 import unittest
 import tempfile
 import textwrap
+import sys
 
 from .._jess import Atom, Molecule
 
@@ -29,6 +30,11 @@ class TestMolecule(unittest.TestCase):
         molecule = Molecule.loads(MOLECULE)
         self.assertEqual(len(molecule), 5)
         self.assertEqual(molecule.id, '1A0P')
+
+    @unittest.skipUnless(sys.implementation.name == "cpython", "only available on CPython")
+    def test_sizeof(self):
+        molecule = Molecule.loads(MOLECULE)
+        self.assertGreater(sys.getsizeof(molecule), 0)
 
     @unittest.skipIf(os.name == "nt", "permission errors on Windows")
     def test_load_filename(self):

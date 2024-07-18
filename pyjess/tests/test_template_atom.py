@@ -1,4 +1,5 @@
 import unittest
+import sys
 
 from .._jess import TemplateAtom
 
@@ -29,6 +30,11 @@ class TestTemplateAtom(unittest.TestCase):
         }
         default.update(kwargs)
         return TemplateAtom(**default)
+
+    @unittest.skipUnless(sys.implementation.name == "cpython", "only available on CPython")
+    def test_sizeof(self):
+        atom = self._create_atom()
+        self.assertGreater(sys.getsizeof(atom), 0)
 
     def test_init_invalid_match_code(self):
         self.assertRaises(ValueError, self._create_atom, match_mode=2000)

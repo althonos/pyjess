@@ -1,5 +1,6 @@
 import math
 import unittest
+import sys
 
 from .._jess import Template, Molecule, Jess
 from .utils import files
@@ -18,6 +19,13 @@ class TestJess(unittest.TestCase):
         jess = Jess()
         hits = jess.query(mol, 2, 2, 4)
         self.assertRaises(StopIteration, next, hits)
+
+    @unittest.skipUnless(sys.implementation.name == "cpython", "only available on CPython")
+    def test_sizeof(self):
+        with files(data).joinpath("template_01.qry").open() as f:
+            template = Template.load(f)
+            jess = Jess([template])
+        self.assertGreater(sys.getsizeof(jess), 0)
 
     def test_getitem(self):
         
