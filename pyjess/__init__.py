@@ -1,6 +1,6 @@
 # noqa: D104
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __author__ = "Martin Larralde <martin.larralde@embl.de>"
 __all__ = ["Atom", "Hit", "Jess", "Query", "Molecule", "Template", "TemplateAtom"]
 

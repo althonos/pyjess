@@ -6,7 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.3.1...HEAD
+
+
+## [v0.3.1] - 2024-07-18
+[v0.3.1]: https://github.com/althonos/pyjess/compare/v0.3.0...v0.3.1
+
+### Changed
+- Migrate documentation to `pydata-sphinx-theme`.
+- Make `Hit.evalue` and `Hit.log_evalue` release the GIL when possible.
+
+### Fixed
+- Signatures of `__init__` methods missing from all Cython types after the `v3.0` update.
 
 
 ## [v0.3.0] - 2024-06-11
