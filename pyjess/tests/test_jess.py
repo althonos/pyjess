@@ -1,3 +1,4 @@
+import math
 import unittest
 
 from .._jess import Template, Molecule, Jess
@@ -18,6 +19,32 @@ class TestJess(unittest.TestCase):
         hits = jess.query(mol, 2, 2, 4)
         self.assertRaises(StopIteration, next, hits)
 
+    def test_getitem(self):
+        
+        with files(data).joinpath("template_01.qry").open() as f:
+            template = Template.load(f)
+            jess = Jess([template])
+
+        self.assertEqual(jess[0], template)
+        self.assertEqual(len(jess[:1]), 1)
+        self.assertEqual(len(jess[1:]), 0)
+
+    def test_query_template_subclass(self):
+
+        class MyTemplate(Template):
+            pass
+        
+        with files(data).joinpath("template_01.qry").open() as f:
+            template = MyTemplate.load(f)
+            jess = Jess([template])
+        with files(data).joinpath("pdb1lnb.pdb").open() as f:
+            molecule = Molecule.load(f)
+
+        self.assertEqual(jess[0], template)
+        self.assertIsInstance(jess[0], MyTemplate)
+        hits = list(jess.query(molecule, 1, 2, 2))
+        self.assertIsInstance(hits[0].template, MyTemplate)
+
     @unittest.skipUnless(files, "importlib.resources not available")
     def test_query(self):
         with files(data).joinpath("template_01.qry").open() as f:
@@ -32,6 +59,7 @@ class TestJess(unittest.TestCase):
         self.assertAlmostEqual(hits[0].rmsd, 0.555, places=3)
         self.assertAlmostEqual(hits[0].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[0].log_evalue, -2.04, places=1)
+        self.assertAlmostEqual(hits[0].evalue, math.exp(-2.04), places=1)
 
         hits = list(jess.query(molecule, 2, 5, 3))
         self.assertEqual(len(hits), 2)
@@ -39,10 +67,12 @@ class TestJess(unittest.TestCase):
         self.assertAlmostEqual(hits[0].rmsd, 0.555, places=3)
         self.assertAlmostEqual(hits[0].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[0].log_evalue, -2.04, places=1)
+        self.assertAlmostEqual(hits[0].evalue, math.exp(-2.04), places=1)
         self.assertIs(hits[1].template, template)
         self.assertAlmostEqual(hits[1].rmsd, 1.440, places=3)
         self.assertAlmostEqual(hits[1].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[1].log_evalue, 0.17, places=1)
+        self.assertAlmostEqual(hits[1].evalue, math.exp(0.17), places=1)
 
         hits = list(jess.query(molecule, 2, 5, 5))
         self.assertEqual(len(hits), 3)
@@ -50,14 +80,17 @@ class TestJess(unittest.TestCase):
         self.assertAlmostEqual(hits[0].rmsd, 0.555, places=3)
         self.assertAlmostEqual(hits[0].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[0].log_evalue, -2.04, places=1)
+        self.assertAlmostEqual(hits[0].evalue, math.exp(-2.04), places=1)
         self.assertIs(hits[1].template, template)
         self.assertAlmostEqual(hits[1].rmsd, 1.440, places=3)
         self.assertAlmostEqual(hits[1].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[1].log_evalue, 0.17, places=1)
+        self.assertAlmostEqual(hits[1].evalue, math.exp(0.17), places=1)
         self.assertIs(hits[2].template, template)
         self.assertAlmostEqual(hits[2].rmsd, 1.644, places=3)
         self.assertAlmostEqual(hits[2].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[2].log_evalue, 0.68, places=1)
+        self.assertAlmostEqual(hits[2].evalue, math.exp(0.68), places=1)
 
         hits = list(jess.query(molecule.conserved(10.0), 1, 2, 2))
         self.assertEqual(len(hits), 1)
@@ -65,6 +98,7 @@ class TestJess(unittest.TestCase):
         self.assertAlmostEqual(hits[0].rmsd, 0.555, places=3)
         self.assertAlmostEqual(hits[0].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[0].log_evalue, -2.10, places=1)
+        self.assertAlmostEqual(hits[0].evalue, math.exp(-2.10), places=1)
 
     @unittest.skipUnless(files, "importlib.resources not available")
     def test_query_best_match(self):
