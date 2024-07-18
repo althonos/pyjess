@@ -3,7 +3,7 @@
 """Bindings to Jess, a 3D template matching software.
 
 References:
-    - Barker, J. A., & Thornton, J. M. (2003). &An algorithm for
+    - Barker, J. A., & Thornton, J. M. (2003). *An algorithm for
       constraint-based structural template matching: application to
       3D templates with statistical analysis*. Bioinformatics (Oxford,
       England), 19(13), 1644–1649. :doi:`10.1093/bioinformatics/btg226`.

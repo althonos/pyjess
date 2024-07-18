@@ -86,12 +86,47 @@ performing any external I/O.
 PyJess is available for all modern Python versions (3.6+).
 
 
+.. grid:: 1 2 3 3
+   :gutter: 1
+
+   .. grid-item-card:: :fas:`battery-full` Batteries-included
+
+      Just add ``pyjess`` as a ``pip`` or ``conda`` dependency, no need
+      for the Jess binary or any external dependency.
+
+   .. grid-item-card:: :fas:`screwdriver-wrench` Flexible
+
+      Load a `~pyjess.Molecule` from a PDB file or create it
+      programmatically through the :doc:`Python API <api/index>`.
+
+   .. grid-item-card:: :fas:`gears` Practical
+
+      Retrieve results as they become availble as dedicated 
+      `~pyjess.Hit` objects, and compute statistics on-the-fly.
+
+   .. grid-item-card:: :fas:`server` Parallel
+
+      Easily run computations in parallel querying thread-safe 
+      `~pyjess.Jess` with several `~pyjess.Molecule` in parallel.
+
+   .. grid-item-card:: :fas:`check` Consistent
+
+      Get the same results as Jess, with some additional bug fixes for 
+      edge cases of the original implementation.
+
+   .. grid-item-card:: :fas:`toolbox` Feature-complete
+
+      Access all the features of the original CLI through the 
+      :doc:`Python API <api/index>`, including atom coordinate 
+      transformation.
+
+
 Setup
 -----
 
 Run ``pip install pyjess`` in a shell to download the latest release from PyPI,
 or have a look at the :doc:`Installation page <guide/install>` to find other ways 
-to install ``pyjess`.
+to install PyJess.
 
 Library
 -------

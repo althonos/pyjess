@@ -15,3 +15,4 @@ This section contains guides and documents about PyJess usage.
 
    Contribution Guide <contributing>
    Changelog <changes>
+   Copyright Notice <copyright>
