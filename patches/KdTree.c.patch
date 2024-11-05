@@ -1,8 +1,8 @@
 diff --git a/src/KdTree.c b/src/KdTree.c
-index 5d8d783..00cf761 100644
+index 5d8d783..698064e 100644
 --- a/src/KdTree.c
 +++ b/src/KdTree.c
-@@ -87,7 +87,19 @@ struct _KdTreeQuery
+@@ -87,9 +87,26 @@ struct _KdTreeQuery
  // data,index			Static globals (see KdTreeNode_create)
  // ==================================================================
  
@@ -14,16 +14,23 @@ index 5d8d783..00cf761 100644
 +static int KdTree_compare_r(void*, const void*, const void*);
 +#endif
 +
-+struct _KdTreeCompareData 
-+{
-+	double** data;
-+	int index;
-+};
-+
++#ifdef HAVE_THREADLOCALSTORAGE
++static __thread double **KdTree_data;
++static __thread int KdTree_index;
++#else
  static double **KdTree_data;
  static int KdTree_index;
++#endif
++
++struct _KdTreeCompareData
++{
++      double** data;
++      int index;
++};
  
-@@ -258,6 +270,21 @@ static int KdTree_compare(const void *pa, const void *pb)
+ // ==================================================================
+ // Local functions
+@@ -258,6 +275,21 @@ static int KdTree_compare(const void *pa, const void *pb)
  	return c<d ? -1 : c>d ? 1 : 0;
  }
  
@@ -45,11 +52,10 @@ index 5d8d783..00cf761 100644
  // ==================================================================
  // Methods of local type KdTreeNode
  // ==================================================================
-@@ -297,9 +324,19 @@ static KdTreeNode *KdTreeNode_create(int *idx,int n,int type,double **u,int dim)
+@@ -297,9 +329,18 @@ static KdTreeNode *KdTreeNode_create(int *idx,int n,int type,double **u,int dim)
  	// is used because it's not possible to pass extra
  	// parameters to qsort.
  
-+
 +	struct _KdTreeCompareData _data = { u, type };
 +#if defined(HAVE_GNU_QSORT_R)
 +	qsort_r(idx,n,sizeof(int),KdTree_compare_r,&_data);
@@ -60,8 +66,7 @@ index 5d8d783..00cf761 100644
 +#else
  	KdTree_data=u;
  	KdTree_index=type;
--	qsort(idx,n,sizeof(int),KdTree_compare);
-+	qsort(idx,n,sizeof(int),KdTree_compare)
+ 	qsort(idx,n,sizeof(int),KdTree_compare);
 +#endif
  
  	// 3. The recursive case. Find [n/2] and split the array into

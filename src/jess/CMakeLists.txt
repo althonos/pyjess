@@ -63,6 +63,15 @@ else()
     set(CMAKE_REQUIRED_DEFINITIONS "${SAFE_CMAKE_REQUIRED_DEFINITIONS}")
 endif()
 
+check_source_runs(C
+    "
+    #include <stdlib.h>
+    static __thread int i;
+    int main(int argc, const char** argv) { i = 0; return i; }
+    "
+    HAVE_THREADLOCALSTORAGE
+)
+
 # --- Compile Jess -------------------------------------------------------------
 
 set(JESS_SOURCES
@@ -132,4 +141,7 @@ elseif(HAVE_GNU_QSORT_R)
     target_compile_definitions(jess PRIVATE -DHAVE_GNU_QSORT_R)
 elseif(HAVE_WIN32_QSORT_S)
     target_compile_definitions(jess PRIVATE -DHAVE_WIN32_QSORT_S)
+endif()
+if(HAVE_THREADLOCALSTORAGE)
+    target_compile_definitions(jess PRIVATE -DHAVE_THREADLOCALSTORAGE)
 endif()
