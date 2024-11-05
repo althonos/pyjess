@@ -12,7 +12,7 @@ Installation
 PyPi
 ^^^^
 
-``pyjess`` is hosted on GitHub, but the easiest way to install it is to download
+PyJess is hosted on GitHub, but the easiest way to install it is to download
 the latest release from its `PyPi repository <https://pypi.python.org/pypi/pyjess>`_.
 It will install all dependencies then install ``pyjess`` either from a wheel if
 one is available, or from source after compiling the Rust code :
@@ -22,16 +22,16 @@ one is available, or from source after compiling the Rust code :
 	$ pip install --user pyjess
 
 
-.. Conda
-.. ^^^^^
+Conda
+^^^^^
 
-.. Pronto is also available as a `recipe <https://anaconda.org/bioconda/pyjess>`_
-.. in the `bioconda <https://bioconda.github.io/>`_ channel. To install, simply
-.. use the ``conda`` installer:
+PyJess is also available as a `recipe <https://anaconda.org/bioconda/pyjess>`_
+in the `bioconda <https://bioconda.github.io/>`_ channel. To install, simply
+use the ``conda`` installer:
 
-.. .. code:: console
+.. code:: console
 
-..    $ conda install -c bioconda pyjess
+   $ conda install -c bioconda pyjess
 
 
 Arch User Repository
@@ -70,7 +70,7 @@ Steps to install on ArchLinux depend on your `AUR helper <https://wiki.archlinux
 Piwheels
 ^^^^^^^^
 
-``pyjess`` works on Raspberry Pi computers, and pre-built wheels are compiled 
+PyJess works on Raspberry Pi computers, and pre-built wheels are compiled 
 for `armv7l` platforms on piwheels. Run the following command to install these 
 instead of compiling from source:
 
@@ -99,19 +99,19 @@ the repository and install the repository by running (with the admin rights):
     which may not even build, so consider using a versioned release instead.
 
 
-GitHub + ``setuptools``
-^^^^^^^^^^^^^^^^^^^^^^^
+GitHub + ``installer``
+^^^^^^^^^^^^^^^^^^^^^^
 
 If you do not want to use ``pip``, you can still clone the repository and
-run the ``setup.py`` file manually, although you will need to install the
-build dependencies (mainly `Cython <https://pypi.org/project/cython>`_):
+run ``build`` manually, although you will need to install the build 
+dependencies (mainly `Cython <https://pypi.org/project/cython>`_):
 
 .. code:: console
 
    $ git clone --recursive https://github.com/althonos/pyjess
    $ cd pyjess
-   $ python setup.py build_ext
-   # python setup.py install
+   $ python -m build .
+   # python -m installer dist/*.whl
 
 .. Danger::
 
