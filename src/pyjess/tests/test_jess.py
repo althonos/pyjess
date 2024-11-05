@@ -21,14 +21,15 @@ class TestJess(unittest.TestCase):
         self.assertRaises(StopIteration, next, hits)
 
     @unittest.skipUnless(sys.implementation.name == "cpython", "only available on CPython")
+    @unittest.skipUnless(files, "importlib.resources not available")
     def test_sizeof(self):
         with files(data).joinpath("template_01.qry").open() as f:
             template = Template.load(f)
             jess = Jess([template])
         self.assertGreater(sys.getsizeof(jess), 0)
 
+    @unittest.skipUnless(files, "importlib.resources not available")
     def test_getitem(self):
-        
         with files(data).joinpath("template_01.qry").open() as f:
             template = Template.load(f)
             jess = Jess([template])
@@ -37,6 +38,7 @@ class TestJess(unittest.TestCase):
         self.assertEqual(len(jess[:1]), 1)
         self.assertEqual(len(jess[1:]), 0)
 
+    @unittest.skipUnless(files, "importlib.resources not available")
     def test_query_template_subclass(self):
 
         class MyTemplate(Template):
