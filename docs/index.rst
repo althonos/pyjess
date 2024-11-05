@@ -123,7 +123,7 @@ PyJess is a Python module that provides bindings to Jess using
 Setup
 -----
 
-PyJess is available for all modern Python versions (3.6+).
+PyJess is available for all modern Python versions (3.7+).
 
 Run ``pip install pyjess`` in a shell to download the latest release from PyPI,
 or have a look at the :doc:`Installation page <guide/install>` to find other ways 

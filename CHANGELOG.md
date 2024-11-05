@@ -6,7 +6,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.3.2...HEAD
+
+
+## [v0.3.2] - 2024-11-05
+[v0.3.2]: https://github.com/althonos/pyjess/compare/v0.3.1...v0.3.2
+
+### Added
+- Support for Python 3.13.
+
+### Changed
+- Use `scikit-build-core` to build the project.
+- Use CMake to detect availability of `qsort_r` / `qsort_s` on the current platform.
+- Use thread-local storage to support parallelism on platforms without `qsort_r`.
+
+### Removed
+- Support for Python 3.6.
 
 
 ## [v0.3.1] - 2024-07-18

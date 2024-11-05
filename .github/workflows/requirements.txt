@@ -1,4 +1,5 @@
 coverage >=7.0
 cython ~=3.0
 scikit-build-core
+build
 importlib-resources ; python_version < '3.9'

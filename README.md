@@ -38,7 +38,7 @@ performing any external I/O.
 
 ## 🔧 Installing
 
-PyJess is available for all modern Python versions (3.6+).
+PyJess is available for all modern Python versions (3.7+).
 
 It can be installed directly from [PyPI](https://pypi.org/project/pyjess/),
 which hosts some pre-built x86-64 wheels for Linux, MacOS, and Windows,
