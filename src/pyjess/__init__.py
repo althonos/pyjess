@@ -1,13 +1,11 @@
 # noqa: D104
-
-__version__ = "0.3.1"
-__author__ = "Martin Larralde <martin.larralde@embl.de>"
-__all__ = ["Atom", "Hit", "Jess", "Query", "Molecule", "Template", "TemplateAtom"]
-
 from . import _jess
 from ._jess import Atom, Hit, Jess, Query, Molecule, Template, TemplateAtom
 
+__author__ = "Martin Larralde <martin.larralde@embl.de>"
+__all__ = ["Atom", "Hit", "Jess", "Query", "Molecule", "Template", "TemplateAtom"]
 __doc__ = _jess.__doc__
+__version__ = _jess.__version__
 
 # Small addition to the docstring: we want to show a link redirecting to the
 # rendered version of the documentation, but this can only work when Python

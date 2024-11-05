@@ -39,6 +39,6 @@ the standard library. Running them requires the extension to be built
 locally:
 
 ```console
-$ python setup.py build_ext --debug --inplace
-$ python -m unittest discover -vv
+$ python -m pip install -v -e . --no-build-isolation
+$ python -m unittest pyjess.tests -vv
 ```
