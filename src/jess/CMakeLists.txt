@@ -55,5 +55,13 @@ endforeach()
 
 add_library(jess STATIC ${JESS_PATCHED_SOURCES})
 target_include_directories(jess PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-target_compile_definitions(jess PUBLIC -D_GNU_SOURCE)
 set_property(TARGET jess PROPERTY C_STANDARD 99)
+
+# --- Compile with GNU extensions for `qsort_r` --------------------------------
+
+include(CheckSymbolExists)
+
+check_symbol_exists(__GNU_LIBRARY__ "stdio.h" GLIBC)
+if(GLIBC)
+    target_compile_definitions(jess PRIVATE -D_GNU_SOURCE)
+endif()

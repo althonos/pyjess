@@ -55,7 +55,7 @@ index 5d8d783..4e09630 100644
  
  	return c<d ? -1 : c>d ? 1 : 0;
  }
-@@ -297,9 +314,16 @@ static KdTreeNode *KdTreeNode_create(int *idx,int n,int type,double **u,int dim)
+@@ -297,9 +314,17 @@ static KdTreeNode *KdTreeNode_create(int *idx,int n,int type,double **u,int dim)
  	// is used because it's not possible to pass extra
  	// parameters to qsort.
  
@@ -65,12 +65,14 @@ index 5d8d783..4e09630 100644
 +	// KdTree_data=u;
 +	// KdTree_index=type;
 +	struct _KdTreeCompareData _data = { u, type };
-+#if defined(_GNU_SOURCE)
++#if defined(__APPLE__) || defined(BSD)
++	qsort_r(idx,n,sizeof(int),&_data,KdTree_compare);
++#elif defined(_GNU_SOURCE)
 +	qsort_r(idx,n,sizeof(int),KdTree_compare,&_data);
 +#elif defined(_WIN32)
 +	qsort_s(idx,n,sizeof(int),KdTree_compare, &_data);
 +#else
-+	qsort_r(idx,n,sizeof(int),&_data,KdTree_compare);
++#error "No re-entrant qsort implementation found"
 +#endif
  
  	// 3. The recursive case. Find [n/2] and split the array into
