@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.3.3...HEAD
+
+
+## [v0.3.3] - 2024-11-05
+[v0.3.3]: https://github.com/althonos/pyjess/compare/v0.3.2...v0.3.3
+
+### Fixed
+- Tests crashing on missing `importlib.resources.files` function.
 
 
 ## [v0.3.2] - 2024-11-05
