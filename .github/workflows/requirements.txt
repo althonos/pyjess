@@ -1,6 +1,4 @@
-coverage >=6.0
+coverage >=7.0
 cython ~=3.0
-wheel
-auditwheel
-setuptools >=46.4.0
+scikit-build-core
 importlib-resources ; python_version < '3.9'

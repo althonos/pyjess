@@ -33,9 +33,9 @@ jobs:
         - python-version: 3.12
           python-release: v3.12
           python-impl: CPython
-        - python-version: pypy-3.6
-          python-release: v3.6
-          python-impl: PyPy
+        - python-version: 3.13
+          python-release: v3.13
+          python-impl: CPython
         - python-version: pypy-3.7
           python-release: v3.7
           python-impl: PyPy
@@ -50,7 +50,7 @@ jobs:
           python-impl: PyPy
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Setup Python ${{ matrix.python-version }}
@@ -62,30 +62,27 @@ jobs:
     - name: Install Python requirements
       run: python -m pip install -r .github/workflows/requirements.txt
     - name: Build C extension in debug mode
-      run: python setup.py build_ext --inplace --debug
-    - name: Test with coverage
-      run: python -m coverage run -m unittest discover -vv
-    #- name: Upload to Codecov
-    #  if: matrix.python-impl == 'CPython'
-    #  uses: codecov/codecov-action@v3
-    #  with:
-    #    flags: ${{ matrix.python-impl }},${{ matrix.python-release }},${{ env.OS }}
-    #    name: test-python-${{ matrix.python-version }}
-    #    fail_ci_if_error: true
-    #    token: ${{ secrets.CODECOV_TOKEN }}
+      run: python -m pip install -e . -vv --no-build-isolation 
+    - name: Test package
+      run: python -m unittest pyjess.tests -vv
+    # - name: Upload to Codecov
+    #   if: matrix.python-impl == 'CPython'
+    #   uses: codecov/codecov-action@v3
+    #   with:
+    #     flags: ${{ matrix.python-impl }},${{ matrix.python-release }},${{ env.OS }}
+    #     name: test-python-${{ matrix.python-version }}
+    #     fail_ci_if_error: false
+    #     token: ${{ secrets.CODECOV_TOKEN }}
 
   test_osx:
     name: Test (OSX)
-    runs-on: macos-12
+    runs-on: macos-latest
     env:
       OS: OSX
     strategy:
       fail-fast: false
       matrix:
         include:
-        - python-version: 3.7
-          python-release: v3.7
-          python-impl: CPython
         - python-version: 3.8
           python-release: v3.8
           python-impl: CPython
@@ -101,9 +98,9 @@ jobs:
         - python-version: '3.12'
           python-release: v3.12
           python-impl: CPython
-        - python-version: pypy-3.7
-          python-release: v3.7
-          python-impl: PyPy
+        - python-version: 3.13
+          python-release: v3.13
+          python-impl: CPython
         - python-version: pypy-3.8
           python-release: v3.8
           python-impl: PyPy
@@ -115,7 +112,7 @@ jobs:
           python-impl: PyPy
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Setup Python ${{ matrix.python-version }}
@@ -131,17 +128,17 @@ jobs:
     - name: Install Python requirements
       run: python -m pip install -r .github/workflows/requirements.txt
     - name: Build C extension in debug mode
-      run: python setup.py build_ext --inplace --debug --plat-name macos-x86_64
-    - name: Test with coverage
-      run: python -m coverage run -m unittest discover -vv
-    - name: Upload to Codecov
-      if: matrix.python-impl == 'CPython'
-      uses: codecov/codecov-action@v3
-      with:
-        flags: ${{ matrix.python-impl }},${{ matrix.python-release }},${{ env.OS }}
-        name: test-python-${{ matrix.python-version }}
-        fail_ci_if_error: true
-        token: ${{ secrets.CODECOV_TOKEN }}
+      run: python -m pip install -e . -vv --no-build-isolation 
+    - name: Test package
+      run: python -m unittest pyjess.tests -vv
+    # - name: Upload to Codecov
+    #   if: matrix.python-impl == 'CPython'
+    #   uses: codecov/codecov-action@v3
+    #   with:
+    #     flags: ${{ matrix.python-impl }},${{ matrix.python-release }},${{ env.OS }}
+    #     name: test-python-${{ matrix.python-version }}
+    #     fail_ci_if_error: false
+    #     token: ${{ secrets.CODECOV_TOKEN }}
 
   test_windows:
     name: Test (Windows)
@@ -152,9 +149,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - python-version: 3.6
-          python-release: v3.6
-          python-impl: CPython
         - python-version: 3.7
           python-release: v3.7
           python-impl: CPython
@@ -173,6 +167,9 @@ jobs:
         - python-version: '3.12'
           python-release: v3.12
           python-impl: CPython
+        - python-version: 3.13
+          python-release: v3.13
+          python-impl: CPython
         - python-version: pypy-3.7
           python-release: v3.7
           python-impl: PyPy
@@ -187,7 +184,7 @@ jobs:
           python-impl: PyPy
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         submodules: true
     - name: Setup Python ${{ matrix.python-version }}
@@ -200,6 +197,6 @@ jobs:
     - name: Install Python requirements
       run: python -m pip install -r .github/workflows/requirements.txt
     - name: Build C extension
-      run: python setup.py build_ext --inplace
+      run: python -m pip install . -vv --no-build-isolation 
     - name: Test without coverage
-      run: python -m unittest discover -vv
+      run: python -m unittest pyjess.tests -vv
