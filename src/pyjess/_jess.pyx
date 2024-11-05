@@ -47,6 +47,8 @@ import io
 import os
 import warnings
 
+__version__ = PROJECT_VERSION
+
 # --- Utils ------------------------------------------------------------------
 
 cdef inline void copy_token(char* dst, const char* src, size_t n) noexcept nogil:
