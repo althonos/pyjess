@@ -52,6 +52,12 @@ test = ["importlib-resources ; python_version < '3.9'"]
 build-dir = "build/{build_type}"
 editable.rebuild = true
 editable.verbose = false
+sdist.exclude = ["vendor/jess/examples"]
+sdist.include = [
+    "vendor/jess/examples/template_01.qry", 
+    "vendor/jess/examples/template_02.qry",
+    "vendor/jess/examples/test_pdbs/pdb1lnb.ent",
+]
 
 [[tool.scikit-build.overrides]]
 if.state = "editable"
