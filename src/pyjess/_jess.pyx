@@ -46,6 +46,7 @@ import contextlib
 import io
 import os
 import warnings
+import functools
 
 __version__ = PROJECT_VERSION
 
@@ -297,11 +298,11 @@ cdef class Atom:
         str chain_id,
         int residue_number,
         str insertion_code,
-        float x,
-        float y,
-        float z,
-        float occupancy = 0.0,
-        float temperature_factor = 0.0,
+        double x,
+        double y,
+        double z,
+        double occupancy = 0.0,
+        double temperature_factor = 0.0,
         str segment = '',
         str element = '',
         int charge = 0,
@@ -336,7 +337,7 @@ cdef class Atom:
         self._atom.serial = serial
         self._atom.altLoc = ord(altloc)
         self._atom.chainID1 = ord(chain_id[0]) if len(chain_id) > 0 else 0
-        self._atom.chainID2 = ord(chain_id[1]) if len(chain_id) > 1 else ord('0')
+        self._atom.chainID2 = ord(chain_id[1]) if len(chain_id) > 1 else ord(' ')
         self._atom.resSeq = residue_number
         self._atom.iCode = ord(insertion_code)
         self._atom.x[0] = x
@@ -354,29 +355,38 @@ cdef class Atom:
             _name.insert(0, ord('_'))
         copy_token(self._atom.name, _name.ljust(4, b'\0'), 4)
 
+    def __copy__(self):
+        return self.copy()
+
+    cdef dict _state(self):
+        return {
+            "serial": self.serial,
+            "name": self.name,
+            "altloc": self.altloc,
+            "residue_name": self.residue_name,
+            "chain_id": self.chain_id,
+            "residue_number": self.residue_number,
+            "insertion_code": self.insertion_code,
+            "x": self.x,
+            "y": self.y,
+            "z": self.z,
+            "temperature_factor": self.temperature_factor,
+            "occupancy": self.occupancy,
+            "segment": self.segment,
+            "element": self.element,
+            "charge": self.charge,
+        }
+
+    def __reduce__(self):
+        cdef dict state = self._state()
+        return functools.partial(type(self), **state), ()
+
     def __repr__(self):
         cdef str  ty   = type(self).__name__
-        cdef list args = [
-            f"serial={self.serial!r}",
-            f"name={self.name!r}",
-            f"altloc={self.altloc!r}",
-            f"residue_name={self.residue_name!r}",
-            f"chain_id={self.chain_id!r}",
-            f"residue_number={self.residue_number!r}",
-            f"x={self.x!r}",
-            f"y={self.y!r}",
-            f"z={self.z!r}",
-            f"segment={self.segment!r}",
-            f"insertion_code={self.insertion_code!r}",
-        ]
-        if self.occupancy:
-            args.append(f"occupancy={self.occupancy!r}")
-        if self.temperature_factor:
-            args.append(f"temperature_factor={self.temperature_factor!r}")
-        if self.element:
-            args.append(f"element={self.element!r}")
-        if self.charge:
-            args.append(f"charge={self.charge!r}")
+        cdef list args = []
+        for k,v in self._state().items():
+            if v is not None:
+                args.append(f"{k}={v!r}")
         return f"{ty}({', '.join(args)})"
 
     def __sizeof__(self):
@@ -384,6 +394,16 @@ cdef class Atom:
         if not self.owned:
             size += sizeof(_Atom)
         return size
+
+    def __eq__(self, object other):
+        cdef Atom other_
+        if not isinstance(other, Atom):
+            return NotImplemented
+        other_ = other
+        return self._state() == other_._state()
+
+    def __hash__(self):
+        return hash(tuple(self._state().values()))
 
     @property
     def serial(self):
@@ -483,6 +503,14 @@ cdef class Atom:
     def z(self):
         assert self._atom is not NULL
         return self._atom.x[2]
+
+    cpdef Atom copy(self):
+        cdef Atom copy = Atom.__new__(Atom)
+        copy._atom = <_Atom*> malloc(sizeof(_Atom))
+        if copy._atom is NULL:
+            raise MemoryError("Failed to allocate atom")
+        memcpy(copy._atom, self._atom, sizeof(_Atom))
+        return copy
 
 
 cdef class TemplateAtom:

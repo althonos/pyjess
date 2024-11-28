@@ -1,4 +1,6 @@
+import ctypes
 import unittest
+import pickle
 
 from .._jess import Atom
 
@@ -25,6 +27,25 @@ class TestAtom(unittest.TestCase):
         self.assertEqual(atom.segment, '')
         self.assertEqual(atom.element, 'C')
         self.assertEqual(atom.charge, 0)
+
+    def test_init_consistency(self):
+        loaded = Atom.loads("ATOM     39  CA  PRO A 469     -14.948   2.091  10.228  1.00 27.71           C")
+        created = Atom(
+            serial=loaded.serial,
+            name=loaded.name,
+            residue_name=loaded.residue_name,
+            chain_id=loaded.chain_id,
+            altloc=loaded.altloc,
+            insertion_code=loaded.insertion_code,
+            residue_number=loaded.residue_number,
+            x=loaded.x,
+            y=loaded.y,
+            z=loaded.z,
+            occupancy=loaded.occupancy,
+            temperature_factor=loaded.temperature_factor,
+            element=loaded.element,
+        )
+        self.assertEqual(loaded, created)
         
     def test_init_invalid_chain_id(self):
         self.assertRaises(ValueError, self._create_atom, chain_id="too long")
@@ -52,3 +73,23 @@ class TestAtom(unittest.TestCase):
         self.assertEqual(atom.x, copy.x)
         self.assertEqual(atom.y, copy.y)
         self.assertEqual(atom.z, copy.z)
+        self.assertEqual(atom, copy)
+
+    def test_pickle_roundtrip(self):
+        atom = self._create_atom()
+        copy = pickle.loads(pickle.dumps(atom))
+        self.assertEqual(atom.serial, copy.serial)
+        self.assertEqual(atom.altloc, copy.altloc)
+        self.assertEqual(atom.name, copy.name)
+        self.assertEqual(atom.residue_name, copy.residue_name)
+        self.assertEqual(atom.residue_number, copy.residue_number)
+        self.assertEqual(atom.element, copy.element)
+        self.assertEqual(atom.insertion_code, copy.insertion_code)
+        self.assertEqual(atom.chain_id, copy.chain_id)
+        self.assertEqual(atom.occupancy, copy.occupancy)
+        self.assertEqual(atom.temperature_factor, copy.temperature_factor)
+        self.assertEqual(atom.charge, copy.charge)
+        self.assertEqual(atom.x, copy.x)
+        self.assertEqual(atom.y, copy.y)
+        self.assertEqual(atom.z, copy.z)
+        self.assertEqual(atom, copy)
