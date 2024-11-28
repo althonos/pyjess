@@ -1,5 +1,6 @@
 import unittest
 import sys
+import pickle
 
 from .._jess import TemplateAtom
 
@@ -43,8 +44,33 @@ class TestTemplateAtom(unittest.TestCase):
     def test_init_invalid_residue_name(self):
         self.assertRaises(ValueError, self._create_atom, residue_names=["something"])
 
+    def test_init_consistency(self):
+        loaded = TemplateAtom.loads("ATOM      1  NE  ARG A1136       3.953   0.597  -1.721 K")
+        created = TemplateAtom(
+            chain_id=loaded.chain_id, 
+            residue_number=loaded.residue_number,
+            x=loaded.x,
+            y=loaded.y,
+            z=loaded.z,
+            residue_names=loaded.residue_names,
+            atom_names=loaded.atom_names,
+            distance_weight=loaded.distance_weight,
+            match_mode=loaded.match_mode
+        )
+        for attribute in ("atom_names", "residue_names", "chain_id", "x", "y", "z", "match_mode"):
+            self.assertEqual(getattr(loaded, attribute), getattr(created, attribute))
+        self.assertEqual(loaded, created)
+
     def test_repr_roundtrip(self):
         atom = self._create_atom()
         copy = eval(repr(atom))
         for attribute in ("atom_names", "residue_names", "chain_id", "x", "y", "z", "match_mode"):
             self.assertEqual(getattr(copy, attribute), getattr(atom, attribute))
+        self.assertEqual(atom, copy)
+
+    def test_pickle_roundtrip(self):
+        atom = self._create_atom()
+        copy = pickle.loads(pickle.dumps(atom))
+        for attribute in ("atom_names", "residue_names", "chain_id", "x", "y", "z", "match_mode"):
+            self.assertEqual(getattr(copy, attribute), getattr(atom, attribute))
+        self.assertEqual(atom, copy)

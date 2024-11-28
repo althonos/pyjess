@@ -715,22 +715,38 @@ cdef class TemplateAtom:
                 raise ValueError(f"Invalid residue name: {name!r}")
             copy_token(self._atom.resName[m], _name.ljust(3, b'\0'), 3)
 
+    cdef dict _state(self):
+        return {
+            "chain_id": self.chain_id,
+            "residue_number": self.residue_number,
+            "x": self.x,
+            "y": self.y,
+            "z": self.z,
+            "residue_names": self.residue_names,
+            "atom_names": self.atom_names,
+            "distance_weight": self.distance_weight,
+            "match_mode": self.match_mode,
+        }
+
     def __repr__(self):
         cdef str  ty   = type(self).__name__
-        cdef list args = [
-            f"chain_id={self.chain_id!r}",
-            f"residue_number={self.residue_number!r}",
-            f"x={self.x!r}",
-            f"y={self.y!r}",
-            f"z={self.z!r}",
-            f"residue_names={self.residue_names!r}",
-            f"atom_names={self.atom_names!r}",
-        ]
-        if self.distance_weight:
-            args.append(f"distance_weight={self.distance_weight!r}")
-        if self.match_mode:
-            args.append(f"match_mode={self.match_mode!r}")
+        cdef list args = []
+        for k, v in self._state().items():
+            args.append(f"{k}={v!r}")
         return f"{ty}({', '.join(args)})"
+
+    def __eq__(self, object other):
+        cdef TemplateAtom other_
+        if not isinstance(other, TemplateAtom):
+            return NotImplemented
+        other_ = other
+        return self._state() == other_._state()
+
+    def __hash__(self):
+        return hash(tuple(self._state().values()))
+
+    def __reduce__(self):
+        return functools.partial(type(self), **self._state()), ()
 
     def __sizeof__(self):
         assert self._atom is not NULL
