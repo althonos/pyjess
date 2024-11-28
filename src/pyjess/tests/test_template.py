@@ -1,4 +1,5 @@
 import os
+import pickle
 import unittest
 import tempfile
 import textwrap
@@ -85,3 +86,15 @@ class TestTemplate(unittest.TestCase):
         tpl1 = Template.loads(TEMPLATE, id="tpl1")
         tpl2 = tpl1[1:4]
         self.assertEqual(len(tpl2), 3)
+
+    def test_copy(self):
+        tpl1 = Template.loads(TEMPLATE, id="tpl1")
+        tpl2 = tpl1.copy()
+        self.assertEqual(len(tpl1), len(tpl2))
+        self.assertEqual(tpl1, tpl2)
+
+    def test_pickle_roundtrip(self):
+        tpl1 = Template.loads(TEMPLATE, id="tpl1")
+        tpl2 = pickle.loads(pickle.dumps(tpl1))
+        self.assertEqual(len(tpl1), len(tpl2))
+        self.assertEqual(tpl1, tpl2)

@@ -959,6 +959,9 @@ cdef class Template:
         residues = { self._tess.atom[i].resSeq for i in range(count) }
         self._tess.dim = len(residues)
 
+    def __copy__(self):
+        return self.copy()
+
     def __len__(self):
         assert self._tpl is not NULL
         return self._tess.count
@@ -984,6 +987,28 @@ cdef class Template:
             atom.owned = True
             atom._atom = self._tess.atom[index_]
             return atom
+
+    def __eq__(self, object other):
+        cdef Template other_
+        if not isinstance(other, Template):
+            return NotImplemented
+        other_ = other
+        if self.id != other_.id:
+            return False
+        if self.dimension != other_.dimension:
+            return False
+        if len(self) != len(other_):
+            return False
+        return all(x == y for x,y in zip(self, other_))
+
+    def __hash__(self):
+        return hash(
+            self.id,
+            *(hash(x) for x in self)
+        )
+
+    def __reduce__(self):
+        return type(self), (list(self), self.id)
 
     def __sizeof__(self):
         assert self._tess is not NULL
@@ -1027,6 +1052,12 @@ cdef class Template:
         """
         assert self._tess is not NULL
         return self._tess.dim
+
+    cpdef Template copy(self):
+        return Template(
+            self,
+            self.id
+        )
 
 
 cdef class Query:
