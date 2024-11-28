@@ -56,6 +56,13 @@ class TestAtom(unittest.TestCase):
     def test_init_invalid_residue_name(self):
         self.assertRaises(ValueError, self._create_atom, residue_name="too long")
 
+    def test_hash(self):
+        a1 = self._create_atom()
+        a2 = self._create_atom()
+        self.assertEqual(a1, a2)
+        self.assertEqual(hash(a1), hash(a2))
+        self.assertIsNot(a1, a2)
+
     def test_repr_roundtrip(self):
         atom = self._create_atom()
         copy = eval(repr(atom))

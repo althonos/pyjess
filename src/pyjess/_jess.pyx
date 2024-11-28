@@ -43,10 +43,11 @@ from jess.tess_atom cimport TessAtom as _TessAtom
 # --- Python imports ---------------------------------------------------------
 
 import contextlib
+import functools
 import io
+import itertools
 import os
 import warnings
-import functools
 
 __version__ = PROJECT_VERSION
 
@@ -205,6 +206,26 @@ cdef class Molecule:
             atom._atom = <_Atom*> jess.molecule.Molecule_atom(self._mol, index_)
             return atom
 
+    def __copy__(self):
+        return self.copy()
+
+    def __eq__(self, object other):
+        cdef Molecule other_
+        if not isinstance(other, Molecule):
+            return NotImplemented
+        other_ = other
+        if self._id != other_._id:
+            return False
+        if self._mol.count != other_._mol.count:
+            return False
+        return all(x == y for x,y in zip(self, other_))
+
+    def __hash__(self):
+        return hash((self._id, *(hash(x) for x in self)))
+
+    def __reduce__(self):
+        return type(self), (list(self), self.id)
+
     def __sizeof__(self):
         assert self._mol is not NULL
         return (
@@ -229,6 +250,35 @@ cdef class Molecule:
                 or atom._atom.tempFactor >= cutoff
             ]
         )
+
+    cpdef Molecule copy(self):
+        """Create a copy of this molecule and its atoms.
+
+        Returns:
+            `~pyjess.Molecule`: A newly allocated molecule with the same
+            identifier and atoms.
+
+        """
+        cdef Molecule copy = Molecule.__new__(Molecule)
+        cdef size_t   size = sizeof(_Molecule) + self._mol.count * sizeof(_Atom*)
+
+        with nogil:
+            # allocate molecule storage
+            copy._mol = <_Molecule*> malloc(size)
+            if copy._mol is NULL:
+                raise MemoryError("Failed to allocate molecule")
+            #
+            copy._mol.count = self._mol.count
+            memset(copy._mol.id, b' ', 5)
+
+            for i in range(self._mol.count):
+                copy._mol.atom[i] = <_Atom*> malloc(sizeof(_Atom))
+                if copy._mol.atom[i] is NULL:
+                    raise MemoryError("Failed to allocate atom")
+                memcpy(copy._mol.atom[i], self._mol.atom[i], sizeof(_Atom))
+
+        copy._id = self._id
+        return copy
 
 
 cdef class Atom:
@@ -400,7 +450,8 @@ cdef class Atom:
         if not isinstance(other, Atom):
             return NotImplemented
         other_ = other
-        return self._state() == other_._state()
+        # FIXME: it should be possible to do a memcmp here.
+        return self._state() == other_._state()  
 
     def __hash__(self):
         return hash(tuple(self._state().values()))
@@ -505,6 +556,12 @@ cdef class Atom:
         return self._atom.x[2]
 
     cpdef Atom copy(self):
+        """Create a copy of this atom.
+
+        Returns:
+            `~pyjess.Atom`: A newly allocated atom with identical attributes.
+
+        """
         cdef Atom copy = Atom.__new__(Atom)
         copy._atom = <_Atom*> malloc(sizeof(_Atom))
         if copy._atom is NULL:

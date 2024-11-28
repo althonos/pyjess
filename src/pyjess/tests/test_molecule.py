@@ -1,4 +1,5 @@
 import os
+import pickle
 import unittest
 import tempfile
 import textwrap
@@ -84,3 +85,41 @@ class TestMolecule(unittest.TestCase):
         self.assertEqual(len(mol2), 2)
         self.assertEqual(mol2[0].name, "CA")
         self.assertEqual(mol2[1].name, "C")
+
+    def test_hash(self):
+        atoms = [
+            self._create_atom(serial=1, name='N'),
+            self._create_atom(serial=2, name='CA'),
+            self._create_atom(serial=3, name='C'),
+            self._create_atom(serial=4, name='O'),
+        ]
+        mol1 = Molecule(atoms)
+        mol2 = Molecule(atoms)
+        self.assertEqual(hash(mol1), hash(mol2))
+        self.assertEqual(mol1, mol2)
+
+    def test_copy(self):
+        atoms = [
+            self._create_atom(serial=1, name='N'),
+            self._create_atom(serial=2, name='CA'),
+            self._create_atom(serial=3, name='C'),
+            self._create_atom(serial=4, name='O'),
+        ]
+        mol1 = Molecule(atoms)
+        mol2 = mol1.copy()
+        self.assertEqual(list(mol1), list(mol2))
+        self.assertEqual(mol1.id, mol2.id)
+        self.assertEqual(mol1, mol2)
+
+    def test_pickle_roundtrip(self):
+        atoms = [
+            self._create_atom(serial=1, name='N'),
+            self._create_atom(serial=2, name='CA'),
+            self._create_atom(serial=3, name='C'),
+            self._create_atom(serial=4, name='O'),
+        ]
+        mol1 = Molecule(atoms)
+        mol2 = pickle.loads(pickle.dumps(mol1))
+        self.assertEqual(list(mol1), list(mol2))
+        self.assertEqual(mol1.id, mol2.id)
+        self.assertEqual(mol1, mol2)
