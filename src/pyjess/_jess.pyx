@@ -55,10 +55,11 @@ __version__ = PROJECT_VERSION
 
 cdef inline void copy_token(char* dst, const char* src, size_t n) noexcept nogil:
     cdef size_t i
-    strncpy(dst, src, n)
     for i in range(n):
-        if dst[i] == ord(' ') or dst[i] == 0:
+        if src[i] == ord(' ') or src[i] == 0:
             dst[i] = ord('_')
+        else:
+            dst[i] = src[i]
     dst[n] = 0
 
 @contextlib.contextmanager
@@ -70,8 +71,11 @@ def nullcontext(return_value=None):
 cdef class Molecule:
     """A molecule structure, as a sequence of `Atom` objects.
 
-    .. versionchanged:: 0.2.2
+    .. versionadded:: 0.2.2
        Support identifiers of arbitrary length.
+
+    .. versionadded:: 0.4.0
+       Equality, hashing and pickle protocol support.
 
     """
     cdef _Molecule* _mol
@@ -258,6 +262,8 @@ cdef class Molecule:
             `~pyjess.Molecule`: A newly allocated molecule with the same
             identifier and atoms.
 
+        .. versionadded:: 0.4.0
+
         """
         cdef Molecule copy = Molecule.__new__(Molecule)
         cdef size_t   size = sizeof(_Molecule) + self._mol.count * sizeof(_Atom*)
@@ -267,10 +273,10 @@ cdef class Molecule:
             copy._mol = <_Molecule*> malloc(size)
             if copy._mol is NULL:
                 raise MemoryError("Failed to allocate molecule")
-            #
+            # copy molecule attributes
             copy._mol.count = self._mol.count
             memset(copy._mol.id, b' ', 5)
-
+            # copy molecule atoms
             for i in range(self._mol.count):
                 copy._mol.atom[i] = <_Atom*> malloc(sizeof(_Atom))
                 if copy._mol.atom[i] is NULL:
@@ -283,6 +289,10 @@ cdef class Molecule:
 
 cdef class Atom:
     """A single atom in a molecule.
+
+    .. versionadded:: 0.4.0
+       Equality, hashing and pickle protocol support.
+
     """
     cdef object owner
     cdef bint   owned
@@ -561,6 +571,8 @@ cdef class Atom:
         Returns:
             `~pyjess.Atom`: A newly allocated atom with identical attributes.
 
+        .. versionadded:: 0.4.0
+
         """
         cdef Atom copy = Atom.__new__(Atom)
         copy._atom = <_Atom*> malloc(sizeof(_Atom))
@@ -572,6 +584,10 @@ cdef class Atom:
 
 cdef class TemplateAtom:
     """A single template atom.
+
+    .. versionadded:: 0.4.0
+       Equality, hashing and pickle protocol support.
+
     """
     cdef object     owner
     cdef bint       owned
@@ -843,6 +859,10 @@ cdef class TemplateAtom:
 
 cdef class Template:
     """A template, as a sequence of `TemplateAtom` objects.
+
+    .. versionadded:: 0.4.0
+       Equality, hashing and pickle protocol support.
+
     """
     cdef object         owner
     cdef bint           owned
@@ -1309,6 +1329,10 @@ cdef class Hit:
 
 cdef class Jess:
     """A handle to run Jess over a list of templates.
+
+    .. versionadded:: 0.4.0
+       Equality, hashing and pickle protocol support.
+
     """
     cdef _Jess* _jess
     cdef dict   _indices
@@ -1388,6 +1412,14 @@ cdef class Jess:
             return self._templates[index_]
 
     cpdef Jess copy(self):
+        """Create a copy of the `Jess` object.
+
+        Returns:
+            `~pyjess.Jess`: A `Jess` object containing the same templates.
+
+        .. versionadded:: 0.4.0
+
+        """
         return type(self)(self._templates)
 
     def query(
