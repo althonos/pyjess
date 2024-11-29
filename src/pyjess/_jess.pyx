@@ -751,6 +751,9 @@ cdef class TemplateAtom:
             args.append(f"{k}={v!r}")
         return f"{ty}({', '.join(args)})"
 
+    def __copy__(self):
+        return self.copy()
+
     def __eq__(self, object other):
         cdef TemplateAtom other_
         if not isinstance(other, TemplateAtom):
@@ -855,6 +858,18 @@ cdef class TemplateAtom:
         """
         assert self._atom is not NULL
         return self._atom.distWeight
+
+    cpdef TemplateAtom copy(self):
+        """Create a copy of this template atom.
+
+        Returns:
+            `~pyjess.TemplateAtom`: A new template atom object with 
+            identical attributes.
+            
+        .. versionadded:: 0.4.0
+        
+        """
+        return type(self)(**self._state())
 
 
 cdef class Template:
