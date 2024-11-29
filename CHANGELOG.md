@@ -6,7 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.4.1...HEAD
+
+
+## [v0.4.1] - 2024-11-29
+[v0.4.1]: https://github.com/althonos/pyjess/compare/v0.4.0...v0.4.1
+
+### Fixed
+- `TemplateAtom.__hash__` implementation.
+
+### Changed
+- `TemplateAtom.residue_names` and `TemplateAtom.atom_names` are now tuples.
 
 
 ## [v0.4.0] - 2024-11-29
