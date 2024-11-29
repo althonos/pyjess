@@ -35,9 +35,18 @@ class TestTemplateAtom(unittest.TestCase):
     def test_hash(self):
         a1 = self._create_atom()
         a2 = self._create_atom()
-        self.assertEqual(a1, a2)
         self.assertEqual(hash(a1), hash(a2))
         self.assertIsNot(a1, a2)
+        a3 = self._create_atom(x=1.0)
+        self.assertNotEqual(hash(a1), hash(a3))
+
+    def test_eq(self):
+        a1 = self._create_atom()
+        a2 = self._create_atom()
+        self.assertEqual(a1, a2)
+        self.assertIsNot(a1, a2)
+        a3 = self._create_atom(x=1.0)
+        self.assertNotEqual(a1, a3)
 
     @unittest.skipUnless(sys.implementation.name == "cpython", "only available on CPython")
     def test_sizeof(self):

@@ -46,9 +46,23 @@ class TestJess(unittest.TestCase):
             template2 = Template.load(f)
         j1 = Jess([template1, template2])
         j2 = Jess([template1, template2])
-        self.assertEqual(j1, j2)
         self.assertEqual(hash(j1), hash(j2))
         self.assertIsNot(j1, j2)
+        j3 = Jess([template1])
+        self.assertNotEqual(hash(j1), hash(j3))
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    def test_eq(self):
+        with files(data).joinpath("template_01.qry").open() as f:
+            template1 = Template.load(f)
+        with files(data).joinpath("template_02.qry").open() as f:
+            template2 = Template.load(f)
+        j1 = Jess([template1, template2])
+        j2 = Jess([template1, template2])
+        self.assertEqual(j1, j2)
+        self.assertIsNot(j1, j2)
+        j3 = Jess([template1])
+        self.assertNotEqual(j1, j3)
 
     @unittest.skipUnless(files, "importlib.resources not available")
     def test_pickle_roundtrip(self):

@@ -93,6 +93,16 @@ class TestTemplate(unittest.TestCase):
         self.assertEqual(tpl1, tpl2)
         self.assertEqual(hash(tpl1), hash(tpl2))
         self.assertIsNot(tpl1, tpl2)
+        tpl3 = Template.loads(TEMPLATE, id="tpl3")
+        self.assertNotEqual(hash(tpl1), hash(tpl3))
+
+    def test_eq(self):
+        tpl1 = Template.loads(TEMPLATE, id="tpl1")
+        tpl2 = Template.loads(TEMPLATE, id="tpl1")
+        self.assertEqual(tpl1, tpl2)
+        self.assertIsNot(tpl1, tpl2)
+        tpl3 = Template.loads(TEMPLATE, id="tpl3")
+        self.assertNotEqual(tpl1, tpl3)
 
     def test_copy(self):
         tpl1 = Template.loads(TEMPLATE, id="tpl1")

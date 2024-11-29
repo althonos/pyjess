@@ -96,7 +96,23 @@ class TestMolecule(unittest.TestCase):
         mol1 = Molecule(atoms)
         mol2 = Molecule(atoms)
         self.assertEqual(hash(mol1), hash(mol2))
+        self.assertIsNot(mol1, mol2)
+        mol3 = Molecule(atoms[:-1])
+        self.assertNotEqual(hash(mol1), hash(mol3))
+
+    def test_eq(self):
+        atoms = [
+            self._create_atom(serial=1, name='N'),
+            self._create_atom(serial=2, name='CA'),
+            self._create_atom(serial=3, name='C'),
+            self._create_atom(serial=4, name='O'),
+        ]
+        mol1 = Molecule(atoms)
+        mol2 = Molecule(atoms)
         self.assertEqual(mol1, mol2)
+        self.assertIsNot(mol1, mol2)
+        mol3 = Molecule(atoms[:-1])
+        self.assertNotEqual(mol1, mol3)
 
     def test_copy(self):
         atoms = [
