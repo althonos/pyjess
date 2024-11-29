@@ -1,6 +1,7 @@
 import math
 import unittest
 import sys
+import pickle
 
 from .._jess import Template, Molecule, Jess
 from .utils import files
@@ -19,6 +20,26 @@ class TestJess(unittest.TestCase):
         jess = Jess()
         hits = jess.query(mol, 2, 2, 4)
         self.assertRaises(StopIteration, next, hits)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    def test_copy(self):
+        with files(data).joinpath("template_01.qry").open() as f:
+            template1 = Template.load(f)
+        with files(data).joinpath("template_02.qry").open() as f:
+            template2 = Template.load(f)
+        jess = Jess([template1, template2])
+        copy = jess.copy()
+        self.assertEqual(jess, copy)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    def test_pickle_roundtrip(self):
+        with files(data).joinpath("template_01.qry").open() as f:
+            template1 = Template.load(f)
+        with files(data).joinpath("template_02.qry").open() as f:
+            template2 = Template.load(f)
+        jess = Jess([template1, template2])
+        copy = pickle.loads(pickle.dumps(jess))
+        self.assertEqual(jess, copy)
 
     @unittest.skipUnless(sys.implementation.name == "cpython", "only available on CPython")
     @unittest.skipUnless(files, "importlib.resources not available")

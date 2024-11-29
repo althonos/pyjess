@@ -1354,6 +1354,22 @@ cdef class Jess:
             self._templates.append(template)
             self.length += 1
 
+    def __copy__(self):
+        return self.copy()
+
+    def __reduce__(self):
+        return type(self), (self._templates,)
+
+    def __eq__(self, object other):
+        cdef Jess other_
+        if not isinstance(other, Jess):
+            return NotImplemented
+        other_ = other
+        return self._templates == other_._templates
+
+    def __hash__(self):
+        return hash(tuple(hash(t) for t in self._templates))
+
     def __len__(self):
         return self.length
 
@@ -1370,6 +1386,9 @@ cdef class Jess:
             if index_ < 0 or index_ >= self.length:
                 raise IndexError(index)
             return self._templates[index_]
+
+    cpdef Jess copy(self):
+        return type(self)(self._templates)
 
     def query(
         self,
