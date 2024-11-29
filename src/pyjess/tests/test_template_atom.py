@@ -10,8 +10,8 @@ class TestTemplateAtom(unittest.TestCase):
     def test_load(self):
         atom = TemplateAtom.loads("ATOM      1  NE  ARG A1136       3.953   0.597  -1.721 K")
         self.assertEqual(atom.match_mode, 1)
-        self.assertEqual(atom.atom_names, ["NE"])
-        self.assertEqual(atom.residue_names, ["ARG", "LYS"])
+        self.assertEqual(atom.atom_names, ("NE",))
+        self.assertEqual(atom.residue_names, ("ARG", "LYS",))
         self.assertEqual(atom.chain_id, "A")
         self.assertEqual(atom.residue_number, 1136)
         self.assertEqual(atom.x, 3.953)
@@ -31,6 +31,13 @@ class TestTemplateAtom(unittest.TestCase):
         }
         default.update(kwargs)
         return TemplateAtom(**default)
+
+    def test_hash(self):
+        a1 = self._create_atom()
+        a2 = self._create_atom()
+        self.assertEqual(a1, a2)
+        self.assertEqual(hash(a1), hash(a2))
+        self.assertIsNot(a1, a2)
 
     @unittest.skipUnless(sys.implementation.name == "cpython", "only available on CPython")
     def test_sizeof(self):

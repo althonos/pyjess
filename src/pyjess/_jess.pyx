@@ -828,7 +828,11 @@ cdef class TemplateAtom:
 
     @property
     def atom_names(self):
-        """`list` of `str`: The different atom names for this atom.
+        """`tuple` of `str`: The different atom names for this atom.
+
+        .. versionchanged:: 0.4.1
+           Property now returns a `tuple` rather than a `list`.
+
         """
         assert self._atom is not NULL
 
@@ -837,11 +841,15 @@ cdef class TemplateAtom:
 
         for i in range(self._atom.nameCount):
             l.append(self._atom.name[i].replace(b'_', b'').decode())
-        return l
+        return tuple(l)
 
     @property
     def residue_names(self):
-        """`list` of `str`: The different residue names for this atom.
+        """`tuple` of `str`: The different residue names for this atom.
+
+        .. versionchanged:: 0.4.1
+           Property now returns a `tuple` rather than a `list`.
+           
         """
         assert self._atom is not NULL
 
@@ -850,7 +858,7 @@ cdef class TemplateAtom:
 
         for i in range(self._atom.resNameCount):
             l.append(self._atom.resName[i].replace(b'_', b'').decode())
-        return l
+        return tuple(l)
 
     @property
     def distance_weight(self):
@@ -1037,10 +1045,10 @@ cdef class Template:
         return all(x == y for x,y in zip(self, other_))
 
     def __hash__(self):
-        return hash(
+        return hash((
             self.id,
             *(hash(x) for x in self)
-        )
+        ))
 
     def __reduce__(self):
         return type(self), (list(self), self.id)
@@ -1351,7 +1359,7 @@ cdef class Jess:
     """
     cdef _Jess* _jess
     cdef dict   _indices
-    cdef list   _templates
+    cdef tuple  _templates
     cdef size_t length
 
     def __cinit__(self):
@@ -1379,10 +1387,10 @@ cdef class Jess:
         """
         cdef Template   template
         cdef _Template* tpl
+        cdef list       _templates = []
 
         self._jess = jess.jess.Jess_create()
         self._indices = {}
-        self._templates = []
 
         for template in templates:
             # NOTE: the Jess storage owns the data, so we make a copy of the
@@ -1390,8 +1398,10 @@ cdef class Jess:
             tpl = template._tpl.copy(template._tpl)
             jess.jess.Jess_addTemplate(self._jess, tpl)
             self._indices[<size_t> tpl] = self.length
-            self._templates.append(template)
+            _templates.append(template)
             self.length += 1
+
+        self._templates = tuple(_templates)
 
     def __copy__(self):
         return self.copy()
@@ -1407,7 +1417,7 @@ cdef class Jess:
         return self._templates == other_._templates
 
     def __hash__(self):
-        return hash(tuple(hash(t) for t in self._templates))
+        return hash((Jess, self._templates))
 
     def __len__(self):
         return self.length

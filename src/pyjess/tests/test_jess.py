@@ -21,6 +21,13 @@ class TestJess(unittest.TestCase):
         hits = jess.query(mol, 2, 2, 4)
         self.assertRaises(StopIteration, next, hits)
 
+    def test_hash_empty(self):
+        j1 = Jess()
+        j2 = Jess()
+        self.assertEqual(j1, j2)
+        self.assertEqual(hash(j1), hash(j2))
+        self.assertIsNot(j1, j2)
+
     @unittest.skipUnless(files, "importlib.resources not available")
     def test_copy(self):
         with files(data).joinpath("template_01.qry").open() as f:
@@ -30,6 +37,18 @@ class TestJess(unittest.TestCase):
         jess = Jess([template1, template2])
         copy = jess.copy()
         self.assertEqual(jess, copy)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    def test_hash(self):
+        with files(data).joinpath("template_01.qry").open() as f:
+            template1 = Template.load(f)
+        with files(data).joinpath("template_02.qry").open() as f:
+            template2 = Template.load(f)
+        j1 = Jess([template1, template2])
+        j2 = Jess([template1, template2])
+        self.assertEqual(j1, j2)
+        self.assertEqual(hash(j1), hash(j2))
+        self.assertIsNot(j1, j2)
 
     @unittest.skipUnless(files, "importlib.resources not available")
     def test_pickle_roundtrip(self):

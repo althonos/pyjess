@@ -30,9 +30,9 @@ class TestTemplate(unittest.TestCase):
         template = Template.loads(TEMPLATE)
         self.assertEqual(len(template), 11)
         self.assertEqual(template.dimension, 5)
-        self.assertEqual(template[0].residue_names, ["LYS"])
-        self.assertEqual(template[0].atom_names, ["NZ"])
-        self.assertEqual(template[1].atom_names, ["CG"])
+        self.assertEqual(template[0].residue_names, ("LYS",))
+        self.assertEqual(template[0].atom_names, ("NZ",))
+        self.assertEqual(template[1].atom_names, ("CG",))
         self.assertEqual(template[2].residue_number, 1132)
         self.assertEqual(template[-1].residue_number, 1150)
 
@@ -42,9 +42,9 @@ class TestTemplate(unittest.TestCase):
             f.write(TEMPLATE)
             f.flush()
             template = Template.load(f.name)
-        self.assertEqual(template[0].residue_names, ["LYS"])
-        self.assertEqual(template[0].atom_names, ["NZ"])
-        self.assertEqual(template[1].atom_names, ["CG"])
+        self.assertEqual(template[0].residue_names, ("LYS",))
+        self.assertEqual(template[0].atom_names, ("NZ",))
+        self.assertEqual(template[1].atom_names, ("CG",))
         self.assertEqual(template[2].residue_number, 1132)
         self.assertEqual(template[-1].residue_number, 1150)
 
@@ -55,9 +55,9 @@ class TestTemplate(unittest.TestCase):
             f.flush()
             f.seek(0)
             template = Template.load(f)
-        self.assertEqual(template[0].residue_names, ["LYS"])
-        self.assertEqual(template[0].atom_names, ["NZ"])
-        self.assertEqual(template[1].atom_names, ["CG"])
+        self.assertEqual(template[0].residue_names, ("LYS",))
+        self.assertEqual(template[0].atom_names, ("NZ",))
+        self.assertEqual(template[1].atom_names, ("CG",))
         self.assertEqual(template[2].residue_number, 1132)
         self.assertEqual(template[-1].residue_number, 1150)
 
@@ -86,6 +86,13 @@ class TestTemplate(unittest.TestCase):
         tpl1 = Template.loads(TEMPLATE, id="tpl1")
         tpl2 = tpl1[1:4]
         self.assertEqual(len(tpl2), 3)
+
+    def test_hash(self):
+        tpl1 = Template.loads(TEMPLATE, id="tpl1")
+        tpl2 = Template.loads(TEMPLATE, id="tpl1")
+        self.assertEqual(tpl1, tpl2)
+        self.assertEqual(hash(tpl1), hash(tpl2))
+        self.assertIsNot(tpl1, tpl2)
 
     def test_copy(self):
         tpl1 = Template.loads(TEMPLATE, id="tpl1")
