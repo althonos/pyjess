@@ -6,7 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.4.0...HEAD
+
+
+## [v0.4.0] - 2024-11-29
+[v0.4.0]: https://github.com/althonos/pyjess/compare/v0.3.3...v0.4.0
+
+### Added
+- `__eq__`, `__hash__`, `__copy__`, and `__reduce__` to `Molecule`, `Atom`, `Template`, `TemplateAtom` and `Jess`.
+
+### Changed
+- Move project development stage from *Alpha* to *Beta*. 
+- List `conda` support in the [Install page](https://pyjess.readthedocs.io/en/latest/guide/install.html) of the documentation.
 
 
 ## [v0.3.3] - 2024-11-05
