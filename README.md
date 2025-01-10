@@ -47,11 +47,11 @@ as well as the code required to compile from source with Cython:
 $ pip install pyjess
 ```
 
-<!-- Otherwise, PyJess is also available as a [Bioconda](https://bioconda.github.io/)
+Otherwise, PyJess is also available as a [Bioconda](https://bioconda.github.io/)
 package:
 ```console
 $ conda install -c bioconda pyjess
-``` -->
+```
 
 Check the [*install* page](https://pyjess.readthedocs.io/en/stable/install.html)
 of the documentation for other ways to install PyJess on your machine.
@@ -61,20 +61,21 @@ of the documentation for other ways to install PyJess on your machine.
 Load templates to be used as references from different template files:
 
 ```python
-import glob
+import pathlib
 import pyjess
 
 templates = []
-for path in sorted(glob.iglob("vendor/jess/examples/template_*.qry")):
-    templates.append(Template.load(path, id=os.path.basename(path)))
+for path in sorted(pathlib.Path("vendor/jess/examples").glob("template_*.qry")):
+    with path.open() as file:
+        templates.append(pyjess.Template.load(file, id=path.stem))
 ```
 
 Create a `Jess` instance and use it to query a molecule (a PDB structure)
 against the stored templates:
 
 ```python
-jess = Jess(templates)
-mol = Molecule("vendor/jess/examples/test_pdbs/pdb1a0p.ent")
+jess = pyjess.Jess(templates)
+mol = pyjess.Molecule.load("vendor/jess/examples/test_pdbs/pdb1a0p.ent")
 query = jess.query(mol, rmsd_threshold=2.0, distance_cutoff=3.0, max_dynamic_distance=3.0)
 ```
 
