@@ -461,7 +461,7 @@ cdef class Atom:
             return NotImplemented
         other_ = other
         # FIXME: it should be possible to do a memcmp here.
-        return self._state() == other_._state()  
+        return self._state() == other_._state()
 
     def __hash__(self):
         return hash(tuple(self._state().values()))
@@ -598,11 +598,16 @@ cdef class TemplateAtom:
         """Load a template atom from the given file.
 
         Arguments:
-            file (file-like object): A file-like object opened in
-                text mode to read the template atom from.
+            file (str, os.PathLike or file-like object): A file-like object
+                opened in text or binary mode to read the template atom from.
 
         """
-        return cls.loads(file.read())
+        try:
+            handle = open(file)
+        except TypeError:
+            handle = nullcontext(file)
+        with handle as f:
+            return cls.loads(f.read())
 
     @classmethod
     def loads(cls, text):
@@ -849,7 +854,7 @@ cdef class TemplateAtom:
 
         .. versionchanged:: 0.4.1
            Property now returns a `tuple` rather than a `list`.
-           
+
         """
         assert self._atom is not NULL
 
@@ -871,11 +876,11 @@ cdef class TemplateAtom:
         """Create a copy of this template atom.
 
         Returns:
-            `~pyjess.TemplateAtom`: A new template atom object with 
+            `~pyjess.TemplateAtom`: A new template atom object with
             identical attributes.
-            
+
         .. versionadded:: 0.4.0
-        
+
         """
         return type(self)(**self._state())
 
@@ -894,10 +899,42 @@ cdef class Template:
 
     @classmethod
     def loads(cls, text, str id = None):
+        """Load a template from a string.
+
+        Arguments:
+            file (`str`, `os.PathLike`, or file-like object): Either the path
+                to a file, or a file-like object opened in **text mode**
+                containing the template.
+            id (`str`, optional): The identifier of the template. By default,
+                the parser will take the one from the ``PDB_ID`` remark if
+                found in the header.
+
+        Returns:
+            `~pyjess.Template`: The template parsed from the given string.
+
+        See Also:
+            `Template.load` to load a template from a file-like object or
+            from a path.
+
+        """
         return cls.load(io.StringIO(text), id=id)
 
     @classmethod
     def load(cls, file, str id = None):
+        """Load a template from the given file.
+
+        Arguments:
+            file (`str`, `os.PathLike` or file-like object): Either the
+                path to a file, or a file-like object opened in **text mode**
+                to read the template from.
+            id (`str`, optional): The identifier of the template. By default,
+                the parser will take the one from the ``PDB_ID`` remark if
+                found in the header.
+
+        Returns:
+            `~pyjess.Template`: The template parsed from the given file.
+
+        """
         try:
             handle = open(file)
         except TypeError:
