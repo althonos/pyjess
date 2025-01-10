@@ -25,8 +25,8 @@ Jess is an algorithm for constraint-based structural template matching
 proposed by Jonathan Barker *et al.*[\[1\]](#ref1). It can be used to identify
 catalytic residues from a known template inside a protein structure. Jess
 is an evolution of TESS, a geometric hashing algorithm developed by
-Andrew Wallace *et al.*[\[2\]](#ref2), removing some pre-computation and 
-structural requirements from the original algorithm. Jess was further 
+Andrew Wallace *et al.*[\[2\]](#ref2), removing some pre-computation and
+structural requirements from the original algorithm. Jess was further
 updated and maintained by [Ioannis Riziotis](https://github.com/iriziotis)
 during his PhD in the [Thornton group](https://www.ebi.ac.uk/research/thornton/).
 
@@ -55,6 +55,15 @@ $ conda install -c bioconda pyjess
 
 Check the [*install* page](https://pyjess.readthedocs.io/en/stable/install.html)
 of the documentation for other ways to install PyJess on your machine.
+
+
+## 🔖 Citation
+
+PyJess is scientific software, and builds on top of Jess. Please cite
+Jess if you are using it in an academic work, for instance as:
+
+> PyJess, a Python library binding to Jess (Barker *et al.*, 2003).
+
 
 ## 💡 Example
 
@@ -105,7 +114,7 @@ with multiprocessing.ThreadPool() as pool:
     hits = pool.map(jess.query, molecules)
 ```
 
-*⚠️ Prior to PyJess `v0.2.1`, the Jess code was running some thread-unsafe operations which have now been patched. 
+*⚠️ Prior to PyJess `v0.2.1`, the Jess code was running some thread-unsafe operations which have now been patched.
 If running Jess in parallel, make sure to use `v0.2.1` or later to use the code patched with re-entrant functions*.
 
 <!-- ## ⏱️ Benchmarks -->
