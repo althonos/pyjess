@@ -44,6 +44,7 @@ classifiers = [
 "Coverage" = "https://codecov.io/gh/althonos/pyjess/"
 "Builds" = "https://github.com/althonos/pyjess/actions"
 "PyPI" = "https://pypi.org/project/pyjess"
+"PiWheels" = "https://piwheels.org/project/pyjess/"
 
 [project.optional-dependencies]
 test = ["importlib-resources ; python_version < '3.9'"]
