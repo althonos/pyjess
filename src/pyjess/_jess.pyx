@@ -1218,7 +1218,7 @@ cdef class Query:
         hit._sup = NULL
         hit._atoms = NULL
         hit.rmsd = INFINITY
-        hit.molecule = self.molecule
+        hit._molecule = self.molecule
         hit_tpl = NULL
 
         # search the next hit without the GIL to allow parallel queries.
@@ -1298,7 +1298,7 @@ cdef class Hit:
 
     cdef readonly double   rmsd
     cdef readonly Template template
-    cdef readonly Molecule molecule
+    cdef          Molecule _molecule
 
     def __dealloc__(self):
         jess.super.Superposition_free(self._sup)
@@ -1329,7 +1329,7 @@ cdef class Hit:
         cdef double e
 
         with nogil:
-            n = jess.molecule.Molecule_count(self.molecule._mol)
+            n = jess.molecule.Molecule_count(self._molecule._mol)
             e = self.template._tpl.logE(self.template._tpl, self.rmsd, n)
         return e
 
@@ -1341,7 +1341,7 @@ cdef class Hit:
         cdef double e
 
         with nogil:
-            n = jess.molecule.Molecule_count(self.molecule._mol)
+            n = jess.molecule.Molecule_count(self._molecule._mol)
             e = exp(self.template._tpl.logE(self.template._tpl, self.rmsd, n))
         return e
 
@@ -1385,6 +1385,43 @@ cdef class Hit:
             atoms.append(atom)
 
         return atoms
+
+    cpdef Molecule molecule(self, bint transform=False):
+        """Get the molecule matching the template.
+
+        Arguments:
+            transform (`bool`): Whether or not to transform coordinates
+                of the molecule atoms into template frame.
+
+        Returns:
+            `~pyjess.Molecule`: The matching molecule, optionally
+            rotated to match the template coordinate.
+
+        """
+        assert self.template._tpl is not NULL
+        assert self._sup is not NULL
+
+        cdef _Atom*        atom
+        cdef Molecule      mol
+        cdef size_t        i
+        cdef size_t        j
+        cdef size_t        k
+        cdef const double* M    = jess.super.Superposition_rotation(self._sup)
+        cdef const double* c    = jess.super.Superposition_centroid(self._sup, 0)
+        cdef const double* v    = jess.super.Superposition_centroid(self._sup, 1)
+
+        if not transform:
+            return self._molecule
+
+        mol = self._molecule.copy()
+        for k in range(mol._mol.count):
+            atom = mol._mol.atom[i]
+            for i in range(3):
+                atom.x[i] = v[i]
+                for j in range(3):
+                    atom.x[i] += M[3*i + j] * (self._molecule._mol.atom[k].x[j] - c[j])
+
+        return mol
 
 
 cdef class Jess:
