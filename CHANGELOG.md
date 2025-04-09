@@ -6,7 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.5.0...HEAD
+
+
+## [v0.5.0] - 2025-04-09
+[v0.5.0]: https://github.com/althonos/pyjess/compare/v0.4.1...v0.5.0
+
+### Fixed
+- Remove invalid `platform` key from `pyproject.toml`.
+
+### Changed
+- `Hit.molecule` is now a method and can optionally rotate the hit molecule.
 
 
 ## [v0.4.1] - 2024-11-29

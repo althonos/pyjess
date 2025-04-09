@@ -1397,6 +1397,8 @@ cdef class Hit:
             `~pyjess.Molecule`: The matching molecule, optionally
             rotated to match the template coordinate.
 
+        .. versionadded:: 0.5.0
+
         """
         assert self.template._tpl is not NULL
         assert self._sup is not NULL
