@@ -124,7 +124,7 @@ If running Jess in parallel, make sure to use `v0.2.1` or later to use the code 
 
 ### ⚠️ Issue Tracker
 
-Found a bug ? Have an enhancement request ? Head over to the [GitHub issue tracker](https://github.com/althonos/[pyjess]/issues)
+Found a bug ? Have an enhancement request ? Head over to the [GitHub issue tracker](https://github.com/althonos/pyjess/issues)
 if you need to report or ask something. If you are filing in on a bug,
 please include as much information as you can about the issue, and try to
 recreate the same bug in a simple, easily reproducible situation.
