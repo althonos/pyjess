@@ -1,11 +1,19 @@
 diff --git a/src/Molecule.c b/src/Molecule.c
-index d6c327e..5e80f5f 100644
+index d6c327e..12faed9 100644
 --- a/src/Molecule.c
 +++ b/src/Molecule.c
-@@ -33,13 +33,6 @@ struct _Node
- // atom[k]				Pointer to kth atom in the molecule
- // ==================================================================
+@@ -25,21 +25,6 @@ struct _Node
+ 	Atom *atom;
+ };
  
+-// ==================================================================
+-// type Molecule
+-// ==================================================================
+-// count				Number of atoms in the molecule
+-// id					The molecule PDB code (if found)
+-// atom[k]				Pointer to kth atom in the molecule
+-// ==================================================================
+-
 -struct _Molecule
 -{
 -	int count;
@@ -16,3 +24,25 @@ index d6c327e..5e80f5f 100644
  // ==================================================================
  // Methods of type Molecule;
  // ==================================================================
+@@ -147,21 +132,5 @@ void Molecule_free(Molecule *M)
+ 	}
+ }
+ 
+-int Molecule_count(const Molecule *M)
+-{
+-	return M->count;
+-}
+-
+-const Atom *Molecule_atom(const Molecule *M, int k)
+-{
+-	return !M || k<0 || k>=M->count ? NULL:M->atom[k];
+-}
+-
+-const char *Molecule_id(const Molecule *M)
+-{
+-	if(strlen(M->id)==4 && strcmp(M->id, "    ")!=0) return M->id;
+-	return NULL;
+-}
+-
+ // ==================================================================
+ 
