@@ -1,9 +1,9 @@
 diff --git a/src/ResIndex.c b/src/ResIndex.c
 new file mode 100644
-index 0000000..ce9a653
+index 0000000..1755063
 --- /dev/null
 +++ b/src/ResIndex.c
-@@ -0,0 +1,154 @@
+@@ -0,0 +1,159 @@
 +// ==================================================================
 +// HashMap.h
 +// Copyright (c) Martin Larralde, 2025
@@ -47,9 +47,14 @@ index 0000000..ce9a653
 +        return NULL;
 +    }
 +
++    // Initialize fields
++    I->n = 0;
++    I->names = NULL;
++    I->offset = NULL;
++    I->atoms = NULL;
++
 +    // Handle empty case
 +    if(n==0) {
-+        I->names = NULL;
 +        I->offset = calloc(2, sizeof(size_t));
 +        I->atoms = (Atom**) calloc(1, sizeof(Atom*));
 +        I->offset[0] = I->offset[1] = 0;
@@ -158,4 +163,3 @@ index 0000000..ce9a653
 +        free(I);
 +    }
 +}
-\ No newline at end of file

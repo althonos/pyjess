@@ -173,6 +173,7 @@ cdef class Molecule:
         if self._mol is NULL:
             raise MemoryError("Failed to allocate molecule")
 
+        self._mol.index = NULL
         self._mol.count = count
         for i in range(count):
             self._mol.atom[i] = NULL
@@ -279,6 +280,7 @@ cdef class Molecule:
             if copy._mol is NULL:
                 raise MemoryError("Failed to allocate molecule")
             # copy molecule attributes
+            copy._mol.index = NULL
             copy._mol.count = self._mol.count
             memset(copy._mol.id, b' ', 5)
             # copy molecule atoms
@@ -287,6 +289,10 @@ cdef class Molecule:
                 if copy._mol.atom[i] is NULL:
                     raise MemoryError("Failed to allocate atom")
                 memcpy(copy._mol.atom[i], self._mol.atom[i], sizeof(_Atom))
+            # regenerate index
+            copy._mol.index = jess.res_index.ResIndex_create(copy._mol.atom, copy._mol.count)
+            if copy._mol.index is NULL:
+                raise MemoryError("Failed to allocate residue index")
 
         copy._id = self._id
         return copy
