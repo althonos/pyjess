@@ -1,11 +1,14 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 new file mode 100644
-index 0000000..39011c2
+index 0000000..b34b6e7
 --- /dev/null
 +++ b/CMakeLists.txt
-@@ -0,0 +1,23 @@
+@@ -0,0 +1,29 @@
 +cmake_minimum_required(VERSION 3.10)
 +project(Jess)
++
++include(CheckSymbolExists)
++check_symbol_exists(alloca "alloca.h" HAVE_ALLOCA)
 +
 +add_library(jess)
 +target_sources(jess PRIVATE
@@ -22,6 +25,9 @@ index 0000000..39011c2
 +	src/TessTemplate.c
 +	src/CandidateSet.c
 +	src/ResIndex.c)
++if(HAVE_ALLOCA)
++	target_compile_definitions(jess PUBLIC -DHAVE_ALLOCA)
++endif()
 +
 +add_executable(jess_bin)
 +target_sources(jess_bin PRIVATE src/Main.c)

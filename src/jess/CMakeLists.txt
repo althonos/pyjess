@@ -2,6 +2,7 @@
 
 include(CheckSymbolExists)
 
+check_symbol_exists(alloca "alloca.h" HAVE_ALLOCA)
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     check_symbol_exists(__GNU_LIBRARY__ "stdio.h" GLIBC)
 endif()
@@ -159,6 +160,9 @@ target_include_directories(jess PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
 set_property(TARGET jess PROPERTY C_STANDARD 11)
 if(GLIBC)
     target_compile_definitions(jess PRIVATE -D_GNU_SOURCE)
+endif()
+if(HAVE_ALLOCA)
+    target_compile_definitions(jess PRIVATE -DHAVE_ALLOCA)
 endif()
 if(HAVE_APPLE_QSORT_R)
     target_compile_definitions(jess PRIVATE -DHAVE_APPLE_QSORT_R)
