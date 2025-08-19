@@ -92,6 +92,29 @@ class TestJess(unittest.TestCase):
         self.assertEqual(len(jess[:1]), 1)
         self.assertEqual(len(jess[1:]), 0)
 
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    def test_multiple_query_split(self):
+        with files(data).joinpath("template_01.qry").open() as f:
+            template1 = Template.load(f)
+        with files(data).joinpath("template_02.qry").open() as f:
+            template2 = Template.load(f)
+        j0 = Jess([template1, template2])
+        j1 = Jess([template1])
+        j2 = Jess([template2])
+
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            molecule = Molecule.load(f)
+
+        h0 = list(j0.query(molecule, 2, 5, 5))
+        h1 = list(j1.query(molecule, 2, 5, 5))
+        h2 = list(j2.query(molecule, 2, 5, 5))
+
+        self.assertEqual(len(h0), len(h1) + len(h2))
+        for hit0, hit1 in zip(h0, (*h1, *h2)):
+            self.assertEqual(hit0.atoms(), hit1.atoms())
+            self.assertEqual(hit0.evalue, hit1.evalue)
+
     @unittest.skipUnless(files, "importlib.resources not available")
     def test_query_template_subclass(self):
 
