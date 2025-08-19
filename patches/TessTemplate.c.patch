@@ -1,5 +1,5 @@
 diff --git a/src/TessTemplate.c b/src/TessTemplate.c
-index 1eb6914..ceb4be4 100644
+index 1eb6914..04eec28 100644
 --- a/src/TessTemplate.c
 +++ b/src/TessTemplate.c
 @@ -5,13 +5,17 @@
@@ -115,7 +115,7 @@ index 1eb6914..ceb4be4 100644
  {
  	const TessTemplate *J = (const TessTemplate*)&T[1];
  	const double logA = -8.5;
-@@ -149,11 +133,78 @@ static double TessTemplate_logE(const Template *T,double rmsd, int n)
+@@ -149,11 +133,69 @@ static double TessTemplate_logE(const Template *T,double rmsd, int n)
  	return logA + alpha*rmsd + beta*(double)J->dim + log((double)n);
  }
  
@@ -129,55 +129,46 @@ index 1eb6914..ceb4be4 100644
 +	int m;
 +	int i;
 +	int j;
++	int code;
 +
 +	if(!(S = CandidateSet_create(M)))
 +		return NULL;
 +
++	// The following match codes require a match on residue name, so we
++	// can use the residue name index to iterate only on atoms from 
++	// (one of) the required residue(s).
 +
-+
-+	switch(TessAtom_code(J->atom[k]))
++	code = TessAtom_code(J->atom[k]);
++	if((code >= -1) && (code <= 8))
 +	{
-+		// The following match codes require a match on residue name, so we
-+		// can use the residue name index to iterate only on atoms from 
-+		// (one of) the required residue(s).
-+		case -1:
-+		case 0:
-+		case 1:
-+		case 2:
-+		case 3:
-+		case 4:
-+		case 5:
-+		case 6:
-+		case 7:
-+		case 8:
-+			// An atom may have several residue names that are actually
-+			// equal, so to avoid the same atom from being selected more
-+			// than once, we use an array to remember which of the residue
-+			// names we have processed.
-+			char* done = (char*) calloc(M->index->n, sizeof(int));
-+			for (i=0; i<TessAtom_resNameCount(J->atom[k]); i++) {
-+				const char* resName = TessAtom_resName(J->atom[k], 0);
-+				int	j = ResIndex_find(M->index, resName);
-+				if((j == -1) || (done[j])) continue;
-+				done[j] = 1;
-+				for (it = ResIndex_values(M->index, j); *it != NULL; it++) {
-+					A = (*it);
-+					if(TessTemplate_match(T,k,A))
-+						CandidateSet_addAtom(S, A);
-+				}
++		// WARNING: A template atom may have several residue names that 
++		// are actually equal to each other (because TessAtom_parse does not
++		// deduplicate), so to avoid the same atom from being selected more
++		// than once, we use an array to remember which of the residue
++		// names we have already processed.
++		char* done = (char*) calloc(M->index->n, sizeof(int));
++		for (i=0; i<TessAtom_resNameCount(J->atom[k]); i++) {
++			const char* resName = TessAtom_resName(J->atom[k], 0);
++			int	j = ResIndex_find(M->index, resName);
++			if((j == -1) || (done[j])) continue;
++			done[j] = 1;
++			for (it = ResIndex_values(M->index, j); *it != NULL; it++) {
++				A = (*it);
++				if(TessTemplate_match(T,k,A))
++					CandidateSet_addAtom(S, A);
 +			}
-+			free(done);
-+			break;
-+
++		}
++		free(done);
++	}
++	else
++	{
 +		// For remaining match codes, a match on residue name is not required,
 +		// so we just fallback to the original implementation.
-+		default:
-+			for (m=0; m<n; m++) {
-+				A = (Atom*)Molecule_atom(M,m);
-+				if(TessTemplate_match(T,k,A))
-+						CandidateSet_addAtom(S, A);
-+			}
-+			break;
++		for (m=0; m<n; m++) {
++			A = (Atom*)Molecule_atom(M,m);
++			if(TessTemplate_match(T,k,A))
++					CandidateSet_addAtom(S, A);
++		}
 +	}
 +
 +	if (S->count > 0)
@@ -195,7 +186,7 @@ index 1eb6914..ceb4be4 100644
  {
  	TessTemplate *J;
  	int i;
-@@ -269,6 +320,7 @@ Template *TessTemplate_create(FILE *file,const char *sym)
+@@ -269,6 +311,7 @@ Template *TessTemplate_create(FILE *file,const char *sym)
  	T->name=TessTemplate_name;
  	T->logE=TessTemplate_logE;
  	T->distWeight=TessTemplate_distWeight;
@@ -203,7 +194,7 @@ index 1eb6914..ceb4be4 100644
  
  	// Set up the data fields
  
-@@ -333,4 +385,78 @@ Template *TessTemplate_create(FILE *file,const char *sym)
+@@ -333,4 +376,78 @@ Template *TessTemplate_create(FILE *file,const char *sym)
  	return T;
  }
  
