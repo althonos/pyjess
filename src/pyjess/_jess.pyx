@@ -31,6 +31,7 @@ cimport jess.molecule
 cimport jess.super
 cimport jess.tess_template
 cimport jess.tess_atom
+cimport jess.res_index
 from jess.atom cimport Atom as _Atom
 from jess.jess cimport Jess as _Jess
 from jess.jess cimport JessQuery as _JessQuery
@@ -183,6 +184,10 @@ cdef class Molecule:
             if self._mol.atom[i] is NULL:
                 raise MemoryError("Failed to allocate atom")
             memcpy(self._mol.atom[i], atom._atom, sizeof(_Atom))
+
+        self._mol.index = jess.res_index.ResIndex_create(self._mol.atom, count)
+        if self._mol.index is NULL:
+            raise MemoryError("Failed to allocate residue index")
 
     def __len__(self):
         assert self._mol is not NULL
@@ -1011,6 +1016,7 @@ cdef class Template:
         self._tpl.count = jess.tess_template.TessTemplate_count
         self._tpl.range = jess.tess_template.TessTemplate_range
         self._tpl.check = jess.tess_template.TessTemplate_check
+        self._tpl.candidates = jess.tess_template.TessTemplate_candidates
         self._tpl.name = jess.tess_template.TessTemplate_name
         self._tpl.logE = jess.tess_template.TessTemplate_logE
         self._tpl.distWeight = jess.tess_template.TessTemplate_distWeight
