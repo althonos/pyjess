@@ -19,8 +19,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         cmpstringp(void* data, const void *p1, const void *p2)
         { return 0; }
 
-        int 
-        main(int argc, const char** argv) 
+        int
+        main(int argc, const char** argv)
         { qsort_r(&argv[1], argc - 1, sizeof(char *), NULL, cmpstringp); }
         "
         HAVE_APPLE_QSORT_R
@@ -35,8 +35,8 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         cmpstringp(void* data, const void *p1, const void *p2)
         { return 0; }
 
-        int 
-        main(int argc, const char** argv) 
+        int
+        main(int argc, const char** argv)
         { qsort_s(&argv[1], argc - 1, sizeof(char *), cmpstringp, NULL); }
         "
         HAVE_WIN32_QSORT_S
@@ -54,8 +54,8 @@ else()
         cmpstringp(const void *p1, const void *p2, void* data)
         { return 0; }
 
-        int 
-        main(int argc, const char** argv) 
+        int
+        main(int argc, const char** argv)
         { qsort_r(&argv[1], argc - 1, sizeof(char *), cmpstringp, NULL); }
         "
         HAVE_GNU_QSORT_R
@@ -79,6 +79,8 @@ set(JESS_SOURCES
     Annulus.h
     Atom.c
     Atom.h
+    CandidateSet.c
+    CandidateSet.h
     Jess.c
     Jess.h
     Join.c
@@ -89,6 +91,8 @@ set(JESS_SOURCES
     Molecule.h
     Region.c
     Region.h
+    ResIndex.c
+    ResIndex.h
     Scanner.c
     Scanner.h
     Super.c
@@ -101,24 +105,45 @@ set(JESS_SOURCES
 )
 
 foreach(_file IN ITEMS ${JESS_SOURCES})
+
     if(EXISTS ${PROJECT_SOURCE_DIR}/patches/${_file}.patch)
-        add_custom_command(
-            OUTPUT 
-                ${_file}
-            COMMENT
-                "Patching ${_file}"
-            COMMAND
-                ${Python_EXECUTABLE} ${PROJECT_SOURCE_DIR}/src/scripts/apply_patch.py 
-                    --input ${PROJECT_SOURCE_DIR}/vendor/jess/src/${_file} 
-                    --patch ${PROJECT_SOURCE_DIR}/patches/${_file}.patch
-                    --output ${CMAKE_CURRENT_BINARY_DIR}/${_file}
-            DEPENDS
-                ${PROJECT_SOURCE_DIR}/vendor/jess/src/${_file}
-                ${PROJECT_SOURCE_DIR}/patches/${_file}.patch
-        )
+
+
+        if(NOT EXISTS ${PROJECT_SOURCE_DIR}/vendor/jess/src/${_file})
+            add_custom_command(
+                OUTPUT
+                    ${_file}
+                COMMENT
+                    "Creating ${_file}"
+                COMMAND
+                    cmake -E touch ${CMAKE_CURRENT_BINARY_DIR}/empty.txt
+                COMMAND
+                    ${Python_EXECUTABLE} ${PROJECT_SOURCE_DIR}/src/scripts/apply_patch.py
+                        --input ${CMAKE_CURRENT_BINARY_DIR}/empty.txt
+                        --patch ${PROJECT_SOURCE_DIR}/patches/${_file}.patch
+                        --output ${CMAKE_CURRENT_BINARY_DIR}/${_file}
+                DEPENDS
+                    ${PROJECT_SOURCE_DIR}/patches/${_file}.patch
+            )
+        else()
+            add_custom_command(
+                OUTPUT
+                    ${_file}
+                COMMENT
+                    "Patching ${_file}"
+                COMMAND
+                    ${Python_EXECUTABLE} ${PROJECT_SOURCE_DIR}/src/scripts/apply_patch.py
+                        --input ${PROJECT_SOURCE_DIR}/vendor/jess/src/${_file}
+                        --patch ${PROJECT_SOURCE_DIR}/patches/${_file}.patch
+                        --output ${CMAKE_CURRENT_BINARY_DIR}/${_file}
+                DEPENDS
+                    ${PROJECT_SOURCE_DIR}/vendor/jess/src/${_file}
+                    ${PROJECT_SOURCE_DIR}/patches/${_file}.patch
+            )
+        endif()
     else()
         add_custom_command(
-            OUTPUT 
+            OUTPUT
                 ${_file}
             COMMAND
                 cmake -E copy ${PROJECT_SOURCE_DIR}/vendor/jess/src/${_file} ${CMAKE_CURRENT_BINARY_DIR}/${_file}
