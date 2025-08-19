@@ -1,8 +1,30 @@
 diff --git a/src/Jess.c b/src/Jess.c
-index e81bda0..6d44558 100644
+index e81bda0..c4e581b 100644
 --- a/src/Jess.c
 +++ b/src/Jess.c
-@@ -91,8 +91,10 @@ void Jess_free(Jess *J)
+@@ -4,15 +4,17 @@
+ // Implementation of types Jess and JessQuery.
+ // ==================================================================
+ 
++#include <stdio.h>
++#include <stdlib.h>
++#include <math.h>
++#include <string.h>
++
+ #include "Jess.h"
+ #include "Molecule.h"
+ #include "Scanner.h"
+ #include "TessTemplate.h"
+ #include "Super.h"
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <math.h>
+-#include <string.h>
++
+ 
+ // ==================================================================
+ // Forward declarations of local types
+@@ -91,8 +93,10 @@ void Jess_free(Jess *J)
  			n=J->head->next;
  			T=J->head->template;
  			if(T) T->free(T);
@@ -13,13 +35,13 @@ index e81bda0..6d44558 100644
  	}
  }
  
-@@ -157,26 +159,26 @@ Superposition *JessQuery_superposition(JessQuery *Q)
+@@ -156,27 +160,25 @@ Superposition *JessQuery_superposition(JessQuery *Q)
+ 	int count;
  	Template *T;
  	Atom **A;
- 
+-
 -	if(Q->super) return Q->super;
 +	Superposition* super;
-+	// if(Q->super) return Q->super;
  
  	A = Q->atoms;
  	T = Q->node->template;

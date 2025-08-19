@@ -1,17 +1,32 @@
 diff --git a/src/TessTemplate.h b/src/TessTemplate.h
-index 1e597f2..0adb79c 100644
+index 1e597f2..4422cb7 100644
 --- a/src/TessTemplate.h
 +++ b/src/TessTemplate.h
-@@ -9,7 +9,84 @@
+@@ -9,8 +9,57 @@
  #define TESSTEMPLATE_H
  
  #include "Template.h"
 +#include "TessAtom.h"
++#include "CandidateSet.h"
  #include <stdio.h>
-+#include <string.h>
-+#include <math.h>
+ 
++// ==================================================================
++// Forward declarations
++// ==================================================================
++// TessTemplate			The implementation of type TessTemplate
++// ==================================================================
 +
 +typedef struct _TessTemplate TessTemplate;
++
++// ==================================================================
++// Implementation of type TessTemplate
++// ==================================================================
++// count				Number of atoms in the template
++// atom[k]				Ptr to TessAtom k
++// distance[i][j]		Distance between atoms i and j
++// symbol				The name of the template
++// dim					The dimension of the template (# residues)
++// ==================================================================
 +
 +struct _TessTemplate
 +{
@@ -26,68 +41,26 @@ index 1e597f2..0adb79c 100644
 +// Oracles of type TessTemplate
 +// ==================================================================
 +
-+static inline int TessTemplate_count(const Template *T)
-+{
-+	const TessTemplate *J = (const TessTemplate*)&T[1];
-+	return J->count;
-+}
-+
-+static inline int TessTemplate_match(const Template *T,int k,const Atom *A)
-+{
-+	const TessTemplate *J = (const TessTemplate*)&T[1];
-+	return TessAtom_match(J->atom[k],A);
-+}
-+
-+static inline int TessTemplate_range(const Template *T,int i,int j,double *a,double *b)
-+{
-+	const TessTemplate *J = (const TessTemplate*)&T[1];
-+	*a = *b = J->distance[i][j];
-+	return 1;
-+}
-+
-+static inline const double *TessTemplate_position(const Template *T, int k)
-+{
-+	const TessTemplate *J=(const TessTemplate*)&T[1];
-+	return TessAtom_position(J->atom[k]);
-+}
-+
-+static inline double TessTemplate_distWeight(const Template *T, int k)
-+{
-+	const TessTemplate *J=(const TessTemplate*)&T[1];
-+	return TessAtom_distWeight(J->atom[k]);
-+}
-+
++extern int TessTemplate_count(const Template *T);
++extern int TessTemplate_match(const Template *T,int k,const Atom *A);
++extern int TessTemplate_range(const Template *T,int i,int j,double *a,double *b);
++extern const double *TessTemplate_position(const Template *T, int k);
++extern double TessTemplate_distWeight(const Template *T, int k);
 +extern int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_chain);
-+
-+static inline const char *TessTemplate_name(const Template *T)
-+{
-+	const TessTemplate *J = (const TessTemplate*)&T[1];
-+	return J->symbol;
-+}
-+
-+static inline double TessTemplate_logE(const Template *T,double rmsd, int n)
-+{
-+	const TessTemplate *J = (const TessTemplate*)&T[1];
-+	const double logA = -8.5;
-+	const double alpha = 2.5;
-+	const double beta = -0.7;
-+
-+	// Approximate number of hits per molecule atom is:
-+	// A * rmsd^alpha * J->dim^beta (empirically). This gives
-+	// us log(expected number of hits in molecule of size n)
-+
-+	return logA + alpha*rmsd + beta*(double)J->dim + log((double)n);
-+}
++CandidateSet* TessTemplate_candidates(const Template *T, const Molecule *M, int k);
++extern const char *TessTemplate_name(const Template *T);
++extern double TessTemplate_logE(const Template *T,double rmsd, int n);
 +
 +// ==================================================================
 +// Private methods of type TessTemplate
 +// ==================================================================
 +
 +extern void TessTemplate_free(Template *T);
- 
++
  // ==================================================================
  // Creation of a TessTemplate object
-@@ -18,6 +95,7 @@
+ // ==================================================================
+@@ -18,6 +67,7 @@
  // ==================================================================
  
  extern Template *TessTemplate_create(FILE*,const char*);

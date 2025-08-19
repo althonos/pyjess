@@ -1,9 +1,9 @@
 diff --git a/src/TessAtom.c b/src/TessAtom.c
-index e1cce1a..2a8ed28 100644
+index e1cce1a..0c5f71f 100644
 --- a/src/TessAtom.c
 +++ b/src/TessAtom.c
-@@ -7,11 +7,18 @@
-
+@@ -7,39 +7,17 @@
+ 
  #include "TessAtom.h"
  #include "Atom.h"
 +
@@ -12,19 +12,21 @@ index e1cce1a..2a8ed28 100644
  #include <stdio.h>
  #include <string.h>
  #include <ctype.h>
-
-+#ifdef _MSC_VER
-+#define strncasecmp _strnicmp
-+#define strcasecmp _stricmp
-+#endif
-+
- // ==================================================================
- // Local type TessAtom
- // ==================================================================
-@@ -26,21 +33,6 @@
- // distWeight[k]			kth atom distance threshold modifier (weight)
- // ==================================================================
-
+ 
+-// ==================================================================
+-// Local type TessAtom
+-// ==================================================================
+-// code					The code describing the match mode
+-// resSeq				The residue sequence number
+-// nameCount			Number of atom names present
+-// resNameCount			Number of residue names present
+-// chainID				The chain field
+-// name[k]				kth atom name alternate
+-// resName[k]			kth residue name alternate
+-// pos[k]				kth coordinate of position of atom
+-// distWeight[k]			kth atom distance threshold modifier (weight)
+-// ==================================================================
+-
 -struct _TessAtom
 -{
 -	int code;
@@ -33,49 +35,82 @@ index e1cce1a..2a8ed28 100644
 -	int resNameCount;
 -	char chainID1; //Riziotis edit
 -	char chainID2;
--	//char chainID;
+-	//char chainID; 
 -	char **name;
 -	char **resName;
 -	double pos[3];
 -	double distWeight;
 -};
--
++#ifdef _MSC_VER
++#define strncasecmp _strnicmp
++#define strcasecmp _stricmp
++#endif
+ 
  // ==================================================================
  // Methods of type TessAtom (ARGGH!!!)
- // ==================================================================
-@@ -91,7 +83,7 @@
+@@ -91,7 +69,7 @@ TessAtom *TessAtom_create(const char *s)
  	int rq;
  	const char *q;
  	const char *tmp;
 -	void *p;
 +	char *p;
-
-
+ 
+ 
  	// 0. Parse the record as a standard PDB atom. We must
-@@ -157,8 +157,8 @@
-        // Set up all the pointers to the
-        // residue name and atom name fields
-
--       p=&A[1];
--       A->name=p;
-+       p=(void*)&A[1];
-+       A->name=(char**)p;
-        p+=sizeof(char*)*ac;
-        for(m=0; m<ac; m++)
-        {
-@@ -166,7 +166,7 @@
-                p+=5;
-        }
-
--       A->resName=p;
-+       A->resName=(char**)p;
-        p+=sizeof(char*)*rc;
-        for(m=0; m<rc; m++)
-        {
-@@ -258,6 +250,66 @@
- 	return A;
+@@ -157,8 +135,8 @@ TessAtom *TessAtom_create(const char *s)
+ 	// Set up all the pointers to the
+ 	// residue name and atom name fields
+ 
+-	p=&A[1];
+-	A->name=p;
++	p=(void*)&A[1];
++	A->name=(char**)p;
+ 	p+=sizeof(char*)*ac;
+ 	for(m=0; m<ac; m++)
+ 	{
+@@ -166,7 +144,7 @@ TessAtom *TessAtom_create(const char *s)
+ 		p+=5;
+ 	}
+ 
+-	A->resName=p;
++	A->resName=(char**)p;
+ 	p+=sizeof(char*)*rc;
+ 	for(m=0; m<rc; m++)
+ 	{
+@@ -294,6 +272,11 @@ int TessAtom_resSeq(const TessAtom *A)
+ 	return A->resSeq;
  }
-
+ 
++int TessAtom_code(const TessAtom *A)
++{
++	return A->code;
++}
++
+ static int TessAtom_isCarbon(const Atom *A)
+ {
+ 	return A->name[0]=='_' && A->name[1]=='C' ? 1:0;
+@@ -325,6 +308,17 @@ static int TessAtom_isInSamePosition(const TessAtom *T, const Atom *A)
+ }
+ //End Riziotis
+ 
++
++const char* TessAtom_resName(const TessAtom* A, int k)
++{
++	return A->resName[k];
++}
++
++int TessAtom_resNameCount(const TessAtom* A)
++{
++	return A->resNameCount;
++}
++
+ static int TessAtom_isMainChain(const Atom *A)
+ {
+ 	if(strcasecmp(A->name,"_CA_")==0) return 1;
+@@ -507,5 +501,65 @@ int TessAtom_match(const TessAtom *T, const Atom *A)
+ 	}
+ }
+ 
 +TessAtom *TessAtom_copy(const TessAtom *A)
 +{
 +	int ac;
@@ -136,6 +171,5 @@ index e1cce1a..2a8ed28 100644
 +	return sqrt(dist);
 +}
 +
- //Riziotis edit
- char TessAtom_chainID1(const TessAtom *A)
- {
+ // ==================================================================
+ 

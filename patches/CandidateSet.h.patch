@@ -1,0 +1,51 @@
+diff --git a/src/CandidateSet.h b/src/CandidateSet.h
+new file mode 100644
+index 0000000..9b12e6e
+--- /dev/null
++++ b/src/CandidateSet.h
+@@ -0,0 +1,44 @@
++// ==================================================================
++// CandidateSet.h
++// Copyright (c) Jonathan Barker, 2002
++// Copyright (c) Martin Larralde, 2025
++// ==================================================================
++// Declaration of type CandidateSet.
++// ==================================================================
++
++#ifndef CANDIDATESET_H
++#define CANDIDATESET_H
++
++#include "Atom.h"
++#include "Molecule.h"
++
++// ==================================================================
++// Local type CandidateSet
++// ==================================================================
++// count				Number of atoms in the set
++// atom[k]				Points to ATOM record for kth candidate
++// coord[k]				Points to coordinates for kth candidate
++// ==================================================================
++
++struct _CandidateSet
++{
++	int count;
++	Atom **atom;
++	double **coord;
++};
++
++typedef struct _CandidateSet CandidateSet;
++
++// ==================================================================
++// Declaration of methods of local type CandidateSet
++// ==================================================================
++// create(M,T,k)		Create from molecule M, atom k of T
++// free(S)				Free candidate set
++// ==================================================================
++
++CandidateSet *CandidateSet_create(const Molecule*);
++void CandidateSet_addAtom(CandidateSet*, Atom*);
++void CandidateSet_recordCoordinates(CandidateSet*);
++void CandidateSet_free(CandidateSet*);
++
++#endif
+\ No newline at end of file

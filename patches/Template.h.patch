@@ -1,8 +1,29 @@
 diff --git a/src/Template.h b/src/Template.h
-index 13f68f1..8dec3c9 100644
+index 13f68f1..ce023aa 100644
 --- a/src/Template.h
 +++ b/src/Template.h
-@@ -42,6 +42,7 @@ struct _Template
+@@ -9,6 +9,7 @@
+ #define TEMPLATE_H
+ 
+ #include "Atom.h"
++#include "CandidateSet.h"
+ 
+ // ==================================================================
+ // Forward declarations
+@@ -26,6 +27,7 @@ typedef struct _Template Template;
+ // match(T,k,A)			True if A matches atom k of T
+ // range(T,i,j,a,b)		[*a,*b] <- range of |atom i - atom j|
+ // check(T,A,k,ignore_chain)	Check n-ary rules on atom k-1 and 0,...,k-2
++// candidates(T,M,k)	Generate a set of candidate atoms of M matching atom k of T
+ // position(T,i)		Position of atom i (example position)
+ // name(T)			Returns the symbolic name for the template
+ // logE(T,x,n)			Provide an estimate of logE for a hit
+@@ -38,10 +40,12 @@ struct _Template
+ 	int (*match)(const Template*,int,const Atom*);
+ 	int (*range)(const Template*,int,int,double*,double*);
+ 	int (*check)(const Template*,Atom**,int,int);
++	CandidateSet* (*candidates)(const Template*, const Molecule*, int);
+ 	const double *(*position)(const Template*,int);
  	const char *(*name)(const Template*);
  	double (*logE)(const Template*,double,int);
  	double (*distWeight)(const Template*,int);

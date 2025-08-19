@@ -1,25 +1,8 @@
 diff --git a/src/Super.c b/src/Super.c
-index 777b693..76784b0 100644
+index 777b693..2fc9a87 100644
 --- a/src/Super.c
 +++ b/src/Super.c
-@@ -29,8 +29,8 @@ struct _Node
- // Methods of local type Node
- // ==================================================================
- 
--static Node *Node_create(const double*, const double*);
--static void Node_free(Node*);
-+static Node *Node_create(const double* x, const double* y);
-+static void Node_free(Node* n);
- 
- // ==================================================================
- // type Superposition
-@@ -61,23 +61,19 @@ struct _Superposition
- // compute(S)		Compute the superposition
- // ==================================================================
- 
--static void Superposition_compute(Superposition*);
-+static void Superposition_compute(Superposition* S);
- 
+@@ -66,15 +66,11 @@ static void Superposition_compute(Superposition*);
  // ==================================================================
  // Local procedures
  // ==================================================================
@@ -32,33 +15,10 @@ index 777b693..76784b0 100644
  
 -static double min(double,double);
 -static double max(double,double);
--static void rotate(double*,double*,int,int);
--static int jacobi(double*,double*,double*);
--static double superpose(double*,double*,int,double*);
-+static void rotate(double* W, double* P, int ip, int iq);
-+static int jacobi(double* M,double* P,double* V);
-+static double superpose(double* a, double* b, int n, double* M);
- 
- // ==================================================================
- // Methods of type Superposition
-@@ -237,16 +233,6 @@ const double *Superposition_rotation(Superposition *S)
- // The superposition algorithm stuff
- // ==================================================================
- 
--static double min(double a, double b)
--{
--	return a<b ? a:b;
--}
--
--static double max(double a, double b)
--{
--	return a>b ? a:b;
--}
--
- static const double PRECISION = 1e-12;
- 
- static void rotate(double *W, double *P, int ip, int iq)
-@@ -480,16 +466,16 @@ static double superpose(double *a,double *b, int n, double *M)
+ static void rotate(double*,double*,int,int);
+ static int jacobi(double*,double*,double*);
+ static double superpose(double*,double*,int,double*);
+@@ -480,16 +476,16 @@ static double superpose(double *a,double *b, int n, double *M)
  
  	jacobi(XX,P,e);
  
@@ -75,11 +35,11 @@ index 777b693..76784b0 100644
  	if(detX<1e-8)
  	{
 -		sumE -= (double)2*sqrt(min(e[0],min(e[1],e[2])));
-+		sumE -= (double)2*sqrt(fmin(e[0],fmin(e[1],e[2])));
++		sumE -= (double)2*sqrt(fmin(e[0],min(e[1],e[2])));
  		flag=1;
  	}
  	else
-@@ -498,7 +484,7 @@ static double superpose(double *a,double *b, int n, double *M)
+@@ -498,7 +494,7 @@ static double superpose(double *a,double *b, int n, double *M)
  	}
  
  	rmsd = sumA + sumB - (double)2*sumE;

@@ -1,11 +1,25 @@
 diff --git a/src/TessAtom.h b/src/TessAtom.h
-index 6480d8b..6377691 100644
+index 6480d8b..0ae63b5 100644
 --- a/src/TessAtom.h
 +++ b/src/TessAtom.h
-@@ -17,6 +17,20 @@
- // ==================================================================
+@@ -18,6 +18,35 @@
  
  typedef struct _TessAtom TessAtom;
+ 
++// ==================================================================
++// Type TessAtom
++// ==================================================================
++// code					The code describing the match mode
++// resSeq				The residue sequence number
++// nameCount			Number of atom names present
++// resNameCount			Number of residue names present
++// chainID				The chain field
++// name[k]				kth atom name alternate
++// resName[k]			kth residue name alternate
++// pos[k]				kth coordinate of position of atom
++// distWeight[k]			kth atom distance threshold modifier (weight)
++// ==================================================================
++
 +struct _TessAtom
 +{
 +	int code;
@@ -20,13 +34,17 @@ index 6480d8b..6377691 100644
 +	double pos[3];
 +	double distWeight;
 +};
- 
++
  // ==================================================================
  // Methods of type TessAtom
-@@ -39,6 +53,8 @@ extern char TessAtom_chainID1(const TessAtom*);
+ // ==================================================================
+@@ -39,6 +68,11 @@ extern char TessAtom_chainID1(const TessAtom*);
  extern char TessAtom_chainID2(const TessAtom*);
  extern double TessAtom_distWeight(const TessAtom*);
  //extern char TessAtom_chainID(const TessAtom*);
++extern const char* TessAtom_resName(const TessAtom*, int);
++extern int TessAtom_resNameCount(const TessAtom*);
++extern int TessAtom_code(const TessAtom*);
 +extern TessAtom* TessAtom_copy(const TessAtom*);
 +extern double TessAtom_distance(const TessAtom*, const TessAtom*);
  

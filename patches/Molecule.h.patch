@@ -1,60 +1,35 @@
 diff --git a/src/Molecule.h b/src/Molecule.h
-index d838488..21a6936 100644
+index d838488..c44bf6f 100644
 --- a/src/Molecule.h
 +++ b/src/Molecule.h
-@@ -10,6 +10,7 @@
+@@ -8,15 +8,27 @@
+ #ifndef MOLECULE_H
+ #define MOLECULE_H
  
- #include "Atom.h"
+-#include "Atom.h"
  #include <stdio.h>
-+#include <string.h>
  
++#include "Atom.h"
++#include "ResIndex.h"
++
  // ==================================================================
- // Forward declarations
-@@ -19,6 +20,21 @@
- 
- typedef struct _Molecule Molecule;
- 
-+// ==================================================================
+-// Forward declarations
 +// type Molecule
-+// ==================================================================
+ // ==================================================================
+-// Molecule					A complete molecule
 +// count				Number of atoms in the molecule
 +// id					The molecule PDB code (if found)
 +// atom[k]				Pointer to kth atom in the molecule
-+// ==================================================================
-+
+ // ==================================================================
+ 
 +struct _Molecule
 +{
 +	int count;
 +	char id[5];
++    ResIndex *index;
 +	Atom *atom[0];
 +};
 +
- // ==================================================================
- // Methods of type Molecule
- // ==================================================================
-@@ -31,9 +47,22 @@ typedef struct _Molecule Molecule;
- 
- extern Molecule *Molecule_create(FILE*,int,float);
- extern void Molecule_free(Molecule*);
--extern int Molecule_count(const Molecule*);
--extern const Atom *Molecule_atom(const Molecule*,int);
--extern const char *Molecule_id(const Molecule*);
-+
-+static inline int Molecule_count(const Molecule* M)
-+{
-+	return M->count;
-+}
-+
-+static inline const Atom *Molecule_atom(const Molecule* M, int k)
-+{
-+	return !M || k<0 || k>=M->count ? NULL:M->atom[k];
-+}
-+
-+static inline const char* Molecule_id(const Molecule* M)
-+{
-+	if(strlen(M->id)==4 && strcmp(M->id, "    ")!=0) return M->id;
-+	return NULL;
-+}
+ typedef struct _Molecule Molecule;
  
  // ==================================================================
- 

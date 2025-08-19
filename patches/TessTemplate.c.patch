@@ -1,33 +1,50 @@
 diff --git a/src/TessTemplate.c b/src/TessTemplate.c
-index 1eb6914..612ea9c 100644
+index 1eb6914..ceb4be4 100644
 --- a/src/TessTemplate.c
 +++ b/src/TessTemplate.c
-@@ -13,20 +13,11 @@
- #include <string.h>
- #include <math.h>
+@@ -5,13 +5,17 @@
+ // Implementation of TessTemplate creation and oracles.
+ // ==================================================================
  
--// ==================================================================
--// Forward declaration of local types
--// ==================================================================
--// Node					A node in a linked list of TessAtoms
--// TessTemplate			The implementation of type TessTemplate
--// ==================================================================
--
--typedef struct _Node Node;
++#include <stdlib.h>
++#include <string.h>
++#include <stdbool.h>
++#include <stddef.h>
++#include <math.h>
++
+ #include "TessTemplate.h"
+ #include "TessAtom.h"
+ #include "Annulus.h"
+ #include "Join.h"
+-#include <stdlib.h>
+-#include <string.h>
+-#include <math.h>
++#include "CandidateSet.h"
+ 
+ // ==================================================================
+ // Forward declaration of local types
+@@ -21,7 +25,6 @@
+ // ==================================================================
+ 
+ typedef struct _Node Node;
 -typedef struct _TessTemplate TessTemplate;
--
+ 
  // ==================================================================
  // Local type Node
- // ==================================================================
+@@ -33,61 +36,42 @@ struct _Node
+ 	Node *succ;
+ };
  
-+typedef struct _Node Node;
- struct _Node
- {
- 	TessAtom *atom;
-@@ -43,51 +34,20 @@ struct _Node
- // dim					The dimension of the template (# residues)
- // ==================================================================
- 
+-// ==================================================================
+-// Local type TessTemplate
+-// ==================================================================
+-// count				Number of atoms in the template
+-// atom[k]				Ptr to TessAtom k
+-// distance[i][j]		Distance between atoms i and j
+-// symbol				The name of the template
+-// dim					The dimension of the template (# residues)
+-// ==================================================================
+-
 -struct _TessTemplate
 -{
 -	int count;
@@ -36,79 +53,139 @@ index 1eb6914..612ea9c 100644
 -	char *symbol;
 -	int dim;
 -};
-+// struct _TessTemplate
-+// {
-+// 	int count;
-+// 	TessAtom **atom;
-+// 	double **distance;
-+// 	char *symbol;
-+// 	int dim;
-+// };
- 
+-
  // ==================================================================
  // Oracles of type TessTemplate
  // ==================================================================
  
 -static int TessTemplate_count(const Template *T)
--{
--	const TessTemplate *J = (const TessTemplate*)&T[1];
--	return J->count;
--}
--
++int TessTemplate_count(const Template *T)
+ {
+ 	const TessTemplate *J = (const TessTemplate*)&T[1];
+ 	return J->count;
+ }
+ 
 -static int TessTemplate_match(const Template *T,int k,const Atom *A)
--{
--	const TessTemplate *J = (const TessTemplate*)&T[1];
--	return TessAtom_match(J->atom[k],A);
--}
--
++int TessTemplate_match(const Template *T,int k,const Atom *A)
+ {
+ 	const TessTemplate *J = (const TessTemplate*)&T[1];
+ 	return TessAtom_match(J->atom[k],A);
+ }
+ 
 -static int TessTemplate_range(const Template *T,int i,int j,double *a,double *b)
--{
--	const TessTemplate *J = (const TessTemplate*)&T[1];
--	*a = *b = J->distance[i][j];
--	return 1;
--}
--
++int TessTemplate_range(const Template *T,int i,int j,double *a,double *b)
+ {
+ 	const TessTemplate *J = (const TessTemplate*)&T[1];
+ 	*a = *b = J->distance[i][j];
+ 	return 1;
+ }
+ 
 -static const double *TessTemplate_position(const Template *T, int k)
--{
--	const TessTemplate *J=(const TessTemplate*)&T[1];
--	return TessAtom_position(J->atom[k]);
--}
--
++const double *TessTemplate_position(const Template *T, int k)
+ {
+ 	const TessTemplate *J=(const TessTemplate*)&T[1];
+ 	return TessAtom_position(J->atom[k]);
+ }
+ 
 -static double TessTemplate_distWeight(const Template *T, int k)
--{
--	const TessTemplate *J=(const TessTemplate*)&T[1];
--	return TessAtom_distWeight(J->atom[k]);
--}
--
++double TessTemplate_distWeight(const Template *T, int k)
+ {
+ 	const TessTemplate *J=(const TessTemplate*)&T[1];
+ 	return TessAtom_distWeight(J->atom[k]);
+ }
+ 
 -static int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_chain)
 +int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_chain)
  {
  	const TessTemplate *J = (const TessTemplate*)&T[1];
  	int i;
-@@ -129,31 +89,11 @@ static int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_cha
+@@ -129,13 +113,13 @@ static int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_cha
  	return 1;
  }
  
 -static const char *TessTemplate_name(const Template *T)
--{
--	const TessTemplate *J = (const TessTemplate*)&T[1];
--	return J->symbol;
--}
--
++const char *TessTemplate_name(const Template *T)
+ {
+ 	const TessTemplate *J = (const TessTemplate*)&T[1];
+ 	return J->symbol;
+ }
+ 
 -static double TessTemplate_logE(const Template *T,double rmsd, int n)
--{
--	const TessTemplate *J = (const TessTemplate*)&T[1];
--	const double logA = -8.5;
--	const double alpha = 2.5;
--	const double beta = -0.7;
--
--	// Approximate number of hits per molecule atom is:
--	// A * rmsd^alpha * J->dim^beta (empirically). This gives
--	// us log(expected number of hits in molecule of size n)
--
--	return logA + alpha*rmsd + beta*(double)J->dim + log((double)n);
--}
--
++double TessTemplate_logE(const Template *T,double rmsd, int n)
+ {
+ 	const TessTemplate *J = (const TessTemplate*)&T[1];
+ 	const double logA = -8.5;
+@@ -149,11 +133,78 @@ static double TessTemplate_logE(const Template *T,double rmsd, int n)
+ 	return logA + alpha*rmsd + beta*(double)J->dim + log((double)n);
+ }
+ 
++CandidateSet* TessTemplate_candidates(const Template *T, const Molecule *M, int k) 
++{
++	const TessTemplate *J = (const TessTemplate*)&T[1];
++	CandidateSet *S;
++	Atom *A;
++	Atom **it;
++	int n = Molecule_count(M);
++	int m;
++	int i;
++	int j;
++
++	if(!(S = CandidateSet_create(M)))
++		return NULL;
++
++
++
++	switch(TessAtom_code(J->atom[k]))
++	{
++		// The following match codes require a match on residue name, so we
++		// can use the residue name index to iterate only on atoms from 
++		// (one of) the required residue(s).
++		case -1:
++		case 0:
++		case 1:
++		case 2:
++		case 3:
++		case 4:
++		case 5:
++		case 6:
++		case 7:
++		case 8:
++			// An atom may have several residue names that are actually
++			// equal, so to avoid the same atom from being selected more
++			// than once, we use an array to remember which of the residue
++			// names we have processed.
++			char* done = (char*) calloc(M->index->n, sizeof(int));
++			for (i=0; i<TessAtom_resNameCount(J->atom[k]); i++) {
++				const char* resName = TessAtom_resName(J->atom[k], 0);
++				int	j = ResIndex_find(M->index, resName);
++				if((j == -1) || (done[j])) continue;
++				done[j] = 1;
++				for (it = ResIndex_values(M->index, j); *it != NULL; it++) {
++					A = (*it);
++					if(TessTemplate_match(T,k,A))
++						CandidateSet_addAtom(S, A);
++				}
++			}
++			free(done);
++			break;
++
++		// For remaining match codes, a match on residue name is not required,
++		// so we just fallback to the original implementation.
++		default:
++			for (m=0; m<n; m++) {
++				A = (Atom*)Molecule_atom(M,m);
++				if(TessTemplate_match(T,k,A))
++						CandidateSet_addAtom(S, A);
++			}
++			break;
++	}
++
++	if (S->count > 0)
++		CandidateSet_recordCoordinates(S);
++
++	return S;
++}
++
  // ==================================================================
  // Private methods of type TessTemplate
  // ==================================================================
@@ -118,15 +195,15 @@ index 1eb6914..612ea9c 100644
  {
  	TessTemplate *J;
  	int i;
-@@ -269,6 +209,7 @@ Template *TessTemplate_create(FILE *file,const char *sym)
+@@ -269,6 +320,7 @@ Template *TessTemplate_create(FILE *file,const char *sym)
  	T->name=TessTemplate_name;
  	T->logE=TessTemplate_logE;
  	T->distWeight=TessTemplate_distWeight;
-+	T->copy=TessTemplate_copy;
++	T->candidates=TessTemplate_candidates;
  
  	// Set up the data fields
  
-@@ -333,4 +274,77 @@ Template *TessTemplate_create(FILE *file,const char *sym)
+@@ -333,4 +385,78 @@ Template *TessTemplate_create(FILE *file,const char *sym)
  	return T;
  }
  
@@ -160,6 +237,7 @@ index 1eb6914..612ea9c 100644
 +	T2->count=TessTemplate_count;
 +	T2->range=TessTemplate_range;
 +	T2->check=TessTemplate_check;
++	T2->candidates=TessTemplate_candidates;
 +	T2->name=TessTemplate_name;
 +	T2->logE=TessTemplate_logE;
 +	T2->distWeight=TessTemplate_distWeight;

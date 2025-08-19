@@ -1,0 +1,71 @@
+diff --git a/src/CandidateSet.c b/src/CandidateSet.c
+new file mode 100644
+index 0000000..a67e878
+--- /dev/null
++++ b/src/CandidateSet.c
+@@ -0,0 +1,65 @@
++// ==================================================================
++// CandidateSet.h
++// Copyright (c) Jonathan Barker, 2002
++// Copyright (c) Martin Larralde, 2025
++// ==================================================================
++// Implementation of type CandidateSet.
++// ==================================================================
++
++#include <stdlib.h>
++
++#include "CandidateSet.h"
++#include "Atom.h"
++#include "Molecule.h"
++#include "Template.h"
++
++// ==================================================================
++// Methods of local type CandidateSet
++// ==================================================================
++
++CandidateSet *CandidateSet_create(const Molecule *M)
++{
++	CandidateSet *S;
++	Atom *A;
++	int n = Molecule_count(M);
++	int m;
++
++	S = (CandidateSet*)calloc(1,sizeof(CandidateSet));
++    if(!S) return NULL;
++
++	S->atom=(Atom**)calloc(n,sizeof(Atom*));
++	S->coord = NULL;
++	S->count = 0;
++    
++    return S;
++}
++
++void CandidateSet_addAtom(CandidateSet *S, Atom *A)
++{
++	S->atom[S->count]=A;
++	S->count++;
++}
++
++void CandidateSet_recordCoordinates(CandidateSet *S)
++{
++	int m;
++	
++	S->atom=(Atom**)realloc(S->atom,sizeof(Atom*)*S->count);
++	S->coord=(double**)calloc(S->count,sizeof(double*));
++
++	for(m=0; m<S->count; m++)
++		S->coord[m]=S->atom[m]->x;
++}
++
++
++void CandidateSet_free(CandidateSet *S)
++{
++	if(S)
++	{
++		if(S->atom) free(S->atom);
++		if(S->coord) free(S->coord);
++		free(S);
++	}
++}
++
++// ==================================================================
