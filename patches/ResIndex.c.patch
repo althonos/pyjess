@@ -1,9 +1,9 @@
 diff --git a/src/ResIndex.c b/src/ResIndex.c
 new file mode 100644
-index 0000000..1755063
+index 0000000..4b62b22
 --- /dev/null
 +++ b/src/ResIndex.c
-@@ -0,0 +1,159 @@
+@@ -0,0 +1,162 @@
 +// ==================================================================
 +// HashMap.h
 +// Copyright (c) Martin Larralde, 2025
@@ -28,7 +28,10 @@ index 0000000..1755063
 +{
 +	const Atom *a = **((const Atom***)pa);
 +	const Atom *b = **((const Atom***)pb);
-+	return strncasecmp(&a->resName[0], &b->resName[0], 4);
++    int result = strncasecmp(&a->resName[0], &b->resName[0], 4);
++    if (result != 0)
++        return result;
++    return a->serial - b->serial;
 +}
 +
 +extern ResIndex* ResIndex_create(Atom** atoms, int n)

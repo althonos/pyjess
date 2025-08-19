@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pyjess"
-version = "0.5.0"
+version = "0.5.1-dev.1"
 description = "Cython bindings and Python interface to JESS, a 3D template matching software."
 readme = "README.md"
 requires-python = ">=3.7"
