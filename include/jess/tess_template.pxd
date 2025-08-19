@@ -3,6 +3,8 @@ from libc.stdio cimport FILE
 from .atom cimport Atom
 from .tess_atom cimport TessAtom
 from .template cimport Template
+from .molecule cimport Molecule
+from .candidate_set cimport CandidateSet
 
 
 cdef extern from "TessTemplate.h" nogil:
@@ -22,6 +24,7 @@ cdef extern from "TessTemplate.h" nogil:
     const double *TessTemplate_position(const Template *T, int k)
     double TessTemplate_distWeight(const Template *T, int k)
     int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_chain)
+    CandidateSet* TessTemplate_candidates(const Template *T, const Molecule *M, int k)
     const char *TessTemplate_name(const Template *T)
     double TessTemplate_logE(const Template *T,double rmsd, int n)
     void TessTemplate_free(Template *T)
