@@ -1429,7 +1429,7 @@ cdef class Hit:
 
         mol = self._molecule.copy()
         for k in range(mol._mol.count):
-            atom = mol._mol.atom[i]
+            atom = mol._mol.atom[k]
             for i in range(3):
                 atom.x[i] = v[i]
                 for j in range(3):
