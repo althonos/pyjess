@@ -8,7 +8,13 @@ _HEADER_PATTERN = re.compile(r"^@@ -(\d+),?(\d+)? \+(\d+),?(\d+)? @@.*$")
 def _apply_patch(s, patch, revert=False):
     # see https://stackoverflow.com/a/40967337
     s = s.splitlines(keepends=True)
-    p = patch.splitlines(keepends=True)[2:]  # ignore `git diff` header
+    p = patch.splitlines(keepends=True)
+    
+    i = 0
+    while not p[i].startswith(("---", "+++")):
+        i += 1
+    p = p[i:]
+    
     t = []
     i = 0
     sl = 0
