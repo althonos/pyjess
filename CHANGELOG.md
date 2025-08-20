@@ -6,7 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.5.1...HEAD
+
+
+## [v0.5.1] - 2025-08-20
+[v0.5.1]: https://github.com/althonos/pyjess/compare/v0.5.0...v0.5.1
+
+### Fixed
+- Typo in `Hit.molecule` returning incorrect coordinates when transformation is required.
+
+### Changed
+- Implement an index to quickly access atoms by residue names in a `Molecule`, and accelerate initial candidate set creation for compatible match modes.
 
 
 ## [v0.5.0] - 2025-04-09
