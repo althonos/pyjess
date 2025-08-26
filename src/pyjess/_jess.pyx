@@ -1383,16 +1383,18 @@ cdef class Hit:
         cdef const double* v = jess.super.Superposition_centroid(self._sup, 1)
 
         for k in range(count):
-
             atom = Atom.__new__(Atom)
-            atom._atom = <_Atom*> malloc(sizeof(_Atom))
-            memcpy(atom._atom, &self._atoms[k], sizeof(_Atom))
-
             if transform:
+                atom._atom = <_Atom*> malloc(sizeof(_Atom))
+                memcpy(atom._atom, &self._atoms[k], sizeof(_Atom))
                 for i in range(3):
                     atom._atom.x[i] = v[i]
                     for j in range(3):
                         atom._atom.x[i] += M[3*i + j] * (self._atoms[k].x[j] - c[j])
+            else:
+                atom.owned = True
+                atom.owner = self
+                atom._atom = &self._atoms[k]
 
             atoms.append(atom)
 

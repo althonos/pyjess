@@ -240,3 +240,14 @@ class TestJess(unittest.TestCase):
                 self.assertAlmostEqual(atom.occupancy, float(atom_line[55:61]), places=3)
                 self.assertAlmostEqual(atom.temperature_factor, float(atom_line[61:67]), places=3)
 
+            atoms = hit.atoms(transform=False)
+            self.assertEqual(len(atoms), len(atom_lines))
+            for atom, atom_line in zip(atoms, atom_lines):
+                self.assertEqual(atom.serial, int(atom_line[7:12]))
+                self.assertEqual(atom.name, atom_line[13:17].strip())
+                self.assertEqual(atom.residue_name, atom_line[17:21].strip())
+                self.assertEqual(atom.chain_id, atom_line[21:23].strip())
+                self.assertEqual(atom.residue_number, int(atom_line[23:27]))
+                self.assertAlmostEqual(atom.occupancy, float(atom_line[55:61]), places=3)
+                self.assertAlmostEqual(atom.temperature_factor, float(atom_line[61:67]), places=3)
+
