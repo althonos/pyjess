@@ -6,7 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.5.2...HEAD
+
+
+## [v0.5.2] - 2025-08-26
+[v0.5.2]: https://github.com/althonos/pyjess/compare/v0.5.1...v0.5.2
+
+### Added
+- `pickle` protocol support to `Hit` objects.
+
+### Fixed
+- Improve performance of residue index using binary search on name queries.
+- Avoid copying atoms in `Hit.atoms` if no transformation is required.
 
 
 ## [v0.5.1] - 2025-08-20
