@@ -1,9 +1,9 @@
 diff --git a/src/ResIndex.c b/src/ResIndex.c
 new file mode 100644
-index 0000000..4b62b22
+index 0000000..e88790e
 --- /dev/null
 +++ b/src/ResIndex.c
-@@ -0,0 +1,162 @@
+@@ -0,0 +1,175 @@
 +// ==================================================================
 +// HashMap.h
 +// Copyright (c) Martin Larralde, 2025
@@ -11,6 +11,7 @@ index 0000000..4b62b22
 +// Implementation of type ResIndex.
 +// ==================================================================
 +
++#include <assert.h>
 +#include <stddef.h>
 +#include <stdlib.h>
 +#include <string.h>
@@ -131,14 +132,26 @@ index 0000000..4b62b22
 +
 +extern int ResIndex_find(ResIndex* I, const char resName[4]) {
 +    //NB: As the names have been sorted with `qsort`, we can use a binary search
-+    //    instead of a full scan here (TODO!)
 +    
-+    size_t i;
++    int cmp;
++    size_t mid;
++    size_t start = 0;
++    size_t end = I->n;
++    size_t n = 0;
 +
-+    for (i = 0; i < I->n; i++) {
-+        if (strncasecmp(&I->names[4*i], resName, 4) == 0) {
-+            return i;
++    while (start < end) {
++        mid = (start + end) / 2;
++        cmp = strncasecmp(&I->names[4*mid], resName, 4);
++        if(cmp < 0) {
++            start = (mid == start) ? mid + 1 : mid;
++        } else if (cmp > 0) {
++            end = (mid == end) ? mid - 1 : mid;
++        } else {
++            return mid;
 +        }
++
++        n++;
++        assert(n < I->n);
 +    }
 +
 +    return -1;
