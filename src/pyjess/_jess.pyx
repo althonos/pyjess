@@ -1205,7 +1205,7 @@ cdef class Query:
     cdef bint _rewind(self) noexcept nogil:
         self._partial = True
 
-    cdef int _copy_atoms(self, _Template* tpl, Hit hit) except -1 nogil:
+    cdef int _copy_atoms(self, const _Template* tpl, Hit hit) except -1 nogil:
         cdef _Atom** atoms = jess.jess.JessQuery_atoms(self._jq)
         cdef int     count = tpl.count(tpl)
 
@@ -1215,6 +1215,15 @@ cdef class Query:
         for i in range(count):
             memcpy(&hit._atoms[i], atoms[i], sizeof(_Atom))
         return count
+
+    cdef int _copy_superposition(self, const _Superposition* sup, Hit hit) except -1 nogil:
+        cdef const double* M = jess.super.Superposition_rotation(sup)
+        cdef const double* c = jess.super.Superposition_centroid(sup, 0)
+        cdef const double* v = jess.super.Superposition_centroid(sup, 1)
+        memcpy(hit._rotation, M, 9*sizeof(double))
+        memcpy(hit._centre[0], c, 3*sizeof(double))
+        memcpy(hit._centre[1], v, 3*sizeof(double))
+        return 0
 
     def __next__(self):
         assert self._jq is not NULL
@@ -1227,11 +1236,11 @@ cdef class Query:
         cdef Hit             hit     = Hit.__new__(Hit)
 
         # prepare the hit to be returned
-        hit._sup = NULL
-        hit._atoms = NULL
         hit.rmsd = INFINITY
+        hit._atoms = NULL
         hit._molecule = self.molecule
         hit_tpl = NULL
+        hit_found = False
 
         # search the next hit without the GIL to allow parallel queries.
         with nogil:
@@ -1240,14 +1249,13 @@ cdef class Query:
                 # was obtained with the current template and not with the
                 # previous one
                 tpl = jess.jess.JessQuery_template(self._jq)
-                if hit._sup != NULL and hit_tpl != tpl:
+                if hit_found and hit_tpl != tpl:
                     self._rewind()
                     break
 
                 # load superposition and compute RMSD for the current iteration
                 sup = jess.jess.JessQuery_superposition(self._jq)
                 rmsd = jess.super.Superposition_rmsd(sup)
-                keep_sup = False
 
                 # NB(@althonos): we don't need to compute the E-value to get the
                 #                best match by molecule/template pair since the
@@ -1272,22 +1280,20 @@ cdef class Query:
                                 stacklevel=2,
                             )
                     else:
-                        if hit._sup != NULL:
-                            jess.super.Superposition_free(hit._sup)
                         self._copy_atoms(tpl, hit)
-                        hit._sup = sup
+                        self._copy_superposition(sup, hit)
                         hit.rmsd = rmsd
                         hit_tpl = tpl
+                        hit_found = True
 
                 # free superposition items that are not used in a hit, and
                 # return hits immediately if we are not in best match mode
                 self._candidates += 1
-                if hit._sup != sup:
-                    jess.super.Superposition_free(sup)
-                if hit._sup != NULL and not self.best_match:
+                jess.super.Superposition_free(sup)
+                if hit_found and not self.best_match:
                     break
 
-        if hit._sup == NULL:
+        if not hit_found:
             raise StopIteration
 
         # get the template object for the hit
@@ -1305,7 +1311,9 @@ cdef class Hit:
         molecule (`~pyjess.Molecule`): The query molecule.
 
     """
-    cdef _Superposition* _sup
+    # cdef _Superposition* _sup
+    cdef double[9]       _rotation
+    cdef double[2][3]    _centre
     cdef _Atom*          _atoms
 
     cdef readonly double   rmsd
@@ -1313,19 +1321,16 @@ cdef class Hit:
     cdef          Molecule _molecule
 
     def __dealloc__(self):
-        jess.super.Superposition_free(self._sup)
         free(self._atoms)
 
     @property
     def determinant(self):
         """`float`: The determinant of the rotation matrix.
         """
-        assert self._sup is not NULL
-        cdef const double* p
+        cdef const double* p   = self._rotation
         cdef double        det = 0.0
 
         with nogil:
-            p = jess.super.Superposition_rotation(self._sup)
             det += p[0] * (p[4] * p[8] - p[5] * p[7])
             det -= p[1] * (p[3] * p[8] - p[5] * p[6])
             det += p[2] * (p[3] * p[7] - p[4] * p[6])
@@ -1369,7 +1374,6 @@ cdef class Hit:
 
         """
         assert self.template._tpl is not NULL
-        assert self._sup is not NULL
 
         cdef Atom atom
         cdef int  i
@@ -1378,9 +1382,9 @@ cdef class Hit:
         cdef int  count = self.template._tpl.count(self.template._tpl)
         cdef list atoms = []
 
-        cdef const double* M = jess.super.Superposition_rotation(self._sup)
-        cdef const double* c = jess.super.Superposition_centroid(self._sup, 0)
-        cdef const double* v = jess.super.Superposition_centroid(self._sup, 1)
+        cdef const double* M = self._rotation
+        cdef const double* c = self._centre[0] 
+        cdef const double* v = self._centre[1] 
 
         for k in range(count):
             atom = Atom.__new__(Atom)
@@ -1415,16 +1419,15 @@ cdef class Hit:
 
         """
         assert self.template._tpl is not NULL
-        assert self._sup is not NULL
 
         cdef _Atom*        atom
         cdef Molecule      mol
         cdef size_t        i
         cdef size_t        j
         cdef size_t        k
-        cdef const double* M    = jess.super.Superposition_rotation(self._sup)
-        cdef const double* c    = jess.super.Superposition_centroid(self._sup, 0)
-        cdef const double* v    = jess.super.Superposition_centroid(self._sup, 1)
+        cdef const double* M = self._rotation
+        cdef const double* c = self._centre[0] 
+        cdef const double* v = self._centre[1] 
 
         if not transform:
             return self._molecule
