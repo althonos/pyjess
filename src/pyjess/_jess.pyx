@@ -1311,7 +1311,6 @@ cdef class Hit:
         molecule (`~pyjess.Molecule`): The query molecule.
 
     """
-    # cdef _Superposition* _sup
     cdef double[9]       _rotation
     cdef double[2][3]    _centre
     cdef _Atom*          _atoms
@@ -1322,6 +1321,39 @@ cdef class Hit:
 
     def __dealloc__(self):
         free(self._atoms)
+
+    def __getstate__(self):
+        return {
+            "rotation": list(self._rotation),
+            "centre": list(self._centre),
+            "atoms": self.atoms(transform=False),
+            "rmsd": self.rmsd,
+            "template": self.template,
+            "molecule": self.molecule(transform=False),
+        }
+
+    def __setstate__(self, state):
+        cdef size_t i
+        cdef size_t count
+        cdef Atom   atom
+
+        self.rmsd = state["rmsd"]
+        self.template = state["template"]
+        self._molecule = state["molecule"]
+        self._rotation = state["rotation"]
+        self._centre = state["centre"]
+
+        # check number of atoms is consistent
+        count = len(self.template)
+        if len(state["atoms"]) != count:
+            raise ValueError(f"unexpected number of atoms: {len(state['atoms'])!r} (expected {count!r})")
+        # allocate or reallocate memory for atoms
+        self._atoms = <_Atom*> realloc(self._atoms, count * sizeof(_Atom))
+        if self._atoms is NULL:
+            raise MemoryError("Failed to allocate hit atoms")
+        # copy atom data
+        for i, atom in enumerate(state["atoms"]):
+            memcpy(&self._atoms[i], atom._atom, sizeof(_Atom))
 
     @property
     def determinant(self):
@@ -1383,8 +1415,8 @@ cdef class Hit:
         cdef list atoms = []
 
         cdef const double* M = self._rotation
-        cdef const double* c = self._centre[0] 
-        cdef const double* v = self._centre[1] 
+        cdef const double* c = self._centre[0]
+        cdef const double* v = self._centre[1]
 
         for k in range(count):
             atom = Atom.__new__(Atom)
@@ -1426,8 +1458,8 @@ cdef class Hit:
         cdef size_t        j
         cdef size_t        k
         cdef const double* M = self._rotation
-        cdef const double* c = self._centre[0] 
-        cdef const double* v = self._centre[1] 
+        cdef const double* c = self._centre[0]
+        cdef const double* v = self._centre[1]
 
         if not transform:
             return self._molecule
