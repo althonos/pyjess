@@ -1216,7 +1216,7 @@ cdef class Query:
             memcpy(&hit._atoms[i], atoms[i], sizeof(_Atom))
         return count
 
-    cdef int _copy_superposition(self, const _Superposition* sup, Hit hit) except -1 nogil:
+    cdef int _copy_superposition(self, _Superposition* sup, Hit hit) noexcept nogil:
         cdef const double* M = jess.super.Superposition_rotation(sup)
         cdef const double* c = jess.super.Superposition_centroid(sup, 0)
         cdef const double* v = jess.super.Superposition_centroid(sup, 1)
