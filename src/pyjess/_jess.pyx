@@ -329,24 +329,26 @@ cdef class Atom:
                 atom metadata from.
 
         """
-        cdef bytearray b
-        cdef Atom      atom
+        cdef const unsigned char* s
+        cdef bytearray            b
+        cdef Atom                 atom
 
         if isinstance(text, str):
             b = bytearray(text, 'utf-8')
         else:
             b = bytearray(text)
-        if not b.endswith(b'\n'):
-            b.append(b'\n')
+        # if not b.endswith(b'\n'):
+        #     b.append(b'\n')
         b.append(b'\0')
+        s = b
 
         atom = cls.__new__(cls)
-        atom._atom = <_Atom*> malloc(sizeof(_Atom))
-        if atom._atom == NULL:
-            raise MemoryError("Failed to allocate atom")
-
-        if not jess.atom.Atom_parse(atom._atom, b):
-            raise ValueError(f"Failed to parse atom: {text!r}")
+        with nogil:
+            atom._atom = <_Atom*> malloc(sizeof(_Atom))
+            if atom._atom == NULL:
+                raise MemoryError("Failed to allocate atom")
+            if not jess.atom.Atom_parse(atom._atom, <const char*> s):
+                raise ValueError(f"Failed to parse atom: {text!r}")
 
         return atom
 

@@ -1,5 +1,5 @@
 diff --git a/src/TessTemplate.c b/src/TessTemplate.c
-index 1eb6914..f901a9b 100644
+index 1eb6914..f2ad827 100644
 --- a/src/TessTemplate.c
 +++ b/src/TessTemplate.c
 @@ -5,13 +5,21 @@
@@ -119,14 +119,13 @@ index 1eb6914..f901a9b 100644
  {
  	const TessTemplate *J = (const TessTemplate*)&T[1];
  	const double logA = -8.5;
-@@ -149,11 +137,74 @@ static double TessTemplate_logE(const Template *T,double rmsd, int n)
+@@ -149,11 +137,73 @@ static double TessTemplate_logE(const Template *T,double rmsd, int n)
  	return logA + alpha*rmsd + beta*(double)J->dim + log((double)n);
  }
  
-+CandidateSet* TessTemplate_candidates(const Template *T, const Molecule *M, int k) 
++void TessTemplate_candidates(const Template *T, const Molecule *M, int k, CandidateSet** S) 
 +{
 +	const TessTemplate *J = (const TessTemplate*)&T[1];
-+	CandidateSet *S;
 +	Atom *A;
 +	Atom **it;
 +	int n = Molecule_count(M);
@@ -135,8 +134,8 @@ index 1eb6914..f901a9b 100644
 +	int j;
 +	int code;
 +
-+	if(!(S = CandidateSet_create(M)))
-+		return NULL;
++	if(!(*S = CandidateSet_reuse(*S, n)))
++		return;
 +
 +	// The following match codes require a match on residue name, so we
 +	// can use the residue name index to iterate only on atoms from 
@@ -163,7 +162,7 @@ index 1eb6914..f901a9b 100644
 +			done[j] = 1;
 +			for (it = ResIndex_values(M->index, j); *it != NULL; it++) {
 +				A = (*it);
-+				if(TessTemplate_match(T,k,A)) CandidateSet_addAtom(S, A);
++				if(TessAtom_match(J->atom[k],A)) CandidateSet_addAtom(*S, A);
 +			}
 +		}
 +#ifndef HAVE_ALLOCA
@@ -176,14 +175,14 @@ index 1eb6914..f901a9b 100644
 +		// so we just fallback to the original implementation.
 +		for (m=0; m<n; m++) {
 +			A = (Atom*)Molecule_atom(M,m);
-+			if(TessTemplate_match(T,k,A)) CandidateSet_addAtom(S, A);
++			if(TessAtom_match(J->atom[k],A)) CandidateSet_addAtom(*S, A);
 +		}
 +	}
 +
-+	if (S->count > 0)
-+		CandidateSet_recordCoordinates(S);
++	if ((*S)->count > 0)
++		CandidateSet_recordCoordinates(*S);
 +
-+	return S;
++	// return S;
 +}
 +
  // ==================================================================
@@ -195,7 +194,16 @@ index 1eb6914..f901a9b 100644
  {
  	TessTemplate *J;
  	int i;
-@@ -269,6 +320,7 @@ Template *TessTemplate_create(FILE *file,const char *sym)
+@@ -224,7 +274,7 @@ Template *TessTemplate_create(FILE *file,const char *sym)
+ 			// No errors thus far - add the atom template
+ 			// to the list we're creating...
+ 
+-			n = (Node*)calloc(1,sizeof(Node));
++			n = (Node*)malloc(sizeof(Node));
+ 			n->succ=head;
+ 			head=n;
+ 			n->atom=A;
+@@ -269,6 +319,7 @@ Template *TessTemplate_create(FILE *file,const char *sym)
  	T->name=TessTemplate_name;
  	T->logE=TessTemplate_logE;
  	T->distWeight=TessTemplate_distWeight;
@@ -203,7 +211,7 @@ index 1eb6914..f901a9b 100644
  
  	// Set up the data fields
  
-@@ -333,4 +385,78 @@ Template *TessTemplate_create(FILE *file,const char *sym)
+@@ -333,4 +384,78 @@ Template *TessTemplate_create(FILE *file,const char *sym)
  	return T;
  }
  

@@ -1,5 +1,5 @@
 diff --git a/src/TessAtom.c b/src/TessAtom.c
-index e1cce1a..0c5f71f 100644
+index e1cce1a..324347d 100644
 --- a/src/TessAtom.c
 +++ b/src/TessAtom.c
 @@ -7,39 +7,17 @@
@@ -77,37 +77,49 @@ index e1cce1a..0c5f71f 100644
  	p+=sizeof(char*)*rc;
  	for(m=0; m<rc; m++)
  	{
-@@ -294,6 +272,11 @@ int TessAtom_resSeq(const TessAtom *A)
- 	return A->resSeq;
+@@ -259,41 +237,7 @@ TessAtom *TessAtom_create(const char *s)
  }
  
-+int TessAtom_code(const TessAtom *A)
-+{
-+	return A->code;
-+}
-+
+ //Riziotis edit
+-char TessAtom_chainID1(const TessAtom *A)
+-{
+-	return A->chainID1;
+-}
+-
+-char TessAtom_chainID2(const TessAtom *A)
+-{
+-	return A->chainID2;
+-}
+-
+-double TessAtom_distWeight(const TessAtom *A)
+-{
+-	return A->distWeight;
+-}
+   
+-//char TessAtom_chainID(const TessAtom *A)
+-//{
+-//	return A->chainID;
+-//}
+-
+-const double *TessAtom_position(const TessAtom *A)
+-{
+-	return A->pos;
+-}
+-
+-void TessAtom_free(TessAtom *A)
+-{
+-	if(A) free(A);
+-}
+-
+-int TessAtom_resSeq(const TessAtom *A)
+-{
+-	return A->resSeq;
+-}
+-
  static int TessAtom_isCarbon(const Atom *A)
  {
  	return A->name[0]=='_' && A->name[1]=='C' ? 1:0;
-@@ -325,6 +308,17 @@ static int TessAtom_isInSamePosition(const TessAtom *T, const Atom *A)
- }
- //End Riziotis
- 
-+
-+const char* TessAtom_resName(const TessAtom* A, int k)
-+{
-+	return A->resName[k];
-+}
-+
-+int TessAtom_resNameCount(const TessAtom* A)
-+{
-+	return A->resNameCount;
-+}
-+
- static int TessAtom_isMainChain(const Atom *A)
- {
- 	if(strcasecmp(A->name,"_CA_")==0) return 1;
-@@ -507,5 +501,65 @@ int TessAtom_match(const TessAtom *T, const Atom *A)
+@@ -507,5 +451,65 @@ int TessAtom_match(const TessAtom *T, const Atom *A)
  	}
  }
  
@@ -128,7 +140,7 @@ index e1cce1a..0c5f71f 100644
 +	rq += sizeof(char)*(5*ac+4*rc);
 +
 +	// allocate new atom
-+	B = (TessAtom*)calloc(1,rq);
++	B = (TessAtom*)malloc(rq);
 +
 +	// copy all fields including string data from original Atom
 +	memcpy(B, A, rq);

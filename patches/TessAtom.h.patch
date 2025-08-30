@@ -1,8 +1,16 @@
 diff --git a/src/TessAtom.h b/src/TessAtom.h
-index 6480d8b..0ae63b5 100644
+index 6480d8b..648f55f 100644
 --- a/src/TessAtom.h
 +++ b/src/TessAtom.h
-@@ -18,6 +18,35 @@
+@@ -9,6 +9,7 @@
+ #define TESSATOM_H
+ 
+ #include "Atom.h"
++#include <stdlib.h>
+ 
+ // ==================================================================
+ // Forward declarations
+@@ -18,6 +19,35 @@
  
  typedef struct _TessAtom TessAtom;
  
@@ -38,15 +46,72 @@ index 6480d8b..0ae63b5 100644
  // ==================================================================
  // Methods of type TessAtom
  // ==================================================================
-@@ -39,6 +68,11 @@ extern char TessAtom_chainID1(const TessAtom*);
- extern char TessAtom_chainID2(const TessAtom*);
- extern double TessAtom_distWeight(const TessAtom*);
- //extern char TessAtom_chainID(const TessAtom*);
-+extern const char* TessAtom_resName(const TessAtom*, int);
-+extern int TessAtom_resNameCount(const TessAtom*);
-+extern int TessAtom_code(const TessAtom*);
-+extern TessAtom* TessAtom_copy(const TessAtom*);
-+extern double TessAtom_distance(const TessAtom*, const TessAtom*);
- 
+@@ -30,16 +60,62 @@ typedef struct _TessAtom TessAtom;
  // ==================================================================
  
+ extern TessAtom *TessAtom_create(const char*);
+-extern void TessAtom_free(TessAtom*);
+-extern const double *TessAtom_position(const TessAtom*);
++
++static inline void TessAtom_free(TessAtom *A)
++{
++	if(A) free(A);
++}
++
++static inline const double *TessAtom_position(const TessAtom *A)
++{
++	return A->pos;
++}
++
+ extern int TessAtom_match(const TessAtom*,const Atom*);
+-extern int TessAtom_resSeq(const TessAtom*);
++
++static inline int TessAtom_resSeq(const TessAtom *A)
++{
++	return A->resSeq;
++}
++
+ //Riziotis edit
+-extern char TessAtom_chainID1(const TessAtom*);
+-extern char TessAtom_chainID2(const TessAtom*);
+-extern double TessAtom_distWeight(const TessAtom*);
++
++static inline char TessAtom_chainID1(const TessAtom *A)
++{
++	return A->chainID1;
++}
++
++static inline char TessAtom_chainID2(const TessAtom *A)
++{
++	return A->chainID2;
++}
++
++static inline double TessAtom_distWeight(const TessAtom *A)
++{
++	return A->distWeight;
++}
++
+ //extern char TessAtom_chainID(const TessAtom*);
+ 
++static inline const char* TessAtom_resName(const TessAtom* A, int k)
++{
++	return A->resName[k];
++}
++
++static inline int TessAtom_resNameCount(const TessAtom* A)
++{
++	return A->resNameCount;
++}
++
++
++static inline int TessAtom_code(const TessAtom *A)
++{
++	return A->code;
++}
++
++extern TessAtom* TessAtom_copy(const TessAtom*);
++extern double TessAtom_distance(const TessAtom*, const TessAtom*);
++
+ // ==================================================================
+ 
+ #endif

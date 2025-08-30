@@ -80,6 +80,8 @@ set(JESS_SOURCES
     Annulus.h
     Atom.c
     Atom.h
+    Box.c
+    Box.h
     CandidateSet.c
     CandidateSet.h
     Jess.c

@@ -1,9 +1,9 @@
 diff --git a/src/CandidateSet.h b/src/CandidateSet.h
 new file mode 100644
-index 0000000..9b12e6e
+index 0000000..b142151
 --- /dev/null
 +++ b/src/CandidateSet.h
-@@ -0,0 +1,44 @@
+@@ -0,0 +1,90 @@
 +// ==================================================================
 +// CandidateSet.h
 +// Copyright (c) Jonathan Barker, 2002
@@ -19,16 +19,18 @@ index 0000000..9b12e6e
 +#include "Molecule.h"
 +
 +// ==================================================================
-+// Local type CandidateSet
++// Type CandidateSet
 +// ==================================================================
 +// count				Number of atoms in the set
++// capacity				Max number of elements allocated in atom[]
 +// atom[k]				Points to ATOM record for kth candidate
 +// coord[k]				Points to coordinates for kth candidate
 +// ==================================================================
 +
 +struct _CandidateSet
 +{
-+	int count;
++	size_t count;
++	size_t capacity;
 +	Atom **atom;
 +	double **coord;
 +};
@@ -38,14 +40,58 @@ index 0000000..9b12e6e
 +// ==================================================================
 +// Declaration of methods of local type CandidateSet
 +// ==================================================================
-+// create(M,T,k)		Create from molecule M, atom k of T
++// create()				Create new empty candidate set
++// reuse(S,n)			Reuse candidate set S for up to n atoms
 +// free(S)				Free candidate set
++// recordCoordinates(S)	Record coordinates from the set atoms
++// addAtom(S,A)			Add atom A to candidate set S
 +// ==================================================================
 +
-+CandidateSet *CandidateSet_create(const Molecule*);
-+void CandidateSet_addAtom(CandidateSet*, Atom*);
-+void CandidateSet_recordCoordinates(CandidateSet*);
++CandidateSet *CandidateSet_create();
++CandidateSet *CandidateSet_reuse(CandidateSet *S, int n);
 +void CandidateSet_free(CandidateSet*);
++
++static inline void CandidateSet_recordCoordinates(CandidateSet *S)
++{
++	int m;
++	for(m=0; m<S->count; m++)
++		S->coord[m]=S->atom[m]->x;
++}
++
++static inline void CandidateSet_addAtom(CandidateSet *S, Atom *A)
++{
++	S->atom[S->count]=A;
++	S->count++;
++}
++
++// ==================================================================
++// Type CandidateSetArray
++// ==================================================================
++// count				Number of atoms in the set
++// atom[k]				Points to ATOM record for kth candidate
++// coord[k]				Points to coordinates for kth candidate
++// ==================================================================
++
++struct _CandidateSetArray
++{
++	size_t count;
++	size_t capacity;
++	CandidateSet **items;
++};
++
++typedef struct _CandidateSetArray CandidateSetArray;
++
++// ==================================================================
++// Declaration of methods of local type CandidateSetArray
++// ==================================================================
++// create()				Create new candidate set array
++// free(C)				Free candidate set array
++// get(C,M,k)		    Get a new candidate set for M at index k
++// ==================================================================
++
++CandidateSetArray *CandidateSetArray_create();
++void CandidateSetArray_free(CandidateSetArray*);
++CandidateSet* CandidateSetArray_get(CandidateSetArray *C, int k);
 +
 +#endif
 \ No newline at end of file
