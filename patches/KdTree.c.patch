@@ -1,18 +1,92 @@
 diff --git a/src/KdTree.c b/src/KdTree.c
-index 5d8d783..698064e 100644
+index 5d8d783..df774d9 100644
 --- a/src/KdTree.c
 +++ b/src/KdTree.c
-@@ -87,9 +87,26 @@ struct _KdTreeQuery
+@@ -9,6 +9,10 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <stdio.h>
++#include <stdint.h>
++
++#define NO_NODE	SIZE_MAX
++#define MAX_DIM 3
+ 
+ // ==================================================================
+ // Forward declarations of local types
+@@ -16,6 +20,7 @@
+ // KdTreeNode			One node of a KdTree
+ // ==================================================================
+ 
++typedef size_t index_t; 
+ typedef struct _KdTreeNode KdTreeNode;
+ 
+ // ==================================================================
+@@ -30,12 +35,12 @@ typedef struct _KdTreeNode KdTreeNode;
+ 
+ struct _KdTreeNode
+ {
++	index_t left;
++	index_t right;
++	double min[MAX_DIM];
++	double max[MAX_DIM];
+ 	int type;
+ 	int index;
+-	KdTreeNode *left;
+-	KdTreeNode *right;
+-	double *min;
+-	double *max;
+ 	int depth;
+ };
+ 
+@@ -46,19 +51,26 @@ struct _KdTreeNode
+ // free(N)				Frees a node and all its descendants
+ // ==================================================================
+ 
+-static KdTreeNode *KdTreeNode_create(int*,int,int,double**,int);
+-static void KdTreeNode_free(KdTreeNode*);
++static index_t KdTreeNode_create(KdTree*,int*,int,int,double**,int);
++// static void KdTreeNode_free(KdTreeNode*);
+ 
+ // ==================================================================
+ // type KdTree
+ // ==================================================================
+ // root					The root of the tree
+ // dim					Dimension of the points
++// node					The nodes stored in an array
++// capacity				The capacity of the node array
++// count				The number of element in the node array
++// dim					The dimension of the tree (at most MAX_DIM)
+ // ==================================================================
+ 
+ struct _KdTree
+ {
+-	KdTreeNode *root;
++	KdTreeNode *nodes;
++	size_t count;
++	size_t capacity;
++	index_t root;
+ 	int dim;
+ };
+ 
+@@ -74,9 +86,9 @@ struct _KdTree
+ struct _KdTreeQuery
+ {
+ 	KdTree *tree;
+-	Region *region;
++	Join *region;
+ 	int count;
+-	KdTreeNode *stack[0];
++	index_t stack[0];
+ };
+ 
+ 
+@@ -87,33 +99,29 @@ struct _KdTreeQuery
  // data,index			Static globals (see KdTreeNode_create)
  // ==================================================================
  
 -static int KdTree_compare(const void*,const void*);
 +static int KdTree_compare(const void*, const void*);
-+#ifdef HAVE_GNU_QSORT_R
 +static int KdTree_compare_r(const void*, const void*, void*);
-+#else
-+static int KdTree_compare_r(void*, const void*, const void*);
-+#endif
 +
 +#ifdef HAVE_THREADLOCALSTORAGE
 +static __thread double **KdTree_data;
@@ -30,15 +104,171 @@ index 5d8d783..698064e 100644
  
  // ==================================================================
  // Local functions
-@@ -258,6 +275,21 @@ static int KdTree_compare(const void *pa, const void *pb)
+ // ==================================================================
+ 
+-static double dmin(double x, double y)
+-{
+-	return x<y ? x:y;
+-}
+-
+-static double dmax(double x, double y)
+-{
+-	return x>y ? x:y;
+-}
+-
+-static int imin(int x, int y)
+-{
+-	return x<y ? x:y;
+-}
+-
+-static int imax(int x, int y)
+-{
+-	return x>y ? x:y;
+-}
++#define min(x,y) (x<y ? x:y)
++#define max(x,y) (x>y ? x:y)
+ 
+ // ==================================================================
+ // Public methods of type KdTree
+@@ -126,24 +134,35 @@ KdTree *KdTree_create(double **u, int n, int d)
+ 	int *tmp;
+ 
+ 	if(n<1 || d<1 || !u) return NULL;
++	if(d>MAX_DIM) return NULL;
+ 
+ 	// 1. Create memory for the object.
+ 
+-	K = (KdTree*)calloc(1,sizeof(KdTree));
++	K = (KdTree*)malloc(sizeof(KdTree));
+ 	K->dim=d;
++	K->nodes=NULL;
++	K->count=0;
++	K->capacity=0;
++	K->root=NO_NODE;
+ 
+ 	// 3a. Create a temporary array to hold indices
+ 
+-	tmp = (int*)calloc(n,sizeof(int));
++	tmp = (int*)malloc(n*sizeof(int));
+ 	for(i=0; i<n; i++) tmp[i]=i;
+ 
+ 	// 3b. Create the tree recursively. This takes time
+ 	// of order at most n.log(n)^2, assuming that qsort
+ 	// always manages n.log(n) and d is constant.
+ 
+-	K->root = KdTreeNode_create(tmp,n,0,u,d);
++	K->root = KdTreeNode_create(K, tmp,n,0,u,d);
+ 	free(tmp);
+ 
++	if(K->root == NO_NODE) 
++	{
++		KdTree_free(K);
++		return NULL;
++	}
++
+ 	// 4. Return the result!
+ 
+ 	return K;
+@@ -155,21 +174,21 @@ void KdTree_free(KdTree *K)
+ 
+ 	if(K)
+ 	{
+-		KdTreeNode_free(K->root);
++		if(K->nodes) free(K->nodes);
+ 		free(K);
+ 	}
+ }
+ 
+-KdTreeQuery *KdTree_query(KdTree *K, Region *R)
++KdTreeQuery *KdTree_query(KdTree *K, Join *J)
+ {
+ 	KdTreeQuery *Q;
+ 	int rq;
+ 
+-	rq = sizeof(KdTreeQuery)+K->root->depth*sizeof(KdTreeNode*);
++	rq = sizeof(KdTreeQuery)+K->nodes[K->root].depth*sizeof(index_t);
+ 
+-	Q = (KdTreeQuery*)calloc(1,rq);
++	Q = (KdTreeQuery*)malloc(rq);
+ 	Q->tree=K;
+-	Q->region=R;
++	Q->region=J;
+ 	Q->count=1;
+ 	Q->stack[0]=K->root;
+ 
+@@ -180,11 +199,30 @@ KdTreeQuery *KdTree_query(KdTree *K, Region *R)
+ // Methods of type KdTreeQuery
+ // ==================================================================
+ 
++KdTreeQuery *KdTreeQuery_reuse(KdTreeQuery *Q, KdTree *K, Join *J)
++{
++	int rq;
++
++	if((!Q) || (Q->tree->nodes[Q->tree->root].depth!=K->nodes[K->root].depth))
++	{
++		rq = sizeof(KdTreeQuery)+K->nodes[K->root].depth*sizeof(index_t);
++		Q=(KdTreeQuery*)realloc(Q,rq);
++		if(!Q) return NULL;
++	}
++
++	Q->tree=K;
++	Q->region=J;
++	Q->count=1;
++	Q->stack[0]=K->root;
++
++	return Q;
++}
++
+ int KdTreeQuery_next(KdTreeQuery *Q)
+ {
+ 	KdTreeNode *N;
+-	Region *R = Q->region;
+-	KdTreeNode **stack=&(Q->stack[0]);
++	Join *J = Q->region;
++	index_t *stack=&(Q->stack[0]);
+ 	int dim = Q->tree->dim;
+ 	int *count = &(Q->count);
+ 
+@@ -195,7 +233,7 @@ int KdTreeQuery_next(KdTreeQuery *Q)
+ 	{
+ 		// Pull the top node off the stack.
+ 
+-		N = stack[--(*count)];
++		N = &Q->tree->nodes[stack[--(*count)]];
+ 
+ 		// If the node is a leaf we simply test it and
+ 		// remove it from the stack. If the point is in
+@@ -204,7 +242,7 @@ int KdTreeQuery_next(KdTreeQuery *Q)
+ 
+ 		if(N->type<0)
+ 		{
+-			if(R->inclusionQ(R,N->min,dim))
++			if(_Join_po(J,N->min,dim))
+ 			{
+ 				return N->index;
+ 			}
+@@ -219,7 +257,7 @@ int KdTreeQuery_next(KdTreeQuery *Q)
+ 		// the node's region then we can remove it
+ 		// and continue with the rest of the stack.
+ 
+-		if(!R->intersectionQ(R,N->min,N->max,dim))
++		if(!_Join_ro(J,N->min,N->max,dim))
+ 		{
+ 			continue;
+ 		}
+@@ -239,7 +277,6 @@ void KdTreeQuery_free(KdTreeQuery *Q)
+ {
+ 	if(Q)
+ 	{
+-		if(Q->region) Q->region->free(Q->region);
+ 		free(Q);
+ 	}
+ }
+@@ -258,26 +295,109 @@ static int KdTree_compare(const void *pa, const void *pb)
  	return c<d ? -1 : c>d ? 1 : 0;
  }
  
-+#ifdef HAVE_GNU_QSORT_R
 +static int KdTree_compare_r(const void* pa, const void* pb, void* data)
-+#else
-+static int KdTree_compare_r(void* data, const void *pa, const void *pb)
-+#endif
 +{
 +	struct _KdTreeCompareData _data  = *((struct _KdTreeCompareData*) data);
 +	const int a = *((const int*)pa);
@@ -52,22 +282,189 @@ index 5d8d783..698064e 100644
  // ==================================================================
  // Methods of local type KdTreeNode
  // ==================================================================
-@@ -297,9 +329,18 @@ static KdTreeNode *KdTreeNode_create(int *idx,int n,int type,double **u,int dim)
- 	// is used because it's not possible to pass extra
- 	// parameters to qsort.
  
+-static KdTreeNode *KdTreeNode_create(int *idx,int n,int type,double **u,int dim)
++typedef int(*compare_t)(const void*, const void*, void*);
++
++
++static inline void
++_qselect_memswap(void *restrict p1, void *restrict p2, size_t n)
++{
++  while (n > 0)
++    {
++      unsigned char t = ((unsigned char *)p1)[--n];
++      ((unsigned char *)p1)[n] = ((unsigned char *)p2)[n];
++      ((unsigned char *)p2)[n] = t;
++    }
++}
++
++static size_t _qselect_partition(void* base, size_t size, size_t left, size_t right, size_t pivot_index, compare_t compare, void* arg)
++{
++	size_t store_index = left;
++	_qselect_memswap(base+right*size, base+pivot_index*size, size);
++	for(size_t i=left; i<right; i++)
++	{
++		if (compare(base+i*size, base+right*size, arg) <= 0)
++		{
++			_qselect_memswap(base+i*size, base+store_index*size, size);
++			store_index += 1; 
++		}
++	}
++	_qselect_memswap(base+store_index*size, base+right*size, size);
++	return store_index;
++}
++
++static size_t _qselect_median3(void* base, size_t size, size_t left, size_t right, compare_t compare, void* arg)
++{
++	size_t mid = (left + right + 1) / 2;
++	if ((compare(base+left*size, base+mid*size, arg) > 0) != (compare(base+left*size, base+right*size, arg) > 0))
++		return left;
++	else if ((compare(base+mid*size, base+left*size, arg) < 0) != (compare(base+mid*size, base+right*size, arg) < 0))
++		return mid;
++	else
++		return right;
++}
++
++static size_t qselect_r(void* base, size_t n, size_t size, size_t k, compare_t compare, void* arg) 
++{
++	size_t pivot_index;
++	size_t left = 0;
++	size_t right = n-1;
++
++	while(1) {
++		if (left == right)
++			return left;
++
++		pivot_index = _qselect_median3(base, size, left, right, compare, arg); 
++		pivot_index = _qselect_partition(base, size, left, right, pivot_index, compare, arg);
++
++		if(pivot_index == k) 
++			return pivot_index;
++		else if (k < pivot_index)
++			right = pivot_index - 1;
++		else
++			left = pivot_index + 1;
++	}
++}
++
++
++static index_t KdTreeNode_create(KdTree *K, int *idx, int n, int type,double **u,int dim)
+ {
+ 	KdTreeNode *N;
+ 	int split;
+ 	int i,rq;
++	index_t k, left, right;
+ 
+ 	// 1. The really easy case. If n is 0 do nothing!
+ 
+-	if(n<=0) return NULL;
++	if(n<=0) return NO_NODE;
+ 
+ 	// 1.5. We'll need to create a node in all other cases.
+ 
+-	rq = sizeof(KdTreeNode)+dim*2*sizeof(double);
+-	N = (KdTreeNode*)calloc(1,rq);
+-	N->min=(double*)&N[1];
+-	N->max=&N->min[dim];
++	if(K->count>=K->capacity) {
++		K->capacity = (K->capacity == 0) ? 32 : K->capacity*2;
++		K->nodes = realloc(K->nodes, K->capacity*sizeof(KdTreeNode));
++		if(!K->nodes) return NO_NODE;
++	}
++
++	k=K->count;
++	N=&K->nodes[k];
++	K->count++;
++	N->left = NO_NODE;
++	N->right = NO_NODE;
+ 
+ 	// 2. The easy case. If n is 1, create a leaf.
+ 
+@@ -286,61 +406,58 @@ static KdTreeNode *KdTreeNode_create(int *idx,int n,int type,double **u,int dim)
+ 		N->type=-1;
+ 		N->index=idx[0];
+ 		N->depth=1;
++		N->left = NO_NODE;
++		N->right = NO_NODE;
+ 		memcpy(N->min,u[idx[0]],sizeof(double)*dim);
+ 		memcpy(N->max,u[idx[0]],sizeof(double)*dim);
+-
+-		return N;
++		return k;
+ 	}
+-
++ 
+ 	// 2.5. Now we need to order the indices by coordinate
+-	// numbered type. THIS IS NOT THREAD-SAFE. This kludge
+-	// is used because it's not possible to pass extra
+-	// parameters to qsort.
++	// numbered type.
+ 
+-	KdTree_data=u;
+-	KdTree_index=type;
+-	qsort(idx,n,sizeof(int),KdTree_compare);
 +	struct _KdTreeCompareData _data = { u, type };
-+#if defined(HAVE_GNU_QSORT_R)
-+	qsort_r(idx,n,sizeof(int),KdTree_compare_r,&_data);
-+#elif defined(HAVE_APPLE_QSORT_R)
-+	qsort_r(idx,n,sizeof(int),&_data,KdTree_compare_r);
-+#elif defined(HAVE_WIN32_QSORT_S)
-+	qsort_s(idx,n,sizeof(int),KdTree_compare_r, &_data);
-+#else
- 	KdTree_data=u;
- 	KdTree_index=type;
- 	qsort(idx,n,sizeof(int),KdTree_compare);
-+#endif
++	split = qselect_r(idx, n, sizeof(int), n/2, KdTree_compare_r, &_data);
  
  	// 3. The recursive case. Find [n/2] and split the array into
  	// two pieces. Create a node whose splitting value is the median.
+ 	// But make sure that if there are several entries with the same
+ 	// coordinate that we take the right-most.
+ 
+-	split = n/2;
+-	N->index=idx[split-1];
+-	while(split<n-1 && u[split+1][type]==u[split][type]) split++;
+ 	N->type=type;
++	N->index=idx[split-1];
+ 
+ 	// Now create the left and right branches of the node.
+ 
+ 	type = (type+1)%dim;
+-	N->left = KdTreeNode_create(idx,split,type,u,dim);
+-	N->right = KdTreeNode_create(&idx[split],n-split,type,u,dim);
++	left = KdTreeNode_create(K, idx,split,type,u,dim);
++	right = KdTreeNode_create(K, &idx[split],n-split,type,u,dim);
++	if((left==NO_NODE) || (right==NO_NODE)) return NO_NODE;
+ 
+-	// Compute max,min and depth...
++	// DANGER: we need to update the pointer `N` because the memory for
++	//		   storing nodes may have been reallocated in the recursive
++	// 		   `KdTreeNode_create` calls. Then it's safe again to access
++	//		   and update it.
+ 
+-	N->depth = imax(N->left->depth,N->right->depth)+1;
++	N=&K->nodes[k];
++	N->left=left;
++	N->right=right;
++
++	// Compute max,min and depth...
++	N->depth = max(K->nodes[left].depth,K->nodes[right].depth)+1;
+ 
+ 	for(i=0; i<dim; i++)
+ 	{
+-		N->min[i]=dmin(N->left->min[i],N->right->min[i]);
+-		N->max[i]=dmax(N->left->max[i],N->right->max[i]);
++		N->min[i]=min(K->nodes[left].min[i],K->nodes[right].min[i]);
++		N->max[i]=max(K->nodes[left].max[i],K->nodes[right].max[i]);
+ 	}
+ 
+ 	// We're done...
+-
+-	return N;
++	return k;
+ }
+ 
+-static void KdTreeNode_free(KdTreeNode *N)
+-{
+-	if(N)
+-	{
+-		KdTreeNode_free(N->left);
+-		KdTreeNode_free(N->right);
+-		free(N);
+-	}
+-}
++#undef min
++#undef max
+ 
+ // ==================================================================
+ 
