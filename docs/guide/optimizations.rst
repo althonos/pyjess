@@ -120,17 +120,19 @@ Approximate annulus intersection
 .. versionadded:: 0.6.0
 
 During the search for matches in a ``Scanner``, Jess takes into account the 
-flexibility of the `Template` by modelling the position of each `TemplateAtom`
-using an `annulus <https://en.wikipedia.org/wiki/Annulus_(mathematics)>`_. 
+flexibility of the `Template` by modelling the distance constraints to each 
+`TemplateAtom` using an `annulus <https://en.wikipedia.org/wiki/Annulus_(mathematics)>`_. 
 Then, it queries the :math:`k`-d tree created on the candidate atoms to find
-the atoms that are included in this annulus.
+candidate atoms that are included in this annulus.
 
 In the original Jess, the traversal of the :math:`k`-d tree is done by computing 
 for each internal node of the tree whether the box formed by that node intersect
 the query annulus, and for each leaf whether they are contained in that annulus.
 
 Computing the intersection between a box and an annulus requires computing 
-euclidean distances, and therefore real product:
+`Euclidean distances <https://en.wikipedia.org/wiki/Euclidean_distance>`_, 
+and therefore products between real numbers, an operation that is among the 
+slowest even on modern CPUs:
 
 .. code:: c
 
@@ -179,6 +181,41 @@ cases, i.e. when the intersection happens in a corner of the bounding box around
 the annulus. However, given that the :math:`k`-d tree later checks that the 
 points are actually included in the annulus for the leaf nodes, 
 using this implementation will not generate false positives.
+
+
+Reduced backtracking
+--------------------
+
+.. versionadded:: 0.6.0
+
+The ``Scanner`` in Jess iterates on the `Template` atoms and then aligns the
+`Molecule` atoms iteratively. When no more candidate for a `TemplateAtom` can
+be found in a `Molecule`, it backtracks to the previous `TemplateAtom`, and 
+continues this iteration. 
+
+Since every backtracking event triggers the querying of the :math:`k`-d tree, 
+we want to minimize backtracking as much as possible. To do so, we compute 
+an iteration order over the `Template` atoms that minimizes the amount of 
+backtracking required to explore all paths. This can be done quickly by 
+sorting the `TemplateAtom` using the number of `Atom` in the corresponding 
+``CandidateSet``. 
+
+Empirically, this approach reduced the amount of :math:`k`-d tree queries by a 
+factor of 10. It is nevertheless unclear whether an optimal path can be 
+further identified and pre-computed from the candidate `Atom`, possibly by 
+filtering distant atoms first.
+
+.. warning:: 
+
+    Out all the optimizations in this section, this one is the only one 
+    to introduce *slight* behavioral changes in PyJess compared to Jess.
+    Since the order in which candidate atoms are matched have changed, 
+    the order in which a PyJess `Query` yields `Hit` objects differs
+    to that in which Jess reports a match. This only affects the *order*
+    though: all matches are still returned, and are 1-to-1 identical!
+    This can be disabled by running with ``Jess.query(..., reorder=False)``
+    to use the original matching order, at the cost of a longer runtime.
+
 
 
 Type concretization
