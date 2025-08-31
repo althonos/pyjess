@@ -88,7 +88,7 @@ around a pivot value, usually the median coordinate for that dimension.
 
 The original Jess code uses ``qsort`` (the `QuickSort <https://en.wikipedia.org/wiki/Quicksort>`_
 implementation of the C standard library) to first sort the atoms on a 
-single dimension, and then takes the middle point::
+single dimension, and then takes the middle point:
 
 .. code:: c
 
@@ -106,11 +106,12 @@ single dimension, and then takes the middle point::
     N->left = KdTreeNode_create(idx,split,type,u,dim);
     N->right = KdTreeNode_create(&idx[split],n-split,type,u,dim); 
 
+
 While implemented very efficiently, QuickSort has an average runtime
 complexity of :math:`O(nlog(n))`. Given that the algorithm is only used
 here to search for the median, and that the sort order is actually irrelevant, 
 we replaced it with the `QuickSelect <https://en.wikipedia.org/wiki/Quickselect>`_ algorithm,
-which can retrieve the median with an averate runtime complexity of :math:`O(n)`.
+which can retrieve the median with an average runtime complexity of :math:`O(n)`.
 
 
 Approximate annulus intersection
