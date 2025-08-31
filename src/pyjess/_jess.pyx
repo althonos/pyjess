@@ -1603,9 +1603,26 @@ cdef class Jess:
                 the atoms to match.
             best_match (`bool`): Pass `True` to return only the best match
                 to each template.
+            reorder (`bool`): Whether to enable template atom reordering
+                to accelerate matching in the scanner algorithm. Pass 
+                `False` to reverse to the original, slower algorithm
+                which matches atoms in the same order as they appear in
+                the template, at the cost
 
         Returns:
             `~pyjess.Query`: An iterator over the query hits.
+
+        Caution:
+            Since ``v0.6.0``, this function uses an optimized variant of
+            the Jess scanning algorithm which minimized the number of steps
+            needed to generate matches, by re-ordering the order the 
+            template atoms are iterated upon. Because of this change,
+            the query may return *exactly* the same matches but in an order 
+            that *differs* from the original Jess version. If you really
+            need results in the original order, set ``reorder`` to `False`.
+
+        .. versionadded:: 0.6.0
+            The ``reorder`` argument, defaulting to `True`.
 
         """
         cdef Query query = Query.__new__(Query)

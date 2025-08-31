@@ -204,7 +204,7 @@ class TestJess(unittest.TestCase):
             self.assertAlmostEqual(hit.log_evalue, -2.04, places=1)
 
     @unittest.skipUnless(files, "importlib.resources not available")
-    def test_mcsa_query(self):
+    def test_mcsa_query_no_reorder(self):
         with files(data).joinpath("1.3.3.tpl").open() as f:
             template = Template.load(f)
             jess = Jess([template])
@@ -217,6 +217,66 @@ class TestJess(unittest.TestCase):
         self.assertEqual(len(hits), len(results))
         for hit, block in zip(hits, results):
             self.assertIs(hit.template, template)
+
+            lines = block.strip().splitlines()
+            query_id, rmsd, template_id, _, determinant, _, logE = lines[0].split()
+            self.assertEqual(query_id, "1AMY")
+            self.assertAlmostEqual(float(rmsd), hit.rmsd, places=3)
+            self.assertAlmostEqual(float(determinant), hit.determinant, places=1)
+            self.assertAlmostEqual(float(logE), hit.log_evalue, places=1)
+
+            atom_lines = lines[1:-1]
+            atoms = hit.atoms()
+            self.assertEqual(len(atoms), len(atom_lines))
+            for atom, atom_line in zip(atoms, atom_lines):
+                self.assertEqual(atom.serial, int(atom_line[7:12]))
+                self.assertEqual(atom.name, atom_line[13:17].strip())
+                self.assertEqual(atom.residue_name, atom_line[17:21].strip())
+                self.assertEqual(atom.chain_id, atom_line[21:23].strip())
+                self.assertEqual(atom.residue_number, int(atom_line[23:27]))
+                self.assertAlmostEqual(atom.x, float(atom_line[31:39]), places=3)
+                self.assertAlmostEqual(atom.y, float(atom_line[39:47]), places=3)
+                self.assertAlmostEqual(atom.z, float(atom_line[47:55]), places=3)
+                self.assertAlmostEqual(atom.occupancy, float(atom_line[55:61]), places=3)
+                self.assertAlmostEqual(atom.temperature_factor, float(atom_line[61:67]), places=3)
+
+            atoms = hit.atoms(transform=False)
+            self.assertEqual(len(atoms), len(atom_lines))
+            for atom, atom_line in zip(atoms, atom_lines):
+                self.assertEqual(atom.serial, int(atom_line[7:12]))
+                self.assertEqual(atom.name, atom_line[13:17].strip())
+                self.assertEqual(atom.residue_name, atom_line[17:21].strip())
+                self.assertEqual(atom.chain_id, atom_line[21:23].strip())
+                self.assertEqual(atom.residue_number, int(atom_line[23:27]))
+                self.assertAlmostEqual(atom.occupancy, float(atom_line[55:61]), places=3)
+                self.assertAlmostEqual(atom.temperature_factor, float(atom_line[61:67]), places=3)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    def test_mcsa_query_reorder(self):
+        with files(data).joinpath("1.3.3.tpl").open() as f:
+            template = Template.load(f)
+            jess = Jess([template])
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            molecule = Molecule.load(f)
+        with files(data).joinpath("1AMY+1.3.3.txt").open() as f:
+            results = list(filter(None, f.read().split("REMARK")))
+
+        hits = list(jess.query(molecule, 2, 4, 4, reorder=True))
+        self.assertEqual(len(hits), len(results))
+
+        # `reorder=True` means that we may get results in a different order
+        # to Jess, so we need to match the hits in the file by residue number
+        # to make sure we compare them consistently.
+        
+        results_by_serials = {}
+        for block in results:
+            lines = block.strip().splitlines()
+            serials = tuple([ int(line.split()[1]) for line in lines[1:-1] ])
+            results_by_serials[serials] = block
+
+        for hit in hits:
+            self.assertIs(hit.template, template)
+            block = results_by_serials[tuple(atom.serial for atom in hit.atoms(False))]
 
             lines = block.strip().splitlines()
             query_id, rmsd, template_id, _, determinant, _, logE = lines[0].split()

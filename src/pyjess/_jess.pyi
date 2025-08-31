@@ -221,4 +221,5 @@ class Jess(Generic[_T], Sequence[_T]):
         max_candidates: int = 1000,
         ignore_chain: bool = False,
         best_match: bool = False,
+        reorder: bool = True,
     ) -> Query[_T]: ...
