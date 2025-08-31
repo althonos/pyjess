@@ -1,0 +1,29 @@
+diff --git a/src/Jess.h b/src/Jess.h
+index c90abe6..dec1fee 100644
+--- a/src/Jess.h
++++ b/src/Jess.h
+@@ -8,6 +8,8 @@
+ #ifndef JESS_H
+ #define JESS_H
+ 
++#include <stdbool.h>
++
+ #include "Super.h"
+ #include "Molecule.h"
+ #include "Template.h"
+@@ -29,13 +31,13 @@ typedef struct _JessQuery JessQuery;
+ // create()				Create a Jess module
+ // free(J)				Free Jess object J (AND all templates)
+ // addTemplate(J,T)		Add T to the list of templates for J
+-// query(J,M,t)			Start a query on M using J threshold t
++// query(J,M,t,s)		Start a query on M using J threshold t
+ // ==================================================================
+ 
+ extern Jess *Jess_create(void);
+ extern void Jess_free(Jess*);
+ extern void Jess_addTemplate(Jess*,Template*);
+-extern JessQuery *Jess_query(Jess*,Molecule*,double,double);
++extern JessQuery *Jess_query(Jess*,Molecule*,double,double,bool);
+ 
+ // ==================================================================
+ // Methods of type JessQuery
