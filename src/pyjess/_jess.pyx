@@ -337,8 +337,8 @@ cdef class Atom:
             b = bytearray(text, 'utf-8')
         else:
             b = bytearray(text)
-        # if not b.endswith(b'\n'):
-        #     b.append(b'\n')
+        if not b.endswith(b'\n'):
+            b.append(b'\n')
         b.append(b'\0')
         s = b
 
