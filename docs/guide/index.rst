@@ -13,6 +13,7 @@ This section contains guides and documents about PyJess usage.
    :maxdepth: 1
    :caption: Resources
 
+   Optimizations <optimizations>
    Contribution Guide <contributing>
    Changelog <changes>
    Copyright Notice <copyright>

@@ -103,15 +103,16 @@ PyJess is a Python module that provides bindings to Jess using
       Retrieve results as they become availble as dedicated 
       `~pyjess.Hit` objects, and compute statistics on-the-fly.
 
+   .. grid-item-card:: :fas:`gauge-high` Fast
+
+      Compute matches about 10x faster, thanks to
+      several :doc:`algorithmic optimizations <guide/optimizations>`
+      made to the original Jess code.
+
    .. grid-item-card:: :fas:`server` Parallel
 
       Easily run computations in parallel querying thread-safe 
       `~pyjess.Jess` with several `~pyjess.Molecule` in parallel.
-
-   .. grid-item-card:: :fas:`check` Consistent
-
-      Get the same results as Jess, with some additional bug fixes for 
-      edge cases of the original implementation.
 
    .. grid-item-card:: :fas:`toolbox` Feature-complete
 
