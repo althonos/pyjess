@@ -90,6 +90,7 @@ set(JESS_SOURCES
     KdTree.h
     Molecule.c
     Molecule.h
+    qselect.h
     Region.c
     Region.h
     ResIndex.c
