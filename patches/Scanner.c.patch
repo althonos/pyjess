@@ -1,5 +1,5 @@
 diff --git a/src/Scanner.c b/src/Scanner.c
-index 19a35a7..7c5f378 100644
+index 19a35a7..79a3ed3 100644
 --- a/src/Scanner.c
 +++ b/src/Scanner.c
 @@ -5,41 +5,37 @@
@@ -78,7 +78,7 @@ index 19a35a7..7c5f378 100644
  	int count;
  	double threshold;
  	double max_total_threshold;
-@@ -75,19 +74,57 @@ struct _Scanner
+@@ -75,19 +74,59 @@ struct _Scanner
  // Methods of type Scanner
  // ==================================================================
  
@@ -89,7 +89,8 @@ index 19a35a7..7c5f378 100644
 +{
 +	int x = *((int*)a);
 +	int y = *((int*)b);
-+	return candidates[x]->count - candidates[y]->count;
++	int diff = candidates[x]->count - candidates[y]->count;
++	return (diff == 0) ? x-y : diff;
 +}
 +#endif
 +
@@ -102,7 +103,8 @@ index 19a35a7..7c5f378 100644
 +	CandidateSet** candidates = (CandidateSet**) data;
 +	int x = *((int*)a);
 +	int y = *((int*)b);
-+	return candidates[x]->count - candidates[y]->count;
++	int diff = candidates[x]->count - candidates[y]->count;
++	return (diff == 0) ? x-y : diff;
 +}
 +
 +Scanner *Scanner_create(Molecule *M, Template *T, ScannerData* D, double r, double s, bool reorder)
@@ -145,7 +147,7 @@ index 19a35a7..7c5f378 100644
  
  	S->template=T;
  	S->threshold=r;
-@@ -96,22 +133,48 @@ Scanner *Scanner_create(Molecule *M, Template *T,double r, double s)
+@@ -96,22 +135,48 @@ Scanner *Scanner_create(Molecule *M, Template *T,double r, double s)
  
  	for(k=0; k<n; k++)
  	{
@@ -199,7 +201,7 @@ index 19a35a7..7c5f378 100644
  	}
  
  	return S;
-@@ -119,26 +182,8 @@ Scanner *Scanner_create(Molecule *M, Template *T,double r, double s)
+@@ -119,26 +184,8 @@ Scanner *Scanner_create(Molecule *M, Template *T,double r, double s)
  
  void Scanner_free(Scanner *S)
  {
@@ -226,7 +228,7 @@ index 19a35a7..7c5f378 100644
  		free(S);
  	}
  }
-@@ -147,8 +192,6 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+@@ -147,8 +194,6 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
  {
  	int j,k;
  	double min,max;
@@ -235,7 +237,7 @@ index 19a35a7..7c5f378 100644
  	double dynamic_threshold = S->threshold;
  
  	k=S->count-1;
-@@ -166,17 +209,16 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+@@ -166,17 +211,16 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
  
  		if(k==0)
  		{
@@ -256,7 +258,7 @@ index 19a35a7..7c5f378 100644
  				k++;
  			}
  
-@@ -186,17 +228,16 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+@@ -186,17 +230,16 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
  		// So k>0. If there is an active query for this
  		// set then query it now...
  
@@ -279,7 +281,7 @@ index 19a35a7..7c5f378 100644
  				k--;
  			}
  			else
-@@ -205,8 +246,8 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+@@ -205,8 +248,8 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
  				// atom, check n-ary constraints and continue
  				// up...
  
@@ -290,7 +292,7 @@ index 19a35a7..7c5f378 100644
  				{
  					k++;
  				}
-@@ -219,7 +260,7 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+@@ -219,7 +262,7 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
  		// no active query result for set k-1 then we need
  		// to drop down again...
  
@@ -299,7 +301,7 @@ index 19a35a7..7c5f378 100644
  		{
  			k--;
  			continue;
-@@ -231,9 +272,9 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+@@ -231,9 +274,9 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
  
  		for(j=0; j<k; j++)
  		{
@@ -311,7 +313,7 @@ index 19a35a7..7c5f378 100644
  			// Limit threshold to a hard cutoff so execution does not suffer
  			if(dynamic_threshold > S->max_total_threshold){
  				dynamic_threshold = S->max_total_threshold;
-@@ -242,11 +283,13 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+@@ -242,11 +285,13 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
  			max += dynamic_threshold;
  			if(min<0.5) min=0.5;
  
@@ -328,7 +330,7 @@ index 19a35a7..7c5f378 100644
  	}
  
  	// If k<0 there is no more!
-@@ -259,49 +302,108 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+@@ -259,49 +304,108 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
  }
  
  // ==================================================================
