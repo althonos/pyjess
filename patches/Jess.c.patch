@@ -1,5 +1,5 @@
 diff --git a/src/Jess.c b/src/Jess.c
-index e81bda0..7d8d165 100644
+index e81bda0..5601c07 100644
 --- a/src/Jess.c
 +++ b/src/Jess.c
 @@ -4,15 +4,18 @@
@@ -96,7 +96,7 @@ index e81bda0..7d8d165 100644
  
  	return Q;
  }
-@@ -129,6 +151,7 @@ void JessQuery_free(JessQuery *Q)
+@@ -129,74 +151,80 @@ void JessQuery_free(JessQuery *Q)
  	{
  		Scanner_free(Q->scanner);
  		Superposition_free(Q->super);
@@ -104,7 +104,31 @@ index e81bda0..7d8d165 100644
  		free(Q);
  	}
  }
-@@ -156,47 +179,52 @@ Superposition *JessQuery_superposition(JessQuery *Q)
+ 
+-Template *JessQuery_template(JessQuery *Q)
++Template *JessQuery_template(const JessQuery *Q)
+ {
+ 	if(!Q->node) return NULL;
+ 	return Q->node->template;
+ }
+ 
+-const Molecule *JessQuery_molecule(JessQuery *Q)
++const Molecule *JessQuery_molecule(const JessQuery *Q)
+ {
+ 	return Q->molecule;
+ }
+ 
+-Atom **JessQuery_atoms(JessQuery *Q)
++Atom **JessQuery_atoms(const JessQuery *Q)
+ {
+ 	if(!Q->atoms) return NULL;
+ 	return Q->atoms;
+ }
+ 
+-Superposition *JessQuery_superposition(JessQuery *Q)
++Superposition *JessQuery_superposition(const JessQuery *Q)
+ {
+ 	int i;
  	int count;
  	Template *T;
  	Atom **A;

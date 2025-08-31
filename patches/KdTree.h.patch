@@ -1,5 +1,5 @@
 diff --git a/src/KdTree.h b/src/KdTree.h
-index 8e53425..81fde8a 100644
+index 8e53425..6bf9160 100644
 --- a/src/KdTree.h
 +++ b/src/KdTree.h
 @@ -9,6 +9,7 @@
@@ -19,8 +19,9 @@ index 8e53425..81fde8a 100644
  // query(K,R)				Initialise a query object (see code)
  // ==================================================================
  
- extern KdTree *KdTree_create(double**,int,int);
-+extern KdTree *KdTree_reuse(KdTree *K, double **u, int n, int d);
+-extern KdTree *KdTree_create(double**,int,int);
++extern KdTree *KdTree_create(const double**,int,int);
++extern KdTree *KdTree_reuse(KdTree *K, const double **u, int n, int d);
  extern void KdTree_free(KdTree*);
 -extern KdTreeQuery *KdTree_query(KdTree*,Region*);
 +extern KdTreeQuery *KdTree_query(KdTree*,Join*);

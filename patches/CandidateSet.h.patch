@@ -1,9 +1,9 @@
 diff --git a/src/CandidateSet.h b/src/CandidateSet.h
 new file mode 100644
-index 0000000..b142151
+index 0000000..14750ac
 --- /dev/null
 +++ b/src/CandidateSet.h
-@@ -0,0 +1,90 @@
+@@ -0,0 +1,61 @@
 +// ==================================================================
 +// CandidateSet.h
 +// Copyright (c) Jonathan Barker, 2002
@@ -32,7 +32,7 @@ index 0000000..b142151
 +	size_t count;
 +	size_t capacity;
 +	Atom **atom;
-+	double **coord;
++	const double **coord;
 +};
 +
 +typedef struct _CandidateSet CandidateSet;
@@ -63,35 +63,6 @@ index 0000000..b142151
 +	S->atom[S->count]=A;
 +	S->count++;
 +}
-+
-+// ==================================================================
-+// Type CandidateSetArray
-+// ==================================================================
-+// count				Number of atoms in the set
-+// atom[k]				Points to ATOM record for kth candidate
-+// coord[k]				Points to coordinates for kth candidate
-+// ==================================================================
-+
-+struct _CandidateSetArray
-+{
-+	size_t count;
-+	size_t capacity;
-+	CandidateSet **items;
-+};
-+
-+typedef struct _CandidateSetArray CandidateSetArray;
-+
-+// ==================================================================
-+// Declaration of methods of local type CandidateSetArray
-+// ==================================================================
-+// create()				Create new candidate set array
-+// free(C)				Free candidate set array
-+// get(C,M,k)		    Get a new candidate set for M at index k
-+// ==================================================================
-+
-+CandidateSetArray *CandidateSetArray_create();
-+void CandidateSetArray_free(CandidateSetArray*);
-+CandidateSet* CandidateSetArray_get(CandidateSetArray *C, int k);
 +
 +#endif
 \ No newline at end of file

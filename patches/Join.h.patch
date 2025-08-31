@@ -1,16 +1,17 @@
 diff --git a/src/Join.h b/src/Join.h
-index b43a6a3..6a60803 100644
+index b43a6a3..08d9b86 100644
 --- a/src/Join.h
 +++ b/src/Join.h
-@@ -10,6 +10,7 @@
+@@ -10,6 +10,8 @@
  #ifndef JOIN_H
  #define JOIN_H
  
 +#include "Annulus.h"
++#include "Box.h"
  #include "Region.h"
  
  // ==================================================================
-@@ -21,6 +22,22 @@
+@@ -21,6 +23,24 @@
  
  typedef enum {innerJoin,outerJoin} JoinType;
  
@@ -18,7 +19,9 @@ index b43a6a3..6a60803 100644
 +// type Join
 +// ==================================================================
 +// count				The number of regions in the join
++// type					The type of the join (inner or outer)
 +// R[k]					The kth region in the join
++// Box					A bounding box around the join region.
 +// ==================================================================
 +
 +typedef struct _Join Join;
@@ -33,14 +36,15 @@ index b43a6a3..6a60803 100644
  // ==================================================================
  // Construction methods for region type Join
  // ==================================================================
-@@ -28,8 +45,103 @@ typedef enum {innerJoin,outerJoin} JoinType;
+@@ -28,8 +48,104 @@ typedef enum {innerJoin,outerJoin} JoinType;
  // free(J)					Frees join AND nested regions (J->free)
  // ==================================================================
  
 -extern Region *Join_create(Region**,int,JoinType);
 -extern void Join_free(Region*);
 +extern Join *Join_allocate(int,JoinType);
-+extern Join *Join_create(Annulus**,int,JoinType);
++extern Join *Join_create(const Annulus**,int,JoinType);
++extern void Join_computeBox(const Join*,Box*);
 +extern void Join_free(Join*);
 +
 +// ==================================================================
@@ -59,7 +63,7 @@ index b43a6a3..6a60803 100644
 +// The oracles
 +// ==================================================================
 +
-+static inline int _Join_oro(Join *J,double *min,double *max,int dim)
++static inline int _Join_oro(const Join *J,const double* restrict min, const double* restrict max,int dim)
 +{
 +	Annulus* A;
 +	int k;
@@ -76,7 +80,7 @@ index b43a6a3..6a60803 100644
 +	return 0;
 +}
 +
-+static inline int _Join_iro(Join *J,double *min,double *max,int dim)
++static inline int _Join_iro(const Join *J,const double* restrict min,const double* restrict max,int dim)
 +{
 +	Annulus* A;
 +	int k;
@@ -93,7 +97,7 @@ index b43a6a3..6a60803 100644
 +	return 1;
 +}
 +
-+static inline int _Join_opo(Join *J,double *x,int dim)
++static inline int _Join_opo(const Join *J,const double *x,int dim)
 +{
 +	Annulus* A;
 +	int k;
@@ -110,7 +114,7 @@ index b43a6a3..6a60803 100644
 +	return 0;
 +}
 +
-+static inline int _Join_ipo(Join *J,double *x,int dim)
++static inline int _Join_ipo(const Join *J,const double *x,int dim)
 +{
 +	Annulus* A;
 +	int k;
@@ -127,12 +131,12 @@ index b43a6a3..6a60803 100644
 +	return 1;
 +}
 +
-+static inline int _Join_ro(Join *J,double *min, double *max, int dim)
++static inline int _Join_ro(const Join *J,const double* restrict min, const double* restrict max, int dim)
 +{
 +    return (J->type == innerJoin) ? _Join_iro(J,min,max,dim) : _Join_oro(J,min,max,dim);
 +}
 +
-+static inline int _Join_po(Join *J,double *x, int dim)
++static inline int _Join_po(const Join *J,const double *x, int dim)
 +{
 +    return (J->type == innerJoin) ? _Join_ipo(J,x,dim) : _Join_opo(J,x,dim);
 +}

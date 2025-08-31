@@ -1,9 +1,9 @@
 diff --git a/src/CandidateSet.c b/src/CandidateSet.c
 new file mode 100644
-index 0000000..235d45d
+index 0000000..3bc9e61
 --- /dev/null
 +++ b/src/CandidateSet.c
-@@ -0,0 +1,123 @@
+@@ -0,0 +1,65 @@
 +// ==================================================================
 +// CandidateSet.h
 +// Copyright (c) Jonathan Barker, 2002
@@ -66,64 +66,6 @@ index 0000000..235d45d
 +		if(S->coord) free(S->coord);
 +		free(S);
 +	}
-+}
-+
-+// ==================================================================
-+// Methods of type CandidateSetArray
-+// ==================================================================
-+
-+CandidateSetArray* CandidateSetArray_create()
-+{
-+	CandidateSetArray *S;
-+
-+	S = (CandidateSetArray*) malloc(sizeof(CandidateSetArray));
-+    if(!S) 
-+		return NULL;
-+
-+	S->items = NULL;
-+	S->count = 0;
-+	S->capacity = 0;
-+    return S;
-+}
-+
-+void CandidateSetArray_free(CandidateSetArray *C)
-+{
-+	if(C)
-+	{
-+		if(C->items)
-+		{
-+			for(size_t i=0; i<C->count; i++)
-+				CandidateSet_free(C->items[i]);
-+			free(C->items);
-+		}
-+		free(C);
-+	}
-+}
-+
-+CandidateSet* CandidateSetArray_get(CandidateSetArray *C, int k)
-+{
-+	if(!C)
-+		return NULL;
-+
-+	if(k>=C->count)
-+	{
-+		if(C->count>=C->capacity)
-+		{
-+			C->capacity = C->capacity + (C->capacity >> 3) + 6;
-+			C->items = realloc(C->items, C->capacity*sizeof(CandidateSet*));
-+			if(!C->items) return NULL;
-+		}
-+
-+		for(int i=k; i<=k; i++)
-+		{
-+			C->items[C->count] = CandidateSet_create();
-+			if(!C->items) return NULL;
-+			C->count++;
-+		}
-+	}
-+
-+
-+	return C->items[k];
 +}
 +
 +// ==================================================================

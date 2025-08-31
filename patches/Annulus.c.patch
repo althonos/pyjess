@@ -1,5 +1,5 @@
 diff --git a/src/Annulus.c b/src/Annulus.c
-index b292fda..f24793c 100644
+index b292fda..0d9ec10 100644
 --- a/src/Annulus.c
 +++ b/src/Annulus.c
 @@ -10,103 +10,39 @@
@@ -95,7 +95,7 @@ index b292fda..f24793c 100644
  // ==================================================================
  
 -Region *Annulus_create(double *u, double a, double b, int d)
-+Annulus *Annulus_create(double *u, double a, double b, int d)
++Annulus *Annulus_create(const double *u, double a, double b, int d)
  {
  	Annulus *A;
 -	Region *R;
@@ -104,7 +104,7 @@ index b292fda..f24793c 100644
 +	return Annulus_reuse(A,u,a,b,d);
 +}
 +
-+Annulus *Annulus_reuse(Annulus *A, double *u, double a, double b, int d)
++Annulus *Annulus_reuse(Annulus *A, const double *u, double a, double b, int d)
 +{
  	double tmp;
  
