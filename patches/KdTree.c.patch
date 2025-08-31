@@ -1,5 +1,5 @@
 diff --git a/src/KdTree.c b/src/KdTree.c
-index 5d8d783..694383b 100644
+index 5d8d783..79ab08f 100644
 --- a/src/KdTree.c
 +++ b/src/KdTree.c
 @@ -9,6 +9,10 @@
@@ -286,7 +286,7 @@ index 5d8d783..694383b 100644
  		free(Q);
  	}
  }
-@@ -258,26 +313,111 @@ static int KdTree_compare(const void *pa, const void *pb)
+@@ -258,26 +313,116 @@ static int KdTree_compare(const void *pa, const void *pb)
  	return c<d ? -1 : c>d ? 1 : 0;
  }
  
@@ -369,8 +369,13 @@ index 5d8d783..694383b 100644
 +	}
 +}
 +
-+#define min(x,y) (x<y ? x:y)
-+#define max(x,y) (x>y ? x:y)
++#ifndef Jess_min
++#define Jess_min(x,y) (x<y ? x:y)
++#endif
++
++#ifndef Jess_max
++#define Jess_max(x,y) (x>y ? x:y)
++#endif
 +
 +static index_t KdTreeNode_create(KdTree *K, int *idx, int n, int type,double **u,int dim)
  {
@@ -404,7 +409,7 @@ index 5d8d783..694383b 100644
  
  	// 2. The easy case. If n is 1, create a leaf.
  
-@@ -286,61 +426,58 @@ static KdTreeNode *KdTreeNode_create(int *idx,int n,int type,double **u,int dim)
+@@ -286,61 +431,58 @@ static KdTreeNode *KdTreeNode_create(int *idx,int n,int type,double **u,int dim)
  		N->type=-1;
  		N->index=idx[0];
  		N->depth=1;
@@ -462,14 +467,14 @@ index 5d8d783..694383b 100644
 +	N->right=right;
 +
 +	// Compute max,min and depth...
-+	N->depth = max(K->nodes[left].depth,K->nodes[right].depth)+1;
++	N->depth=Jess_max(K->nodes[left].depth,K->nodes[right].depth)+1;
  
  	for(i=0; i<dim; i++)
  	{
 -		N->min[i]=dmin(N->left->min[i],N->right->min[i]);
 -		N->max[i]=dmax(N->left->max[i],N->right->max[i]);
-+		N->min[i]=min(K->nodes[left].min[i],K->nodes[right].min[i]);
-+		N->max[i]=max(K->nodes[left].max[i],K->nodes[right].max[i]);
++		N->min[i]=Jess_min(K->nodes[left].min[i],K->nodes[right].min[i]);
++		N->max[i]=Jess_max(K->nodes[left].max[i],K->nodes[right].max[i]);
  	}
  
  	// We're done...

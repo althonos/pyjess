@@ -1,5 +1,5 @@
 diff --git a/src/Annulus.h b/src/Annulus.h
-index 9bb1060..6b586dc 100644
+index 9bb1060..d702fc3 100644
 --- a/src/Annulus.h
 +++ b/src/Annulus.h
 @@ -9,6 +9,30 @@
@@ -33,7 +33,7 @@ index 9bb1060..6b586dc 100644
  
  // ==================================================================
  // Methods for Annulus manipulation
-@@ -17,10 +41,88 @@
+@@ -17,10 +41,81 @@
  // free(A)				Free the region given (or use R->free)
  // ==================================================================
  
@@ -42,13 +42,6 @@ index 9bb1060..6b586dc 100644
 +extern Annulus *Annulus_create(double*,double,double,int);
 +extern Annulus *Annulus_reuse(Annulus*,double*,double,double,int);
 +extern void Annulus_free(Annulus*);
-+
-+// ==================================================================
-+// Local "functions"
-+// ==================================================================
-+
-+#define min(x,y) (x<y ? x:y)
-+#define max(x,y) (x>y ? x:y)
 +
 +// ==================================================================
 +// Oracles
@@ -82,7 +75,7 @@ index 9bb1060..6b586dc 100644
 +	if(d!=A->dim) return 0;
 +
 +	// Does the box region [minBox,maxBox] intersect the annulus A?
-+	
++
 +	// NB: This function is called in `KdTreeQuery` code to compute
 +	//	   which branches of the k-D tree to discard while searching
 +	//	   for a particular point; to speed-up querying, we only
