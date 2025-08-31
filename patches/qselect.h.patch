@@ -1,13 +1,16 @@
 diff --git a/src/qselect.h b/src/qselect.h
 new file mode 100644
-index 0000000..7c70070
+index 0000000..848f65f
 --- /dev/null
 +++ b/src/qselect.h
-@@ -0,0 +1,71 @@
+@@ -0,0 +1,89 @@
 +#ifndef QSELECT_H
 +#define QSELECT_H
 +
 +#include <stddef.h>
++#include <stdint.h>
++
++#define _SAFE_INDEX(p,i,s) ((void*)((intptr_t)p+i*s))
 +
 +typedef int(*__compare_fn_t)(const void*, const void*, void*);
 +
@@ -26,16 +29,24 @@ index 0000000..7c70070
 +_qselect_partition(void* base, size_t size, size_t left, size_t right, size_t pivot_index, __compare_fn_t compare, void* arg)
 +{
 +	size_t store_index = left;
-+	_qselect_memswap(base+right*size, base+pivot_index*size, size);
++
++	void* iptr;
++	void* rptr = _SAFE_INDEX(base,right,size);
++	void* sptr = _SAFE_INDEX(base,store_index,size);
++	void* pptr = _SAFE_INDEX(base,pivot_index,size);
++
++	_qselect_memswap(rptr, pptr, size);
 +	for(size_t i=left; i<right; i++)
 +	{
-+		if (compare(base+i*size, base+right*size, arg) <= 0)
++		iptr = _SAFE_INDEX(base,i,size);
++		if (compare(iptr, rptr, arg) <= 0)
 +		{
-+			_qselect_memswap(base+i*size, base+store_index*size, size);
++			_qselect_memswap(iptr, sptr, size);
 +			store_index += 1; 
++			sptr = _SAFE_INDEX(base,store_index,size);
 +		}
 +	}
-+	_qselect_memswap(base+store_index*size, base+right*size, size);
++	_qselect_memswap(sptr, rptr, size);
 +	return store_index;
 +}
 +
@@ -43,9 +54,14 @@ index 0000000..7c70070
 +_qselect_median3(void* base, size_t size, size_t left, size_t right, __compare_fn_t compare, void* arg)
 +{
 +	size_t mid = (left + right + 1) / 2;
-+	if ((compare(base+left*size, base+mid*size, arg) > 0) != (compare(base+left*size, base+right*size, arg) > 0))
++
++	void* lptr = _SAFE_INDEX(base,left,size);
++	void* rptr = _SAFE_INDEX(base,right,size);
++	void* mptr = _SAFE_INDEX(base,mid,size);
++
++	if ((compare(lptr, mptr, arg) > 0) != (compare(lptr, rptr,arg) > 0))
 +		return left;
-+	else if ((compare(base+mid*size, base+left*size, arg) < 0) != (compare(base+mid*size, base+right*size, arg) < 0))
++	else if ((compare(mptr, lptr, arg) < 0) != (compare(mptr, rptr, arg) < 0))
 +		return mid;
 +	else
 +		return right;
@@ -73,6 +89,8 @@ index 0000000..7c70070
 +			left = pivot_index + 1;
 +	}
 +}
++
++#undef _SAFE_INDEX
 +
 +#endif
 \ No newline at end of file
