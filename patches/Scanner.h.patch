@@ -1,0 +1,44 @@
+diff --git a/src/Scanner.h b/src/Scanner.h
+index d775ce7..14bd840 100644
+--- a/src/Scanner.h
++++ b/src/Scanner.h
+@@ -15,23 +15,37 @@
+ // Forward declarations
+ // ==================================================================
+ // Scanner					A Jess scan on a molecule
++// ScannerData              Reusable auxiliary storage for the scanner
+ // ==================================================================
+ 
++typedef struct _ScannerData ScannerData;
+ typedef struct _Scanner Scanner;
+ 
+ // ==================================================================
+ // Methods of type Scanner
+ // ==================================================================
+-// create(M,T,r)			Create object to scan M with template T
++// create(M,T,C,r)			Create object to scan M with template T
+ // free(S)					Free memory associated with S
+ // next(S)					Next result (an array of Atoms)
+ // ==================================================================
+ 
+-extern Scanner *Scanner_create(Molecule*,Template*,double,double);
++extern Scanner *Scanner_create(Molecule*,Template*,ScannerData*,double,double);
++extern Scanner *Scanner_reuse(Scanner*,Molecule*,Template*,ScannerData*,double,double);
+ extern void Scanner_free(Scanner*);
+ extern Atom **Scanner_next(Scanner*, int);
+ extern double Scanner_rmsd(Scanner*);
+ 
++// ==================================================================
++// Methods of type ScannerData
++// ==================================================================
++// create()     			Create object to store reusable scanner data
++// free(D)					Free memory associated with D
++// resize(D,n)              Resize D for a template of size n
++// ==================================================================
++
++extern ScannerData *ScannerData_create();
++extern void ScannerData_free(ScannerData* D);
++extern int ScannerData_resize(ScannerData* D, int n);
+ // ==================================================================
+ 
+ #endif

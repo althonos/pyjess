@@ -1,0 +1,37 @@
+diff --git a/src/KdTree.h b/src/KdTree.h
+index 8e53425..81fde8a 100644
+--- a/src/KdTree.h
++++ b/src/KdTree.h
+@@ -9,6 +9,7 @@
+ #define KDTREE_H
+ 
+ #include "Region.h"
++#include "Join.h"
+ 
+ // ==================================================================
+ // Forward declarations
+@@ -24,13 +25,15 @@ typedef struct _KdTreeQuery KdTreeQuery;
+ // Methods of type KdTree
+ // ==================================================================
+ // create(u,n,k)			Create kd-tree on u[0],...,u[n-1]
++// reuse(K,u,n,k)           Reuse K to create a kd-tree on u
+ // free(K)					Free the kd-tree K
+ // query(K,R)				Initialise a query object (see code)
+ // ==================================================================
+ 
+ extern KdTree *KdTree_create(double**,int,int);
++extern KdTree *KdTree_reuse(KdTree *K, double **u, int n, int d);
+ extern void KdTree_free(KdTree*);
+-extern KdTreeQuery *KdTree_query(KdTree*,Region*);
++extern KdTreeQuery *KdTree_query(KdTree*,Join*);
+ 
+ // ==================================================================
+ // Methods of type KdTreeQuery
+@@ -41,6 +44,7 @@ extern KdTreeQuery *KdTree_query(KdTree*,Region*);
+ 
+ extern void KdTreeQuery_free(KdTreeQuery*);
+ extern int KdTreeQuery_next(KdTreeQuery*);
++extern KdTreeQuery *KdTreeQuery_reuse(KdTreeQuery*,KdTree*,Join*);
+ 
+ // ==================================================================
+ 

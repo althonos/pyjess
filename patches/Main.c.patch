@@ -1,0 +1,21 @@
+diff --git a/src/Main.c b/src/Main.c
+index dff22b9..41c0a2d 100644
+--- a/src/Main.c
++++ b/src/Main.c
+@@ -193,6 +193,8 @@ static void search(const char *filename,Jess *J,double tRmsd,double tDistance,do
+ 
+ 			printf("ENDMDL\n\n");
+ 		}
++
++		Superposition_free(sup);
+ 		killswitch+=1;
+ 	}
+ 
+@@ -392,6 +394,7 @@ int main(int argc, char **argv)
+ 	}
+ 
+ 	fclose(file);
++	Jess_free(J);
+ 
+ 	return 0;
+ }

@@ -1,0 +1,126 @@
+diff --git a/src/Annulus.h b/src/Annulus.h
+index 9bb1060..6b586dc 100644
+--- a/src/Annulus.h
++++ b/src/Annulus.h
+@@ -9,6 +9,30 @@
+ #define ANNULUS_H
+ 
+ #include "Region.h"
++#include <math.h>
++
++#define ANNULUS_DIM 3
++
++// ==================================================================
++// type Annulus
++// ==================================================================
++// centre				The center of the annulus
++// min,max				Limits of the radii
++// dim					The dimension of the space
++// a,b					Inner and outer radii
++// ==================================================================
++
++struct _Annulus
++{
++	double centre[ANNULUS_DIM];
++	double minBox[ANNULUS_DIM];
++	double maxBox[ANNULUS_DIM];
++	double min;
++	double max;
++	int dim;
++};
++
++typedef struct _Annulus Annulus;
+ 
+ // ==================================================================
+ // Methods for Annulus manipulation
+@@ -17,10 +41,88 @@
+ // free(A)				Free the region given (or use R->free)
+ // ==================================================================
+ 
+-extern Region *Annulus_create(double*,double,double,int);
+-extern void Annulus_free(Region*);
++extern Annulus *Annulus_create(double*,double,double,int);
++extern Annulus *Annulus_reuse(Annulus*,double*,double,double,int);
++extern void Annulus_free(Annulus*);
++
++// ==================================================================
++// Local "functions"
++// ==================================================================
++
++#define min(x,y) (x<y ? x:y)
++#define max(x,y) (x>y ? x:y)
++
++// ==================================================================
++// Oracles
++// ==================================================================
++
++int Annulus_po(Region *vA, double *x, int d);
++int Annulus_ro(Region *vA, double *minBox, double *maxBox, int d);
++
++static inline int _Annulus_po(Annulus *A, double *x, int d)
++{
++	double tmp,sum;
++	int i;
++
++	if(A->dim!=d) return 0;
++
++	// Does x lie within annulus A?
++
++	for(sum=0.0,i=0; i<ANNULUS_DIM; i++)
++	{
++		tmp = A->centre[i]-x[i];
++		sum += tmp*tmp;
++	}
++
++	return sum<A->min || sum>A->max ? 0:1;
++}
++
++static inline int _Annulus_ro(Annulus *A, double *minBox, double *maxBox, int d)
++{
++	int i;
++
++	if(d!=A->dim) return 0;
++
++	// Does the box region [minBox,maxBox] intersect the annulus A?
++	
++	// NB: This function is called in `KdTreeQuery` code to compute
++	//	   which branches of the k-D tree to discard while searching
++	//	   for a particular point; to speed-up querying, we only
++	//	   compute the intersection with the bounding box around the
++	//	   annulus rather than the annulus itself. This may cause some
++	//	   false positives, but since we still compute the inclusion
++	//	   in `Annulus_po` with the exact formula, the `KdTreeQuery`
++	//	   will never return a "wrong" answer.
++
++	for(i=0; i<ANNULUS_DIM; i++)
++		if(!((minBox[i] <= A->maxBox[i] ) && (A->minBox[i] <= maxBox[i])))
++			return 0;
++
++	return 1;
++
++	// NB: Exact version for reference.
++
++	// minSum=0.0;
++	// maxSum=0.0;
++	// for(i=0; i<ANNULUS_DIM; i++)
++	// {
++	// 	t1 = A->centre[i]-minBox[i];
++	// 	t2 = A->centre[i]-maxBox[i];
++	// 	t1 *= t1;
++	// 	t2 *= t2;
++	// 	if(minBox[i]>A->centre[i] || maxBox[i]<A->centre[i])
++	// 	{
++	// 		minSum += min(t1,t2);
++	// 	}
++	// 	maxSum += max(t1,t2);
++	// }
++	// return minSum>A->max || maxSum<A->min ? 0:1;
++
++}
+ 
+ // ==================================================================
+ 
++#undef min
++#undef max
+ #endif
+ 

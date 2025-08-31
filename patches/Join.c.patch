@@ -1,0 +1,173 @@
+diff --git a/src/Join.c b/src/Join.c
+index 52b491c..bcc97d6 100644
+--- a/src/Join.c
++++ b/src/Join.c
+@@ -6,139 +6,77 @@
+ // ==================================================================
+ 
+ #include "Join.h"
++#include "Annulus.h"
+ #include <stdlib.h>
+ #include <string.h>
+ 
+ // ==================================================================
+-// type Join
+-// ==================================================================
+-// count				The number of regions in the join
+-// R[k]					The kth region in the join
+-// ==================================================================
+-
+-typedef struct _Join Join;
+-
+-struct _Join
+-{
+-	int count;
+-	Region *R[0];
+-};
+-
+-// ==================================================================
+-// The oracles
++// Oracles for type Join
+ // ==================================================================
+ 
+-static int Join_oro(Region *R,double *min,double *max,int dim)
++int Join_oro(Region *R,double *min,double *max,int dim) 
+ {
+ 	Join *J=(Join*)&R[1];
+-	int k;
+-
+-	for(k=0; k<J->count; k++)
+-	{
+-		if(J->R[k]->intersectionQ(J->R[k],min,max,dim))
+-		{
+-			return 1;
+-		}
+-	}
+-
+-	return 0;
++	return _Join_oro(J,min,max,dim);
+ }
+ 
+-static int Join_iro(Region *R,double *min,double *max,int dim)
++int Join_iro(Region *R,double *min,double *max,int dim) 
+ {
+ 	Join *J=(Join*)&R[1];
+-	int k;
+-
+-	for(k=0; k<J->count; k++)
+-	{
+-		if(!(J->R[k]->intersectionQ(J->R[k],min,max,dim)))
+-		{
+-			return 0;
+-		}
+-	}
+-
+-	return 1;
++	return _Join_iro(J,min,max,dim);
+ }
+-
+-static int Join_opo(Region *R,double *x,int dim)
++int Join_opo(Region *R,double *x,int dim)
+ {
+ 	Join *J=(Join*)&R[1];
+-	int k;
+-
+-	for(k=0; k<J->count; k++)
+-	{
+-		if(J->R[k]->inclusionQ(J->R[k],x,dim))
+-		{
+-			return 1;
+-		}
+-	}
+-
+-	return 0;
++	return _Join_opo(J,x,dim);
+ }
+ 
+-static int Join_ipo(Region *R,double *x,int dim)
++int Join_ipo(Region *R,double *x,int dim)
+ {
+ 	Join *J=(Join*)&R[1];
+-	int k;
+-
+-	for(k=0; k<J->count; k++)
+-	{
+-		if(!(J->R[k]->inclusionQ(J->R[k],x,dim)))
+-		{
+-			return 0;
+-		}
+-	}
+-
+-	return 1;
++	return _Join_ipo(J,x,dim);
+ }
+ 
+ // ==================================================================
+ // Construction and destruction
+ // ==================================================================
+ 
+-Region *Join_create(Region **S,int count,JoinType type)
++Join *Join_allocate(int count,JoinType type)
+ {
+-	Region *R;
+ 	Join *J;
+ 	int rq;
+ 
+-	rq = sizeof(Region)+sizeof(Join)+sizeof(Region*)*count;
+-	R = (Region*)calloc(1,rq);
+-	J = (Join*)&R[1];
+-	memcpy(J->R,S,sizeof(Region*)*count);
++	rq = sizeof(Join)+sizeof(Annulus*)*count;
++	J = (Join*)malloc(rq);
++	if(!J) return NULL;
+ 
+-	R->free=Join_free;
+ 	J->count=count;
++	J->type=type;
++	for(int i=0;i<count;i++) J->R[i]=NULL;
+ 
+-	if(type==innerJoin)
+-	{
+-		R->intersectionQ = Join_iro;
+-		R->inclusionQ = Join_ipo;
+-	}
+-	else // if type==outerJoin
+-	{
+-		R->intersectionQ = Join_oro;
+-		R->inclusionQ = Join_opo;
+-	}
++	return J;
++}
+ 
+-	return R;
++Join *Join_create(Annulus **S,int count,JoinType type)
++{
++	Join *J = Join_allocate(count,type);
++	if(!J) return NULL;
++	memcpy(J->R,S,sizeof(Annulus*)*count);
++
++	return J;
+ }
+ 
+-void Join_free(Region *R)
++void Join_free(Join *J)
+ {
+-	Join *J;
+ 	int k;
+ 
+-	if(R)
++	if(J)
+ 	{
+-		J = (Join*)&R[1];
+-
+ 		for(k=0; k<J->count; k++)
+ 		{
+-			if(J->R[k]) J->R[k]->free(J->R[k]);
++			if(J->R[k]) Annulus_free(J->R[k]);
+ 		}
+-
+-		free(R);
++		free(J);
+ 	}
+ }
+ 
