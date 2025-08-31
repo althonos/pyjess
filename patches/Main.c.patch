@@ -1,7 +1,25 @@
 diff --git a/src/Main.c b/src/Main.c
-index dff22b9..41c0a2d 100644
+index dff22b9..9b09cc5 100644
 --- a/src/Main.c
 +++ b/src/Main.c
+@@ -116,7 +116,7 @@ static void output(
+ 		A->charge
+ 		);
+ }
+-static void search(const char *filename,Jess *J,double tRmsd,double tDistance,double max_total_threshold,int no_transform,int ignore_chain,int write_filename,int ignore_endmdl, float conservation_cutoff)
++static void search(const char *filename,Jess *J,double tRmsd,double tDistance,double max_total_threshold,int no_transform,int ignore_chain,int write_filename,int ignore_endmdl, float conservation_cutoff, bool fastScan)
+ {
+ 	Molecule *M;
+ 	Superposition *sup;
+@@ -145,7 +145,7 @@ static void search(const char *filename,Jess *J,double tRmsd,double tDistance,do
+ 		return;
+ 	}
+ 
+-	Q=Jess_query(J,M,tDistance,max_total_threshold);
++	Q=Jess_query(J,M,tDistance,max_total_threshold,fastScan);
+ 
+ 	while(JessQuery_next(Q, ignore_chain) && killswitch<1000)
+ 	{
 @@ -193,6 +193,8 @@ static void search(const char *filename,Jess *J,double tRmsd,double tDistance,do
  
  			printf("ENDMDL\n\n");
@@ -11,7 +29,28 @@ index dff22b9..41c0a2d 100644
  		killswitch+=1;
  	}
  
-@@ -392,6 +394,7 @@ int main(int argc, char **argv)
+@@ -339,6 +341,7 @@ int main(int argc, char **argv)
+ 	int ignore_chain=0;
+ 	int write_filename=0;
+ 	int ignore_endmdl=0;
++	int fastScan=0;
+ 
+ 	if(argc<7 || argc>8) help();
+ 
+@@ -354,6 +357,7 @@ int main(int argc, char **argv)
+ 			else if(*s=='i') ignore_chain=1;
+ 			else if(*s=='q') write_filename=1;
+ 			else if(*s=='e') ignore_endmdl=1;
++			else if(*s=='s') fastScan=1;
+ 			else help();
+ 		}
+ 	}
+@@ -388,10 +392,11 @@ int main(int argc, char **argv)
+ 		if(strlen(s)==0) continue;
+ 
+ 		if(feedbackQ) fprintf(stderr,"%s\n",s);
+-		search(buf,J,tRmsd,tDistance,max_total_threshold,no_transform,ignore_chain,write_filename,ignore_endmdl,conservation_cutoff);
++		search(buf,J,tRmsd,tDistance,max_total_threshold,no_transform,ignore_chain,write_filename,ignore_endmdl,conservation_cutoff,fastScan);
  	}
  
  	fclose(file);

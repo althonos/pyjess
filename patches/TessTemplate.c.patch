@@ -1,5 +1,5 @@
 diff --git a/src/TessTemplate.c b/src/TessTemplate.c
-index 1eb6914..f2ad827 100644
+index 1eb6914..27539c8 100644
 --- a/src/TessTemplate.c
 +++ b/src/TessTemplate.c
 @@ -5,13 +5,21 @@
@@ -99,10 +99,32 @@ index 1eb6914..f2ad827 100644
  }
  
 -static int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_chain)
-+int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_chain)
++int TessTemplate_check(const Template *T, Atom **A, int *order, int k, int ignore_chain)
  {
  	const TessTemplate *J = (const TessTemplate*)&T[1];
  	int i;
+@@ -98,8 +86,8 @@ static int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_cha
+ 		// Compare chain ids
+ 
+ 		//Riziotis edit
+-		c = A[i]->chainID2-A[k-1]->chainID2;
+-		d = TessAtom_chainID2(J->atom[i])-TessAtom_chainID2(J->atom[k-1]);
++		c = A[order[i]]->chainID2-A[order[k-1]]->chainID2;
++		d = TessAtom_chainID2(J->atom[order[i]])-TessAtom_chainID2(J->atom[order[k-1]]);
+ 		//c = A[i]->chainID-A[k-1]->chainID;
+ 		//d = TessAtom_chainID(J->atom[i])-TessAtom_chainID(J->atom[k-1]);
+ 
+@@ -119,8 +107,8 @@ static int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_cha
+ 
+ 		// Compare residue sequence numbers
+ 
+-		a = A[i]->resSeq-A[k-1]->resSeq;
+-		b = TessAtom_resSeq(J->atom[i])-TessAtom_resSeq(J->atom[k-1]);
++		a = A[order[i]]->resSeq-A[order[k-1]]->resSeq;
++		b = TessAtom_resSeq(J->atom[order[i]])-TessAtom_resSeq(J->atom[order[k-1]]);
+ 
+ 		if(a==0 && b!=0) return 0;
+ 		if(a!=0 && b==0) return 0;
 @@ -129,13 +117,13 @@ static int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_cha
  	return 1;
  }

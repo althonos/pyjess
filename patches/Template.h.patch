@@ -1,5 +1,5 @@
 diff --git a/src/Template.h b/src/Template.h
-index 13f68f1..32984d8 100644
+index 13f68f1..21e12c8 100644
 --- a/src/Template.h
 +++ b/src/Template.h
 @@ -9,6 +9,7 @@
@@ -18,10 +18,12 @@ index 13f68f1..32984d8 100644
  // position(T,i)		Position of atom i (example position)
  // name(T)			Returns the symbolic name for the template
  // logE(T,x,n)			Provide an estimate of logE for a hit
-@@ -38,10 +40,12 @@ struct _Template
+@@ -37,11 +39,13 @@ struct _Template
+ 	int (*count)(const Template*);
  	int (*match)(const Template*,int,const Atom*);
  	int (*range)(const Template*,int,int,double*,double*);
- 	int (*check)(const Template*,Atom**,int,int);
+-	int (*check)(const Template*,Atom**,int,int);
++	int (*check)(const Template*,Atom**,int*,int,int);
 +	void (*candidates)(const Template*, const Molecule*, int, CandidateSet**);
  	const double *(*position)(const Template*,int);
  	const char *(*name)(const Template*);

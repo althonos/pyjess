@@ -1,8 +1,14 @@
 diff --git a/src/Scanner.h b/src/Scanner.h
-index d775ce7..14bd840 100644
+index d775ce7..e049f40 100644
 --- a/src/Scanner.h
 +++ b/src/Scanner.h
-@@ -15,23 +15,37 @@
+@@ -11,27 +11,43 @@
+ #include "Template.h"
+ #include "Molecule.h"
+ 
++#include <stdbool.h>
++
+ // ==================================================================
  // Forward declarations
  // ==================================================================
  // Scanner					A Jess scan on a molecule
@@ -22,8 +28,8 @@ index d775ce7..14bd840 100644
  // ==================================================================
  
 -extern Scanner *Scanner_create(Molecule*,Template*,double,double);
-+extern Scanner *Scanner_create(Molecule*,Template*,ScannerData*,double,double);
-+extern Scanner *Scanner_reuse(Scanner*,Molecule*,Template*,ScannerData*,double,double);
++extern Scanner *Scanner_create(Molecule*,Template*,ScannerData*,double,double,bool);
++extern Scanner *Scanner_reuse(Scanner*,Molecule*,Template*,ScannerData*,double,double,bool);
  extern void Scanner_free(Scanner*);
  extern Atom **Scanner_next(Scanner*, int);
  extern double Scanner_rmsd(Scanner*);

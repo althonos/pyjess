@@ -213,7 +213,7 @@ class TestJess(unittest.TestCase):
         with files(data).joinpath("1AMY+1.3.3.txt").open() as f:
             results = list(filter(None, f.read().split("REMARK")))
 
-        hits = list(jess.query(molecule, 2, 4, 4))
+        hits = list(jess.query(molecule, 2, 4, 4, reorder=False))
         self.assertEqual(len(hits), len(results))
         for hit, block in zip(hits, results):
             self.assertIs(hit.template, template)

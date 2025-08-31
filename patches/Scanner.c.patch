@@ -1,11 +1,12 @@
 diff --git a/src/Scanner.c b/src/Scanner.c
-index 19a35a7..fe99f2a 100644
+index 19a35a7..7c5f378 100644
 --- a/src/Scanner.c
 +++ b/src/Scanner.c
-@@ -5,41 +5,35 @@
+@@ -5,41 +5,37 @@
  // Implementation of type Scanner (the main Jess query object).
  // ==================================================================
  
++#include <assert.h>
 +#include <stdlib.h>
 +#include <stdbool.h>
 +#include <string.h>
@@ -37,8 +38,6 @@ index 19a35a7..fe99f2a 100644
 -	int count;
 -	Atom **atom;
 -	double **coord;
-+	size_t count;
-+	size_t capacity;
 +	CandidateSet** candidates;
 +	int* index;
 +	Atom** atom;
@@ -47,6 +46,9 @@ index 19a35a7..fe99f2a 100644
 +	KdTree **trees;
 +	KdTreeQuery **queries;
 +	double* weights;
++	int* order;
++	size_t count;
++	size_t capacity;
  };
  
 -// ==================================================================
@@ -62,7 +64,7 @@ index 19a35a7..fe99f2a 100644
  // ==================================================================
  // type Scanner
  //===================================================================
-@@ -63,9 +57,11 @@ struct _Scanner
+@@ -63,9 +59,12 @@ struct _Scanner
  	CandidateSet **set;
  	KdTree **tree;
  	KdTreeQuery **query;
@@ -72,23 +74,43 @@ index 19a35a7..fe99f2a 100644
 -	Region **region;
 +	Join **regions;
 +	double *weights;
++	int* order;
  	int count;
  	double threshold;
  	double max_total_threshold;
-@@ -75,19 +71,31 @@ struct _Scanner
+@@ -75,19 +74,57 @@ struct _Scanner
  // Methods of type Scanner
  // ==================================================================
  
 -Scanner *Scanner_create(Molecule *M, Template *T,double r, double s)
-+Scanner *Scanner_create(Molecule *M, Template *T, ScannerData* D, double r, double s)
++#ifdef HAVE_THREADLOCALSTORAGE
++static __thread CandidateSet **candidates;
++static int _CandidateSet_size_compare(const void* a, const void* b)
 +{
-+	Scanner* S;
-+	S=(Scanner*)calloc(1,sizeof(Scanner));
-+	if(!S) return NULL;
-+	return Scanner_reuse(S,M,T,D,r,s);
++	int x = *((int*)a);
++	int y = *((int*)b);
++	return candidates[x]->count - candidates[y]->count;
++}
++#endif
++
++#ifdef HAVE_GNU_QSORT_R
++static int _CandidateSet_size_compare_r(const void* a, const void* b, void* data)
++#else
++static int _CandidateSet_size_compare_r(void* data, const void* a, const void* b)
++#endif
++{
++	CandidateSet** candidates = (CandidateSet**) data;
++	int x = *((int*)a);
++	int y = *((int*)b);
++	return candidates[x]->count - candidates[y]->count;
 +}
 +
-+Scanner *Scanner_reuse(Scanner *S, Molecule *M, Template *T, ScannerData* D, double r, double s)
++Scanner *Scanner_create(Molecule *M, Template *T, ScannerData* D, double r, double s, bool reorder)
++{
++	return Scanner_reuse(NULL,M,T,D,r,s,reorder);
++}
++
++Scanner *Scanner_reuse(Scanner *S, Molecule *M, Template *T, ScannerData* D, double r, double s, bool reorder)
  {
 -	Scanner *S;
  	int k,n=T->count(T);
@@ -102,8 +124,14 @@ index 19a35a7..fe99f2a 100644
 -	S->atom=(Atom**)calloc(n,sizeof(Atom*));
 -	S->region=(Region**)calloc(n,sizeof(Region*));
 +	if(!D) return NULL;
-+	if(!S) return Scanner_create(M,T,D,r,s);
-+	if(ScannerData_resize(D,n)!=0) return NULL;
++	if(!S)
++	{
++		S=(Scanner*) malloc(sizeof(Scanner));
++		if(!S) return NULL;
++	}
++
++	if(ScannerData_resize(D,n)!=0) 
++		return NULL;
 +
 +	S->set=D->candidates;
 +	S->tree=D->trees;
@@ -113,12 +141,16 @@ index 19a35a7..fe99f2a 100644
 +	S->regions=D->regions;
 +	S->active=D->active;
 +	S->weights=D->weights;
++	S->order=D->order;
  
  	S->template=T;
  	S->threshold=r;
-@@ -97,15 +105,23 @@ Scanner *Scanner_create(Molecule *M, Template *T,double r, double s)
+@@ -96,22 +133,48 @@ Scanner *Scanner_create(Molecule *M, Template *T,double r, double s)
+ 
  	for(k=0; k<n; k++)
  	{
++		S->atom[k]=NULL;
++		S->order[k]=k;
  		S->index[k]=-1;
 -		S->set[k]=CandidateSet_create(M,T,k);
 +		S->active[k]=false;
@@ -141,8 +173,33 @@ index 19a35a7..fe99f2a 100644
 +
  	}
  
- 	if(S->count>0 && S->set[0]->count>0)
-@@ -119,26 +135,8 @@ Scanner *Scanner_create(Molecule *M, Template *T,double r, double s)
+-	if(S->count>0 && S->set[0]->count>0)
++#if defined(HAVE_GNU_QSORT_R)
++	if(reorder) qsort_r(S->order,n,sizeof(int),_CandidateSet_size_compare_r,S->set);
++#elif defined(HAVE_APPLE_QSORT_R)
++	if(reorder) qsort_r(S->order,n,sizeof(int),S->set,_CandidateSet_size_compare_r);
++#elif defined(HAVE_WIN32_QSORT_S)
++	if(reorder) qsort_s(S->order,n,sizeof(int),_CandidateSet_size_compare_r,S->set);
++#elif defined(HAVE_THREADLOCALSTORAGE)
++	if(reorder)
+ 	{
+-		S->index[0]=0;
+-		S->atom[0]=S->set[0]->atom[0];
++		candidates = S->set;
++		qsort(S->order,n,sizeof(int),_CandidateSet_size_compare);
++	}
++#else
++#warning "No re-entrant `qsort` implementation or thread-local storage, no iteration reordering will be done."
++#endif	
++
++	if(S->count>0 && S->set[S->order[0]]->count>0)
++	{
++		S->index[S->order[0]]=0;
++		S->atom[S->order[0]]=S->set[S->order[0]]->atom[0];
+ 	}
+ 
+ 	return S;
+@@ -119,26 +182,8 @@ Scanner *Scanner_create(Molecule *M, Template *T,double r, double s)
  
  void Scanner_free(Scanner *S)
  {
@@ -169,7 +226,7 @@ index 19a35a7..fe99f2a 100644
  		free(S);
  	}
  }
-@@ -147,8 +145,6 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+@@ -147,8 +192,6 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
  {
  	int j,k;
  	double min,max;
@@ -178,56 +235,100 @@ index 19a35a7..fe99f2a 100644
  	double dynamic_threshold = S->threshold;
  
  	k=S->count-1;
-@@ -186,7 +182,7 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+@@ -166,17 +209,16 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+ 
+ 		if(k==0)
+ 		{
+-			S->index[0]++;
++			S->index[S->order[0]]++;
+ 
+-			if(S->index[0]>=S->set[0]->count)
++			if(S->index[S->order[0]]>=S->set[S->order[0]]->count)
+ 			{
+ 				// End of query...
+-
+ 				k=-1;
+ 			}
+ 			else
+ 			{
+-				S->atom[0]=S->set[0]->atom[S->index[0]];
++				S->atom[S->order[0]]=S->set[S->order[0]]->atom[S->index[S->order[0]]];
+ 				k++;
+ 			}
+ 
+@@ -186,17 +228,16 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
  		// So k>0. If there is an active query for this
  		// set then query it now...
  
 -		if(S->query[k])
-+		if(S->active[k])
++		if(S->active[S->order[k]])
  		{
- 			S->index[k]=KdTreeQuery_next(S->query[k]);
- 			if(S->index[k]<0)
-@@ -194,8 +190,7 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+-			S->index[k]=KdTreeQuery_next(S->query[k]);
+-			if(S->index[k]<0)
++			S->index[S->order[k]]=KdTreeQuery_next(S->query[S->order[k]]);
++			if(S->index[S->order[k]]<0)
+ 			{
  				// The query ended. So we need to destroy
  				// this query, then drop down a level...
  
 -				KdTreeQuery_free(S->query[k]);
 -				S->query[k]=NULL;
-+				S->active[k]=false;
- 				S->atom[k]=NULL;
+-				S->atom[k]=NULL;
++				S->active[S->order[k]]=false;
++				S->atom[S->order[k]]=NULL;
  				k--;
  			}
-@@ -228,12 +223,11 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
- 		// So, there is an active query result at k-1 and
- 		// no active query at k; create a new query at
- 		// index k and try again (with the same k)
--
+ 			else
+@@ -205,8 +246,8 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+ 				// atom, check n-ary constraints and continue
+ 				// up...
+ 
+-				S->atom[k]=S->set[k]->atom[S->index[k]];
+-				if(S->template->check(S->template,S->atom,k+1,ignore_chain))
++				S->atom[S->order[k]]=S->set[S->order[k]]->atom[S->index[S->order[k]]];
++				if(S->template->check(S->template,S->atom,S->order,k+1,ignore_chain))
+ 				{
+ 					k++;
+ 				}
+@@ -219,7 +260,7 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+ 		// no active query result for set k-1 then we need
+ 		// to drop down again...
+ 
+-		if(S->index[k-1]<0)
++		if(S->index[S->order[k-1]]<0)
+ 		{
+ 			k--;
+ 			continue;
+@@ -231,9 +272,9 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+ 
  		for(j=0; j<k; j++)
  		{
- 			S->template->range(S->template,j,k,&min,&max);
+-			S->template->range(S->template,j,k,&min,&max);
++			S->template->range(S->template,S->order[j],S->order[k],&min,&max);
  
 -			dynamic_threshold = S->threshold + S->template->distWeight(S->template, j) + S->template->distWeight(S->template, k);
-+			dynamic_threshold = S->threshold + S->weights[j] + S->weights[k];
++			dynamic_threshold = S->threshold + S->weights[S->order[j]] + S->weights[S->order[k]];
  			// Limit threshold to a hard cutoff so execution does not suffer
  			if(dynamic_threshold > S->max_total_threshold){
  				dynamic_threshold = S->max_total_threshold;
-@@ -242,11 +236,12 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+@@ -242,11 +283,13 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
  			max += dynamic_threshold;
  			if(min<0.5) min=0.5;
  
 -			S->region[j]=Annulus_create(S->atom[j]->x,min,max,3);
-+			S->regions[k]->R[j]=Annulus_reuse(S->regions[k]->R[j],S->atom[j]->x,min,max,3);
++			assert(S->atom[S->order[j]]);
++			S->regions[k]->R[j]=Annulus_reuse(S->regions[k]->R[j],S->atom[S->order[j]]->x,min,max,3);
  		}
  
 -		J = Join_create(S->region,k,innerJoin);
 -		S->query[k]=KdTree_query(S->tree[k],J);
-+		S->active[k]=true;
-+		S->query[k]=KdTreeQuery_reuse(S->query[k],S->tree[k],S->regions[k]);
-+		if(!S->query[k]) return NULL;
++		S->active[S->order[k]]=true;
++		S->query[S->order[k]]=KdTreeQuery_reuse(S->query[S->order[k]],S->tree[S->order[k]],S->regions[k]);
++		if(!S->query[S->order[k]]) return NULL;
  	}
  
  	// If k<0 there is no more!
-@@ -259,49 +254,103 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+@@ -259,49 +302,108 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
  }
  
  // ==================================================================
@@ -257,6 +358,7 @@ index 19a35a7..fe99f2a 100644
 +	D->queries=NULL;
 +	D->trees=NULL;
 +	D->weights=NULL;
++	D->order=NULL;
 +	return D;
 +}
  
@@ -293,6 +395,7 @@ index 19a35a7..fe99f2a 100644
 +		if(D->atom) free(D->atom);
 +		if(D->active) free(D->active);
 +		if(D->weights) free(D->weights);
++		if(D->order) free(D->order);
 +		free(D);
  	}
 -
@@ -351,6 +454,9 @@ index 19a35a7..fe99f2a 100644
 +
 +		D->weights=(double*)realloc(D->weights,n*sizeof(double));
 +		if(!D->weights) return -1;
++
++		D->order=(int*)realloc(D->order,n*sizeof(int));
++		if(!D->order) return -1;
 +
 +		D->capacity=n;
  	}

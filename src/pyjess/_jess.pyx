@@ -1584,6 +1584,7 @@ cdef class Jess:
         int max_candidates = 1000,
         bint ignore_chain = False,
         bint best_match = False,
+        bint reorder = True,
     ):
         """Scan for templates matching the given molecule.
 
@@ -1619,5 +1620,6 @@ cdef class Jess:
             molecule._mol,
             distance_cutoff,
             max_dynamic_distance,
+            reorder,
         )
         return query

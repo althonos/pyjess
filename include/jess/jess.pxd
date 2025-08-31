@@ -18,7 +18,7 @@ cdef extern from "Jess.h" nogil:
     Jess* Jess_create()
     void Jess_free(Jess*)
     void Jess_addTemplate(Jess*, Template*)
-    JessQuery* Jess_query(Jess*, Molecule*, double, double)
+    JessQuery* Jess_query(Jess*, Molecule*, double, double, bint)
 
     void JessQuery_free(JessQuery*)
     int JessQuery_next(JessQuery*, int)

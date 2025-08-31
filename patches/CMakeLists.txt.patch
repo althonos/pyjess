@@ -1,14 +1,26 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 new file mode 100644
-index 0000000..b34b6e7
+index 0000000..8de6280
 --- /dev/null
 +++ b/CMakeLists.txt
-@@ -0,0 +1,29 @@
+@@ -0,0 +1,44 @@
 +cmake_minimum_required(VERSION 3.10)
 +project(Jess)
 +
++# --- `alloca` is used in `TessTemplate_candidates` to avoid small char* allocations ---
 +include(CheckSymbolExists)
 +check_symbol_exists(alloca "alloca.h" HAVE_ALLOCA)
++
++# --- `__thread` local storage is used in `Scanner_reuse` ---
++include(CheckSourceRuns)
++check_source_runs(C
++    "
++    #include <stdlib.h>
++    static __thread int i;
++    int main(int argc, const char** argv) { i = 0; return i; }
++    "
++    HAVE_THREADLOCALSTORAGE
++)
 +
 +add_library(jess)
 +target_sources(jess PRIVATE
@@ -27,6 +39,9 @@ index 0000000..b34b6e7
 +	src/ResIndex.c)
 +if(HAVE_ALLOCA)
 +	target_compile_definitions(jess PUBLIC -DHAVE_ALLOCA)
++endif()
++if(HAVE_THREADLOCALSTORAGE)
++	target_compile_definitions(jess PUBLIC -DHAVE_THREADLOCALSTORAGE)
 +endif()
 +
 +add_executable(jess_bin)
