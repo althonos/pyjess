@@ -1,6 +1,6 @@
 diff --git a/src/qselect.h b/src/qselect.h
 new file mode 100644
-index 0000000..848f65f
+index 0000000..1019f38
 --- /dev/null
 +++ b/src/qselect.h
 @@ -0,0 +1,89 @@
@@ -55,9 +55,9 @@ index 0000000..848f65f
 +{
 +	size_t mid = (left + right + 1) / 2;
 +
-+	void* lptr = _SAFE_INDEX(base,left,size);
-+	void* rptr = _SAFE_INDEX(base,right,size);
-+	void* mptr = _SAFE_INDEX(base,mid,size);
++	const void* lptr = _SAFE_INDEX(base,left,size);
++	const void* rptr = _SAFE_INDEX(base,right,size);
++	const void* mptr = _SAFE_INDEX(base,mid,size);
 +
 +	if ((compare(lptr, mptr, arg) > 0) != (compare(lptr, rptr,arg) > 0))
 +		return left;

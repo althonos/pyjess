@@ -1,5 +1,5 @@
 diff --git a/src/Scanner.c b/src/Scanner.c
-index 19a35a7..79a3ed3 100644
+index 19a35a7..d796132 100644
 --- a/src/Scanner.c
 +++ b/src/Scanner.c
 @@ -5,41 +5,37 @@
@@ -166,7 +166,7 @@ index 19a35a7..79a3ed3 100644
  		}
  
 -		S->tree[k]=KdTree_create(S->set[k]->coord,S->set[k]->count,3);
-+		S->tree[k]=KdTree_reuse(S->tree[k],S->set[k]->coord,S->set[k]->count,3);
++		S->tree[k]=KdTree_reuse(S->tree[k],S->set[k]->coord,S->set[k]->count);
 +		if(!S->tree[k])
 +		{
 +			Scanner_free(S);
@@ -319,7 +319,7 @@ index 19a35a7..79a3ed3 100644
  
 -			S->region[j]=Annulus_create(S->atom[j]->x,min,max,3);
 +			assert(S->atom[S->order[j]]);
-+			S->regions[k]->R[j]=Annulus_reuse(S->regions[k]->R[j],S->atom[S->order[j]]->x,min,max,3);
++			S->regions[k]->R[j]=Annulus_reuse(S->regions[k]->R[j],S->atom[S->order[j]]->x,min,max);
  		}
  
 -		J = Join_create(S->region,k,innerJoin);

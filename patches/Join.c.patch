@@ -1,8 +1,8 @@
 diff --git a/src/Join.c b/src/Join.c
-index 52b491c..2add2d4 100644
+index 52b491c..75443f2 100644
 --- a/src/Join.c
 +++ b/src/Join.c
-@@ -6,139 +6,126 @@
+@@ -6,139 +6,124 @@
  // ==================================================================
  
  #include "Join.h"
@@ -35,7 +35,7 @@ index 52b491c..2add2d4 100644
  // ==================================================================
  
 -static int Join_oro(Region *R,double *min,double *max,int dim)
-+int Join_oro(Region *R,double *min,double *max,int dim) 
++int Join_oro(Region *R,double *min,double *max) 
  {
  	Join *J=(Join*)&R[1];
 -	int k;
@@ -49,11 +49,11 @@ index 52b491c..2add2d4 100644
 -	}
 -
 -	return 0;
-+	return _Join_oro(J,min,max,dim);
++	return _Join_oro(J,min,max);
  }
  
 -static int Join_iro(Region *R,double *min,double *max,int dim)
-+int Join_iro(Region *R,double *min,double *max,int dim) 
++int Join_iro(Region *R,double *min,double *max) 
  {
  	Join *J=(Join*)&R[1];
 -	int k;
@@ -67,11 +67,11 @@ index 52b491c..2add2d4 100644
 -	}
 -
 -	return 1;
-+	return _Join_iro(J,min,max,dim);
++	return _Join_iro(J,min,max);
  }
  
 -static int Join_opo(Region *R,double *x,int dim)
-+int Join_opo(Region *R,double *x,int dim)
++int Join_opo(Region *R,double *x)
  {
  	Join *J=(Join*)&R[1];
 -	int k;
@@ -85,11 +85,11 @@ index 52b491c..2add2d4 100644
 -	}
 -
 -	return 0;
-+	return _Join_opo(J,x,dim);
++	return _Join_opo(J,x);
  }
  
 -static int Join_ipo(Region *R,double *x,int dim)
-+int Join_ipo(Region *R,double *x,int dim)
++int Join_ipo(Region *R,double *x)
  {
  	Join *J=(Join*)&R[1];
 -	int k;
@@ -103,7 +103,7 @@ index 52b491c..2add2d4 100644
 -	}
 -
 -	return 1;
-+	return _Join_ipo(J,x,dim);
++	return _Join_ipo(J,x);
  }
  
  // ==================================================================
@@ -132,8 +132,7 @@ index 52b491c..2add2d4 100644
 +
 +	return J;
 +}
- 
--	if(type==innerJoin)
++
 +Join *Join_create(const Annulus **S,int count,JoinType type)
 +{
 +	Join *J = Join_allocate(count,type);
@@ -142,7 +141,8 @@ index 52b491c..2add2d4 100644
 +
 +	return J;
 +}
-+
+ 
+-	if(type==innerJoin)
 +#ifndef Jess_min
 +#define Jess_min(x,y) (x<y ? x:y)
 +#endif
@@ -155,7 +155,6 @@ index 52b491c..2add2d4 100644
 +{
 +	int i;
 +	int r;
-+	int dim;
 +
 +	assert(J);
 +	assert(B);
@@ -164,7 +163,7 @@ index 52b491c..2add2d4 100644
  	{
 -		R->intersectionQ = Join_iro;
 -		R->inclusionQ = Join_ipo;
-+		for(i=0;i<MAX_BOX_DIM;i++)
++		for(i=0;i<BOX_DIM;i++)
 +		{
 +			B->min[i] = 0.0;
 +			B->max[i] = 0.0;
@@ -175,8 +174,7 @@ index 52b491c..2add2d4 100644
  	{
 -		R->intersectionQ = Join_oro;
 -		R->inclusionQ = Join_opo;
-+		dim = J->R[0]->dim;
-+		for(i=0;i<dim;i++)
++		for(i=0;i<BOX_DIM;i++)
 +		{
 +			B->min[i] = -INFINITY;
 +			B->max[i] =  INFINITY;
