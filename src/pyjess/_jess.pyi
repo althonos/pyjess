@@ -176,7 +176,7 @@ class Query(Generic[_T], Iterator[Hit[_T]]):
     @property
     def rmsd_threshold(self) -> float: ...
     @property
-    def max_candidates(self) -> int: ...
+    def max_candidates(self) -> Optional[int]: ...
     @property
     def best_match(self) -> bool: ...
     def __iter__(self) -> Query[_T]: ...
@@ -218,7 +218,7 @@ class Jess(Generic[_T], Sequence[_T]):
         distance_cutoff: float,
         max_dynamic_distance: float,
         *,
-        max_candidates: int = 1000,
+        max_candidates: Optional[int] = None,
         ignore_chain: bool = False,
         best_match: bool = False,
         reorder: bool = True,

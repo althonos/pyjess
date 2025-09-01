@@ -1169,8 +1169,6 @@ cdef class Query:
             the templates.
         rmsd_threshold (`float`): The RMSD threshold for reporting
             results.
-        max_candidates (`int`): The maximum number of candidate hits
-            to report *by template*.
         ignore_chain (`bool`): Whether to check or ignore the chain of
             the atoms to match.
         best_match (`bool`): Whether the query will return only the
@@ -1181,13 +1179,13 @@ cdef class Query:
     cdef bint        _partial
     cdef int         _candidates
     cdef uintptr_t   _prev_tpl
+    cdef int         _max_candidates
 
     cdef readonly Jess     jess
     cdef readonly Molecule molecule
     cdef readonly bint     ignore_chain
     cdef readonly bint     best_match
     cdef readonly double   rmsd_threshold
-    cdef readonly int      max_candidates
 
     def __cinit__(self):
         self._jq = NULL
@@ -1200,6 +1198,21 @@ cdef class Query:
 
     def __iter__(self):
         return self
+
+    @property
+    def max_candidates(self):
+        """`int`: The maximum number of candidate hits to report *by template*.
+        """
+        return None if self._max_candidates == -1 else self._max_candidates
+
+    @max_candidates.setter
+    def max_candidates(self, max_candidates):
+        if max_candidates is None:
+            self._max_candidates = -1
+        elif max_candidates >= 0:
+            self._max_candidates = max_candidates
+        else:
+            raise ValueError(f"invalid value for `max_candidates` argument: {max_candidates!r}")
 
     cdef bint _advance(self) noexcept nogil:
         if self._partial:
@@ -1267,7 +1280,7 @@ cdef class Query:
                     self._candidates = 0 
                 else:
                     self._candidates += 1
-                if self._candidates == self.max_candidates:
+                if self._candidates == self._max_candidates:
                     jess.jess.JessQuery_nextTemplate(self._jq)
                     continue
 
@@ -1596,7 +1609,7 @@ cdef class Jess:
         double distance_cutoff,
         double max_dynamic_distance,
         *,
-        int max_candidates = 1000,
+        object max_candidates = None,
         bint ignore_chain = False,
         bint best_match = False,
         bint reorder = True,
@@ -1614,6 +1627,8 @@ cdef class Jess:
                 dynamic distance after adding the global distance cutoff
                 and the individual atom distance cutoff defined for each
                 atom of the template.
+            max_candidates (`int` or `None`): The maximum number of candidate 
+                hits to report *by template*.
             ignore_chain (`bool`): Whether to check or ignore the chain of
                 the atoms to match.
             best_match (`bool`): Pass `True` to return only the best match
@@ -1622,7 +1637,7 @@ cdef class Jess:
                 to accelerate matching in the scanner algorithm. Pass 
                 `False` to reverse to the original, slower algorithm
                 which matches atoms in the same order as they appear in
-                the template, at the cost
+                the template, at the cost of longer run times.
 
         Returns:
             `~pyjess.Query`: An iterator over the query hits.
@@ -1639,10 +1654,13 @@ cdef class Jess:
         .. versionadded:: 0.6.0
             The ``reorder`` argument, defaulting to `True`.
 
+        .. versionchanged:: 0.7.0
+            Default value of ``max_candidates`` argument to `None`.
+
         """
         cdef Query query = Query.__new__(Query)
-        query.ignore_chain = ignore_chain
         query.max_candidates = max_candidates
+        query.ignore_chain = ignore_chain
         query.rmsd_threshold = rmsd_threshold
         query.best_match = best_match
         query.molecule = molecule
