@@ -6,8 +6,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.5.2...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.6.0...HEAD
 
+
+## [v0.6.0] - 2025-09-01
+[v0.6.0]: https://github.com/althonos/pyjess/compare/v0.5.2...v0.6.0
+
+### Added
+- Several [algorithmic optimizations](https://pyjess.readthedocs.io/en/v0.6.0/guide/optimizations.html) to Jess, greatly improving runtime:
+  - Use QuickSelect ($O(n)$) instead of QuickSort ($O(nlog(n))$) to select the medians used for space partitioning on k-d tree initialization.
+  - Use approximate intersection on bounding boxes rather than exact code involving multiple annuli when querying the k-d tree for atoms.
+  - **breaking**: Reorder the matching order of template atoms to reduce the amount of backtracking and k-d tree querying performed in the average and worst case.
+- `reorder` argument to `Jess.query` to support disabling template atom reordering if needed for Jess 1-to-1 consistency.
+
+### Changed
+- Hardcode space dimensions to 3 to encourage compilers to unroll loops over dimensions.
+- Recycle memory between templates within a query to reduce total amount of allocation/deallocation in hot paths.
 
 ## [v0.5.2] - 2025-08-26
 [v0.5.2]: https://github.com/althonos/pyjess/compare/v0.5.1...v0.5.2
