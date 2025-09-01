@@ -33,7 +33,9 @@ during his PhD in the [Thornton group](https://www.ebi.ac.uk/research/thornton/)
 PyJess is a Python module that provides bindings to Jess using
 [Cython](https://cython.org/). It allows creating templates, querying them
 with protein structures, and retrieving the hits using a Python API without
-performing any external I/O.
+performing any external I/O. It's also more than 10x faster than Jess thanks to
+[algorithmic optimizations](https://pyjess.readthedocs.io/en/latest/guide/optimizations.html)
+added to improve the original Jess code while producing consistent results.
 
 
 ## 🔧 Installing
@@ -67,7 +69,8 @@ Jess if you are using it in an academic work, for instance as:
 
 ## 💡 Example
 
-Load templates to be used as references from different template files:
+Load [`Template`](https://pyjess.readthedocs.io/en/latest/api/template.html#pyjess.Template) 
+objects to be used as references from different template files:
 
 ```python
 import pathlib
@@ -75,11 +78,10 @@ import pyjess
 
 templates = []
 for path in sorted(pathlib.Path("vendor/jess/examples").glob("template_*.qry")):
-    with path.open() as file:
-        templates.append(pyjess.Template.load(file, id=path.stem))
+    templates.append(pyjess.Template.load(path, id=path.stem))
 ```
 
-Create a `Jess` instance and use it to query a molecule (a PDB structure)
+Create a [`Jess`](https://pyjess.readthedocs.io/en/latest/api/jess.html#pyjess.Jess) instance and use it to query a [`Molecule`](https://pyjess.readthedocs.io/en/latest/api/molecule.html#pyjess.Molecule) (a PDB structure)
 against the stored templates:
 
 ```python
@@ -101,9 +103,11 @@ for hit in query:
 
 ## 🧶 Thread-safety
 
-Once a `Jess` instance has been created, the templates cannot be edited anymore,
-making the `Jess.query` method re-entrant. This allows querying several
-molecules against the same templates in parallel using a thread pool:
+Once a [`Jess`](https://pyjess.readthedocs.io/en/latest/api/jess.html#pyjess.Jess) 
+instance has been created, the templates cannot be edited anymore,
+making the [`Jess.query`](https://pyjess.readthedocs.io/en/latest/api/jess.html#pyjess.Jess.query) method re-entrant and thread-safe. This allows querying 
+several molecules against the same templates in parallel using e.g a 
+[`ThreadPool`](https://docs.python.org/3/library/multiprocessing.html#multiprocessing.pool.ThreadPool):
 
 ```python
 molecules = []
@@ -117,8 +121,22 @@ with multiprocessing.ThreadPool() as pool:
 *⚠️ Prior to PyJess `v0.2.1`, the Jess code was running some thread-unsafe operations which have now been patched.
 If running Jess in parallel, make sure to use `v0.2.1` or later to use the code patched with re-entrant functions*.
 
-<!-- ## ⏱️ Benchmarks -->
+## ⏱️ Benchmarks
 
+The following table reports the runtime of PyJess to match $n=132$ protein 
+structures to the $m=7607$ templates of 
+[EnzyMM](https://github.com/RayHackett/enzymm), using $J=12$ threads to parallelize.
+
+| Version     | Runtime (s) | Match Speed (N * M / s * J) | Speedup     |
+| ----------- | ----------- | --------------------------- | ----------- |
+| ``v0.4.2``  | 618.1       | 135.4                       | N/A         |
+| ``v0.5.0``  | 586.3       | 142.7                       | x1.05       |
+| ``v0.5.1``  | 365.6       | 228.9                       | x1.69       |
+| ``v0.5.2``  | 327.2       | 255.7                       | x1.88       |
+| ``v0.6.0``  | 54.5        | 1535.4                      | **x11.34**  |
+
+*Benchmarks were run on a quiet [i7-1255U](https://www.intel.com/content/www/us/en/products/sku/226259/intel-core-i71255u-processor-12m-cache-up-to-4-70-ghz/specifications.html) CPU running @4.70GHz with 10 physical cores / 12 logical
+cores.*
 
 ## 💭 Feedback
 
@@ -151,7 +169,7 @@ This library is provided under the [MIT License](https://choosealicense.com/lice
 *This project is in no way not affiliated, sponsored, or otherwise endorsed
 by the JESS authors. It was developed
 by [Martin Larralde](https://github.com/althonos/) during his PhD project
-at the [European Molecular Biology Laboratory](https://www.embl.de/) in
+at the [Leiden University Medical Center](https://www.lumc.nl/en/) in
 the [Zeller team](https://github.com/zellerlab).*
 
 
