@@ -1051,7 +1051,14 @@ cdef class Template:
                 self._tess.distance[j][i] = dist
 
         # compute dimension
-        residues = { self._tess.atom[i].resSeq for i in range(count) }
+        residues = { 
+            (
+                self._tess.atom[i].resSeq , 
+                self._tess.atom[i].chainID1,
+                self._tess.atom[i].chainID2,
+            )
+            for i in range(count) 
+        }
         self._tess.dim = len(residues)
 
     def __copy__(self):
@@ -1317,8 +1324,9 @@ cdef class Query:
                         hit_tpl = tpl
                         hit_found = True
 
-                # free superposition items that are not used in a hit, and
-                # return hits immediately if we are not in best match mode
+                # free superposition items (as relevant data was copied in
+                # the Hit if needed) and return hits immediately if we are
+                # not in best match mode
                 jess.super.Superposition_free(sup)
                 if hit_found and not self.best_match:
                     break

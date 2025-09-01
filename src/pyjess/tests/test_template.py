@@ -6,6 +6,8 @@ import textwrap
 import sys
 
 from .._jess import Template
+from .utils import files
+from . import data
 
 TEMPLATE = textwrap.dedent(
     """
@@ -115,3 +117,9 @@ class TestTemplate(unittest.TestCase):
         tpl2 = pickle.loads(pickle.dumps(tpl1))
         self.assertEqual(len(tpl1), len(tpl2))
         self.assertEqual(tpl1, tpl2)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    def test_dimension_multiple_chains(self):
+        with files(data).joinpath("1sur.qry").open() as f:
+            template1 = Template.load(f)
+        self.assertEqual(template1.dimension, 4)
