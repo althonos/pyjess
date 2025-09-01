@@ -1,8 +1,16 @@
 diff --git a/src/Main.c b/src/Main.c
-index dff22b9..9b09cc5 100644
+index dff22b9..476cb01 100644
 --- a/src/Main.c
 +++ b/src/Main.c
-@@ -116,7 +116,7 @@ static void output(
+@@ -14,6 +14,7 @@
+ #include <ctype.h>
+ #include <errno.h>
+ #include <stdarg.h>
++#include <stdint.h>
+ 
+ // ==================================================================
+ // Global constants
+@@ -116,11 +117,11 @@ static void output(
  		A->charge
  		);
  }
@@ -11,25 +19,46 @@ index dff22b9..9b09cc5 100644
  {
  	Molecule *M;
  	Superposition *sup;
-@@ -145,7 +145,7 @@ static void search(const char *filename,Jess *J,double tRmsd,double tDistance,do
+-	Template *T;
++	Template *T, *Tprev;
+ 	Atom **A;
+ 	FILE *file;
+ 	JessQuery *Q;
+@@ -145,11 +146,21 @@ static void search(const char *filename,Jess *J,double tRmsd,double tDistance,do
  		return;
  	}
  
 -	Q=Jess_query(J,M,tDistance,max_total_threshold);
 +	Q=Jess_query(J,M,tDistance,max_total_threshold,fastScan);
++	T=JessQuery_template(Q);
  
- 	while(JessQuery_next(Q, ignore_chain) && killswitch<1000)
+-	while(JessQuery_next(Q, ignore_chain) && killswitch<1000)
++	while(JessQuery_next(Q, ignore_chain))
  	{
-@@ -193,6 +193,8 @@ static void search(const char *filename,Jess *J,double tRmsd,double tDistance,do
++		Tprev=T;
+ 		T=JessQuery_template(Q);
++		// printf("current template: %s\n", T->name(T));
++
++		killswitch = (T!=Tprev) ? 0 : killswitch + 1;
++		if(killswitch == 1000)
++		{
++			JessQuery_nextTemplate(Q);
++			continue;
++		}
+ 
+ 		count=T->count(T);
+ 		sup = JessQuery_superposition(Q);
+@@ -193,7 +204,8 @@ static void search(const char *filename,Jess *J,double tRmsd,double tDistance,do
  
  			printf("ENDMDL\n\n");
  		}
+-		killswitch+=1;
 +
 +		Superposition_free(sup);
- 		killswitch+=1;
  	}
  
-@@ -339,6 +341,7 @@ int main(int argc, char **argv)
+ 	JessQuery_free(Q);
+@@ -339,6 +351,7 @@ int main(int argc, char **argv)
  	int ignore_chain=0;
  	int write_filename=0;
  	int ignore_endmdl=0;
@@ -37,7 +66,7 @@ index dff22b9..9b09cc5 100644
  
  	if(argc<7 || argc>8) help();
  
-@@ -354,6 +357,7 @@ int main(int argc, char **argv)
+@@ -354,6 +367,7 @@ int main(int argc, char **argv)
  			else if(*s=='i') ignore_chain=1;
  			else if(*s=='q') write_filename=1;
  			else if(*s=='e') ignore_endmdl=1;
@@ -45,7 +74,7 @@ index dff22b9..9b09cc5 100644
  			else help();
  		}
  	}
-@@ -388,10 +392,11 @@ int main(int argc, char **argv)
+@@ -388,10 +402,11 @@ int main(int argc, char **argv)
  		if(strlen(s)==0) continue;
  
  		if(feedbackQ) fprintf(stderr,"%s\n",s);

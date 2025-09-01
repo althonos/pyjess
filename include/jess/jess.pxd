@@ -22,6 +22,7 @@ cdef extern from "Jess.h" nogil:
 
     void JessQuery_free(JessQuery*)
     int JessQuery_next(JessQuery*, int)
+    int JessQuery_nextTemplate(JessQuery*)
     Template* JessQuery_template(JessQuery*)
     const Molecule* JessQuery_molecule(JessQuery*)
     Atom** JessQuery_atoms(JessQuery*)

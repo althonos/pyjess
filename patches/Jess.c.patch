@@ -1,5 +1,5 @@
 diff --git a/src/Jess.c b/src/Jess.c
-index e81bda0..5601c07 100644
+index e81bda0..44fa672 100644
 --- a/src/Jess.c
 +++ b/src/Jess.c
 @@ -4,15 +4,18 @@
@@ -96,7 +96,7 @@ index e81bda0..5601c07 100644
  
  	return Q;
  }
-@@ -129,74 +151,80 @@ void JessQuery_free(JessQuery *Q)
+@@ -129,74 +151,90 @@ void JessQuery_free(JessQuery *Q)
  	{
  		Scanner_free(Q->scanner);
  		Superposition_free(Q->super);
@@ -150,6 +150,16 @@ index e81bda0..5601c07 100644
  
 -	return Q->super;
 +	return super;
++}
++
++int JessQuery_nextTemplate(JessQuery *Q)
++{
++	Q->scan=false;
++	Superposition_free(Q->super);
++	Q->super=NULL;
++	Q->atoms=NULL;
++	Q->node=Q->node->next;
++	return (Q->node) ? 1 : 0;
  }
  
  int JessQuery_next(JessQuery *Q, int ignore_chain)
@@ -191,7 +201,7 @@ index e81bda0..5601c07 100644
  		}
  
  		if((A=Scanner_next(Q->scanner, ignore_chain)))
-@@ -207,8 +235,9 @@ int JessQuery_next(JessQuery *Q, int ignore_chain)
+@@ -207,8 +245,9 @@ int JessQuery_next(JessQuery *Q, int ignore_chain)
  			return 1;
  		}
  

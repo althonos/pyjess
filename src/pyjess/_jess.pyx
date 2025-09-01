@@ -22,6 +22,7 @@ from cpython.unicode cimport PyUnicode_FromStringAndSize
 
 from libc.math cimport isnan, exp, INFINITY, NAN
 from libc.stdio cimport FILE, fclose, fdopen, printf
+from libc.stdint cimport uintptr_t
 from libc.stdlib cimport calloc, realloc, free, malloc
 from libc.string cimport memcpy, memset, strncpy, strdup
 
@@ -1169,7 +1170,7 @@ cdef class Query:
         rmsd_threshold (`float`): The RMSD threshold for reporting
             results.
         max_candidates (`int`): The maximum number of candidate hits
-            to report.
+            to report *by template*.
         ignore_chain (`bool`): Whether to check or ignore the chain of
             the atoms to match.
         best_match (`bool`): Whether the query will return only the
@@ -1179,6 +1180,7 @@ cdef class Query:
     cdef _JessQuery* _jq
     cdef bint        _partial
     cdef int         _candidates
+    cdef uintptr_t   _prev_tpl
 
     cdef readonly Jess     jess
     cdef readonly Molecule molecule
@@ -1191,6 +1193,7 @@ cdef class Query:
         self._jq = NULL
         self._candidates = 0
         self._partial = False
+        self._prev_tpl = 0
 
     def __dealloc__(self):
         jess.jess.JessQuery_free(self._jq)
@@ -1246,14 +1249,27 @@ cdef class Query:
 
         # search the next hit without the GIL to allow parallel queries.
         with nogil:
-            while self._advance() and self._candidates < self.max_candidates:
+            while self._advance():
                 # load current iteration template, and check that the hit
                 # was obtained with the current template and not with the
                 # previous one
+                self._prev_tpl = <uintptr_t> tpl
                 tpl = jess.jess.JessQuery_template(self._jq)
                 if hit_found and hit_tpl != tpl:
                     self._rewind()
                     break
+
+                # check if we already made it to the next template,
+                # or if we need to short-circuit the iteration and
+                # force the query to move to the next template as
+                # we found too many candidates already.
+                if <uintptr_t> tpl != self._prev_tpl:
+                    self._candidates = 0 
+                else:
+                    self._candidates += 1
+                if self._candidates == self.max_candidates:
+                    jess.jess.JessQuery_nextTemplate(self._jq)
+                    continue
 
                 # load superposition and compute RMSD for the current iteration
                 sup = jess.jess.JessQuery_superposition(self._jq)
@@ -1290,7 +1306,6 @@ cdef class Query:
 
                 # free superposition items that are not used in a hit, and
                 # return hits immediately if we are not in best match mode
-                self._candidates += 1
                 jess.super.Superposition_free(sup)
                 if hit_found and not self.best_match:
                     break
