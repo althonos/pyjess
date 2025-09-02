@@ -1,5 +1,5 @@
 from .molecule import Molecule
-from .template import Template
+from .template import Template, IgnoreType
 
 
 cdef extern from "Scanner.h" nogil:
@@ -10,6 +10,6 @@ cdef extern from "Scanner.h" nogil:
 
     Scanner* Scanner_create(Molecule*, Template*, double, double)
     void Scanner_free(Scanner*)
-    Atom** Scanner_next(Scanner*, int)
+    Atom** Scanner_next(Scanner*, IgnoreType)
     double Scanner_rmsd(Scanner*)
 

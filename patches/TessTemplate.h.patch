@@ -1,5 +1,5 @@
 diff --git a/src/TessTemplate.h b/src/TessTemplate.h
-index 1e597f2..8dd8f06 100644
+index 1e597f2..eb7c2ec 100644
 --- a/src/TessTemplate.h
 +++ b/src/TessTemplate.h
 @@ -9,8 +9,57 @@
@@ -46,7 +46,7 @@ index 1e597f2..8dd8f06 100644
 +extern int TessTemplate_range(const Template *T,int i,int j,double *a,double *b);
 +extern const double *TessTemplate_position(const Template *T, int k);
 +extern double TessTemplate_distWeight(const Template *T, int k);
-+extern int TessTemplate_check(const Template *T, Atom **A, int *order, int k, int ignore_chain);
++extern int TessTemplate_check(const Template *T, Atom **A, int *order, int k, IgnoreType ignore_chain);
 +extern void TessTemplate_candidates(const Template *T, const Molecule *M, int k, CandidateSet** S);
 +extern const char *TessTemplate_name(const Template *T);
 +extern double TessTemplate_logE(const Template *T,double rmsd, int n);

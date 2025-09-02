@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 - **breaking**: Incorrect handling of `max_candidates` in `Jess.query`, causing PyJess to erroneously ignore some templates.
+- `Template.dimension` reporting incorrect numbers for identical residues across different residues.
 
 ### Changed
 - **breaking**: Set the `max_candidates` default value to `None` in `Jess.query`, disabling max candidates filtering by default.

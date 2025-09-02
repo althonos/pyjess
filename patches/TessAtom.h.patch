@@ -1,5 +1,5 @@
 diff --git a/src/TessAtom.h b/src/TessAtom.h
-index 6480d8b..648f55f 100644
+index 6480d8b..8ec3618 100644
 --- a/src/TessAtom.h
 +++ b/src/TessAtom.h
 @@ -9,6 +9,7 @@
@@ -46,12 +46,16 @@ index 6480d8b..648f55f 100644
  // ==================================================================
  // Methods of type TessAtom
  // ==================================================================
-@@ -30,16 +60,62 @@ typedef struct _TessAtom TessAtom;
+@@ -30,16 +60,79 @@ typedef struct _TessAtom TessAtom;
  // ==================================================================
  
  extern TessAtom *TessAtom_create(const char*);
 -extern void TessAtom_free(TessAtom*);
 -extern const double *TessAtom_position(const TessAtom*);
++extern TessAtom* TessAtom_copy(const TessAtom*);
+ extern int TessAtom_match(const TessAtom*,const Atom*);
+-extern int TessAtom_resSeq(const TessAtom*);
++extern double TessAtom_distance(const TessAtom*, const TessAtom*);
 +
 +static inline void TessAtom_free(TessAtom *A)
 +{
@@ -63,8 +67,22 @@ index 6480d8b..648f55f 100644
 +	return A->pos;
 +}
 +
- extern int TessAtom_match(const TessAtom*,const Atom*);
--extern int TessAtom_resSeq(const TessAtom*);
++#ifndef TessAtom_toupper
++#define TessAtom_toupper(c) ((( c >= 'a' ) && (c <= 'z')) ? c & (~0x20) : c);
++#endif
++
++static int TessAtom_compareName(const char* restrict a, const char* restrict b)
++{
++	for(int i=0; i<4;i++)
++	{
++		char ca = TessAtom_toupper(a[i]);
++		char cb = TessAtom_toupper(b[i]);
++		int cmp = ca - cb;
++		if(cmp != 0) return cmp;
++	}
++	return 0;
++}
++
 +
 +static inline int TessAtom_resSeq(const TessAtom *A)
 +{
@@ -109,8 +127,7 @@ index 6480d8b..648f55f 100644
 +	return A->code;
 +}
 +
-+extern TessAtom* TessAtom_copy(const TessAtom*);
-+extern double TessAtom_distance(const TessAtom*, const TessAtom*);
++
 +
  // ==================================================================
  

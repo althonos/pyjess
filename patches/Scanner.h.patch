@@ -1,5 +1,5 @@
 diff --git a/src/Scanner.h b/src/Scanner.h
-index d775ce7..e049f40 100644
+index d775ce7..8a83fbc 100644
 --- a/src/Scanner.h
 +++ b/src/Scanner.h
 @@ -11,27 +11,43 @@
@@ -31,7 +31,8 @@ index d775ce7..e049f40 100644
 +extern Scanner *Scanner_create(Molecule*,Template*,ScannerData*,double,double,bool);
 +extern Scanner *Scanner_reuse(Scanner*,Molecule*,Template*,ScannerData*,double,double,bool);
  extern void Scanner_free(Scanner*);
- extern Atom **Scanner_next(Scanner*, int);
+-extern Atom **Scanner_next(Scanner*, int);
++extern Atom **Scanner_next(Scanner*, IgnoreType);
  extern double Scanner_rmsd(Scanner*);
  
 +// ==================================================================

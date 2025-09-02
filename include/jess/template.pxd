@@ -5,6 +5,12 @@ from .candidate_set cimport CandidateSet
 cdef extern from "Template.h" nogil:
 
     ctypedef _Template Template
+
+    ctypedef enum IgnoreType:
+        ignoreNone
+        ignoreResidues
+        ignoreAtoms
+
     cdef struct _Template:
         void (*free)(Template*) nogil
         int (*count)(const Template*) nogil

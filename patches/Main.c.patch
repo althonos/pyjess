@@ -1,5 +1,5 @@
 diff --git a/src/Main.c b/src/Main.c
-index dff22b9..476cb01 100644
+index dff22b9..5baeb17 100644
 --- a/src/Main.c
 +++ b/src/Main.c
 @@ -14,6 +14,7 @@
@@ -10,12 +10,21 @@ index dff22b9..476cb01 100644
  
  // ==================================================================
  // Global constants
-@@ -116,11 +117,11 @@ static void output(
+@@ -21,6 +22,8 @@
+ // atomFormat			The format of a PDB ATOM record (for printf)
+ // ==================================================================
+ 
++#define MAX_CANDIDATES -1
++
+ static const char *atomFormat =
+ 	"ATOM  %5i%5s%c%-3s%c%c%4i%-4c%8.3f%8.3f%8.3f%6.2f%6.2f\n"; //Riziotis edit
+ 	//"ATOM  %5i%5s%c%-3s%c%c%4i%-4c%8.3f%8.3f%8.3f\n"; //Riziotis edit
+@@ -116,11 +119,11 @@ static void output(
  		A->charge
  		);
  }
 -static void search(const char *filename,Jess *J,double tRmsd,double tDistance,double max_total_threshold,int no_transform,int ignore_chain,int write_filename,int ignore_endmdl, float conservation_cutoff)
-+static void search(const char *filename,Jess *J,double tRmsd,double tDistance,double max_total_threshold,int no_transform,int ignore_chain,int write_filename,int ignore_endmdl, float conservation_cutoff, bool fastScan)
++static void search(const char *filename,Jess *J,double tRmsd,double tDistance,double max_total_threshold,int no_transform,IgnoreType ignore_chain,int write_filename,int ignore_endmdl, float conservation_cutoff, bool fastScan)
  {
  	Molecule *M;
  	Superposition *sup;
@@ -24,7 +33,16 @@ index dff22b9..476cb01 100644
  	Atom **A;
  	FILE *file;
  	JessQuery *Q;
-@@ -145,11 +146,21 @@ static void search(const char *filename,Jess *J,double tRmsd,double tDistance,do
+@@ -128,7 +131,7 @@ static void search(const char *filename,Jess *J,double tRmsd,double tDistance,do
+ 	const double *P,*c[2];
+ 	double det;
+ 	double logE;
+-	int killswitch = 0;
++	int candidates = 0;
+ 
+ 	if(!(file=fopen(filename,"r")))
+ 	{
+@@ -145,11 +148,21 @@ static void search(const char *filename,Jess *J,double tRmsd,double tDistance,do
  		return;
  	}
  
@@ -39,8 +57,8 @@ index dff22b9..476cb01 100644
  		T=JessQuery_template(Q);
 +		// printf("current template: %s\n", T->name(T));
 +
-+		killswitch = (T!=Tprev) ? 0 : killswitch + 1;
-+		if(killswitch == 1000)
++		candidates = (T!=Tprev) ? 0 : candidates + 1;
++		if(candidates == MAX_CANDIDATES)
 +		{
 +			JessQuery_nextTemplate(Q);
 +			continue;
@@ -48,7 +66,7 @@ index dff22b9..476cb01 100644
  
  		count=T->count(T);
  		sup = JessQuery_superposition(Q);
-@@ -193,7 +204,8 @@ static void search(const char *filename,Jess *J,double tRmsd,double tDistance,do
+@@ -193,7 +206,8 @@ static void search(const char *filename,Jess *J,double tRmsd,double tDistance,do
  
  			printf("ENDMDL\n\n");
  		}
@@ -58,23 +76,32 @@ index dff22b9..476cb01 100644
  	}
  
  	JessQuery_free(Q);
-@@ -339,6 +351,7 @@ int main(int argc, char **argv)
- 	int ignore_chain=0;
+@@ -336,9 +350,10 @@ int main(int argc, char **argv)
+ 	int count;
+ 	//Riziotis edit
+ 	int no_transform=0;
+-	int ignore_chain=0;
++	IgnoreType ignore_chain=ignoreNone;
  	int write_filename=0;
  	int ignore_endmdl=0;
 +	int fastScan=0;
  
  	if(argc<7 || argc>8) help();
  
-@@ -354,6 +367,7 @@ int main(int argc, char **argv)
- 			else if(*s=='i') ignore_chain=1;
+@@ -351,9 +366,11 @@ int main(int argc, char **argv)
+ 			if(*s=='f') feedbackQ=1;
+ 			//Riziotis edit
+ 			else if(*s=='n') no_transform=1;
+-			else if(*s=='i') ignore_chain=1;
++			else if(*s=='i') ignore_chain=ignoreAtoms;
++			else if(*s=='I') ignore_chain=ignoreResidues;
  			else if(*s=='q') write_filename=1;
  			else if(*s=='e') ignore_endmdl=1;
 +			else if(*s=='s') fastScan=1;
  			else help();
  		}
  	}
-@@ -388,10 +402,11 @@ int main(int argc, char **argv)
+@@ -388,10 +405,11 @@ int main(int argc, char **argv)
  		if(strlen(s)==0) continue;
  
  		if(feedbackQ) fprintf(stderr,"%s\n",s);

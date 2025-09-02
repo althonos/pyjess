@@ -1,5 +1,5 @@
 diff --git a/src/Jess.c b/src/Jess.c
-index e81bda0..44fa672 100644
+index e81bda0..a0929cd 100644
 --- a/src/Jess.c
 +++ b/src/Jess.c
 @@ -4,15 +4,18 @@
@@ -162,7 +162,8 @@ index e81bda0..44fa672 100644
 +	return (Q->node) ? 1 : 0;
  }
  
- int JessQuery_next(JessQuery *Q, int ignore_chain)
+-int JessQuery_next(JessQuery *Q, int ignore_chain)
++int JessQuery_next(JessQuery *Q, IgnoreType ignore_chain)
  {
  	Template *T;
  	Atom **A;

@@ -1,8 +1,8 @@
 diff --git a/src/Template.h b/src/Template.h
-index 13f68f1..21e12c8 100644
+index 13f68f1..8cb0ee7 100644
 --- a/src/Template.h
 +++ b/src/Template.h
-@@ -9,6 +9,7 @@
+@@ -9,14 +9,17 @@
  #define TEMPLATE_H
  
  #include "Atom.h"
@@ -10,7 +10,17 @@ index 13f68f1..21e12c8 100644
  
  // ==================================================================
  // Forward declarations
-@@ -26,6 +27,7 @@ typedef struct _Template Template;
+ // ==================================================================
+ // Template				The template interface
++// IgnoreChainType		The type of ignore_chain in check
+ // ==================================================================
+ 
+ typedef struct _Template Template;
++typedef enum { ignoreNone,ignoreResidues,ignoreAtoms } IgnoreType;
+ 
+ // ==================================================================
+ // type Template
+@@ -26,6 +29,7 @@ typedef struct _Template Template;
  // match(T,k,A)			True if A matches atom k of T
  // range(T,i,j,a,b)		[*a,*b] <- range of |atom i - atom j|
  // check(T,A,k,ignore_chain)	Check n-ary rules on atom k-1 and 0,...,k-2
@@ -18,12 +28,12 @@ index 13f68f1..21e12c8 100644
  // position(T,i)		Position of atom i (example position)
  // name(T)			Returns the symbolic name for the template
  // logE(T,x,n)			Provide an estimate of logE for a hit
-@@ -37,11 +39,13 @@ struct _Template
+@@ -37,11 +41,13 @@ struct _Template
  	int (*count)(const Template*);
  	int (*match)(const Template*,int,const Atom*);
  	int (*range)(const Template*,int,int,double*,double*);
 -	int (*check)(const Template*,Atom**,int,int);
-+	int (*check)(const Template*,Atom**,int*,int,int);
++	int (*check)(const Template*,Atom**,int*,int,IgnoreType);
 +	void (*candidates)(const Template*, const Molecule*, int, CandidateSet**);
  	const double *(*position)(const Template*,int);
  	const char *(*name)(const Template*);

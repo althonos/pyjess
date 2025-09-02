@@ -1,7 +1,7 @@
 from .atom cimport Atom
 from .molecule cimport Molecule
 from .super cimport Superposition
-from .template cimport Template
+from .template cimport Template, IgnoreType
 
 
 cdef extern from "Jess.h" nogil:
@@ -21,7 +21,7 @@ cdef extern from "Jess.h" nogil:
     JessQuery* Jess_query(Jess*, Molecule*, double, double, bint)
 
     void JessQuery_free(JessQuery*)
-    int JessQuery_next(JessQuery*, int)
+    int JessQuery_next(JessQuery*, IgnoreType)
     int JessQuery_nextTemplate(JessQuery*)
     Template* JessQuery_template(JessQuery*)
     const Molecule* JessQuery_molecule(JessQuery*)

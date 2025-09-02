@@ -38,7 +38,7 @@ from jess.jess cimport Jess as _Jess
 from jess.jess cimport JessQuery as _JessQuery
 from jess.molecule cimport Molecule as _Molecule
 from jess.super cimport Superposition as _Superposition
-from jess.template cimport Template as _Template
+from jess.template cimport Template as _Template, IgnoreType as _IgnoreType
 from jess.tess_template cimport TessTemplate as _TessTemplate
 from jess.tess_atom cimport TessAtom as _TessAtom
 
@@ -1176,8 +1176,6 @@ cdef class Query:
             the templates.
         rmsd_threshold (`float`): The RMSD threshold for reporting
             results.
-        ignore_chain (`bool`): Whether to check or ignore the chain of
-            the atoms to match.
         best_match (`bool`): Whether the query will return only the
             best match to each template.
 
@@ -1187,10 +1185,10 @@ cdef class Query:
     cdef int         _candidates
     cdef uintptr_t   _prev_tpl
     cdef int         _max_candidates
+    cdef _IgnoreType _ignore_chain
 
     cdef readonly Jess     jess
     cdef readonly Molecule molecule
-    cdef readonly bint     ignore_chain
     cdef readonly bint     best_match
     cdef readonly double   rmsd_threshold
 
@@ -1205,6 +1203,28 @@ cdef class Query:
 
     def __iter__(self):
         return self
+
+    @property
+    def ignore_chain(self):
+        """`str` or `None`: The way atom chains are considered or discarded.
+        """
+        if self._ignore_chain == _IgnoreType.ignoreNone:
+            return None
+        elif self._ignore_chain == _IgnoreType.ignoreResidues:
+            return "residues"
+        elif self._ignore_chain == _IgnoreType.ignoreAtoms:
+            return "atoms"
+
+    @ignore_chain.setter
+    def ignore_chain(self, ignore_chain):
+        if ignore_chain is None:
+            self._ignore_chain = _IgnoreType.ignoreNone
+        elif ignore_chain == "residues":
+            self._ignore_chain = _IgnoreType.ignoreResidues
+        elif ignore_chain == "atoms":
+            self._ignore_chain = _IgnoreType.ignoreAtoms
+        else:
+            raise ValueError(f"invalid value for `ignore_chain`: {ignore_chain!r}")
 
     @property
     def max_candidates(self):
@@ -1225,7 +1245,7 @@ cdef class Query:
         if self._partial:
             self._partial = False
             return True
-        return jess.jess.JessQuery_next(self._jq, self.ignore_chain)
+        return jess.jess.JessQuery_next(self._jq, self._ignore_chain)
 
     cdef bint _rewind(self) noexcept nogil:
         self._partial = True
@@ -1618,7 +1638,7 @@ cdef class Jess:
         double max_dynamic_distance,
         *,
         object max_candidates = None,
-        bint ignore_chain = False,
+        str ignore_chain = None,
         bint best_match = False,
         bint reorder = True,
     ):
@@ -1637,8 +1657,18 @@ cdef class Jess:
                 atom of the template.
             max_candidates (`int` or `None`): The maximum number of candidate 
                 hits to report *by template*.
-            ignore_chain (`bool`): Whether to check or ignore the chain of
-                the atoms to match.
+            ignore_chain (`str`): Whether to check or ignore the chain of
+                the atoms to match. The different supported modes are:
+                    - `None`: Force the atoms in the molecule to belong 
+                      to different (resp. same) chains if so in the case 
+                      in the template.
+                    - ``residues``: Allow atoms to belong to different 
+                      (resp. same) chains even if it is not the case in 
+                      the template, but force all atoms of a residue to
+                      belong to the same chain.
+                    - ``atoms``: Allow atoms to belong to any chain, 
+                      independently to the template or the residue they
+                      belong to.
             best_match (`bool`): Pass `True` to return only the best match
                 to each template.
             reorder (`bool`): Whether to enable template atom reordering
@@ -1665,7 +1695,28 @@ cdef class Jess:
         .. versionchanged:: 0.7.0
             Default value of ``max_candidates`` argument to `None`.
 
+        .. versionchanged:: 0.7.0
+            ``ignore_chain`` now expects string variants rather than `bool`.
+
         """
+
+        if ignore_chain is True:
+            warnings.warn(
+                "`ignore_chain` parameter expects string parameters "
+                "to specificy the mode since PyJess v0.7.0. "
+                "Use `ignore_chain='atoms'` instead of `ignore_chain=True`",
+                DeprecationWarning,
+            )
+            ignore_chain="atoms"
+        elif ignore_chain is False:
+            warnings.warn(
+                "`ignore_chain` parameter expects string parameters "
+                "to specificy the mode since PyJess v0.7.0. "
+                "Use `ignore_chain=None` instead of `ignore_chain=False`",
+                DeprecationWarning,
+            )
+            ignore_chain=None
+        
         cdef Query query = Query.__new__(Query)
         query.max_candidates = max_candidates
         query.ignore_chain = ignore_chain

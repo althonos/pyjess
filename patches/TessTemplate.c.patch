@@ -1,5 +1,5 @@
 diff --git a/src/TessTemplate.c b/src/TessTemplate.c
-index 1eb6914..27539c8 100644
+index 1eb6914..eb635cf 100644
 --- a/src/TessTemplate.c
 +++ b/src/TessTemplate.c
 @@ -5,13 +5,21 @@
@@ -99,11 +99,11 @@ index 1eb6914..27539c8 100644
  }
  
 -static int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_chain)
-+int TessTemplate_check(const Template *T, Atom **A, int *order, int k, int ignore_chain)
++int TessTemplate_check(const Template *T, Atom **A, int *order, int k, IgnoreType ignore_chain)
  {
  	const TessTemplate *J = (const TessTemplate*)&T[1];
  	int i;
-@@ -98,8 +86,8 @@ static int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_cha
+@@ -98,44 +86,45 @@ static int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_cha
  		// Compare chain ids
  
  		//Riziotis edit
@@ -114,7 +114,26 @@ index 1eb6914..27539c8 100644
  		//c = A[i]->chainID-A[k-1]->chainID;
  		//d = TessAtom_chainID(J->atom[i])-TessAtom_chainID(J->atom[k-1]);
  
-@@ -119,8 +107,8 @@ static int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_cha
+-		if(ignore_chain==1)
+-		{
+-			c=0;
+-			d=0;
+-		}
+-
+-		if(c==0 && d!=0) return 0;
+-		if(c!=0 && d==0) return 0;
+-
+-		if(c!=0)
++		if(ignore_chain==ignoreNone)
+ 		{
+-			continue;
++			if(c==0 && d!=0) return 0;
++			if(c!=0 && d==0) return 0;
++			if(c!=0)
++			{
++				continue;
++			}
+ 		}
  
  		// Compare residue sequence numbers
  
@@ -125,7 +144,13 @@ index 1eb6914..27539c8 100644
  
  		if(a==0 && b!=0) return 0;
  		if(a!=0 && b==0) return 0;
-@@ -129,13 +117,13 @@ static int TessTemplate_check(const Template *T, Atom **A, int k, int ignore_cha
++
++		if(ignore_chain!=ignoreAtoms)
++		{
++			if(a==0 && c!=0) return 0;
++		}
+ 	}
+ 
  	return 1;
  }
  
@@ -141,7 +166,7 @@ index 1eb6914..27539c8 100644
  {
  	const TessTemplate *J = (const TessTemplate*)&T[1];
  	const double logA = -8.5;
-@@ -149,11 +137,73 @@ static double TessTemplate_logE(const Template *T,double rmsd, int n)
+@@ -149,11 +138,73 @@ static double TessTemplate_logE(const Template *T,double rmsd, int n)
  	return logA + alpha*rmsd + beta*(double)J->dim + log((double)n);
  }
  
@@ -216,7 +241,7 @@ index 1eb6914..27539c8 100644
  {
  	TessTemplate *J;
  	int i;
-@@ -224,7 +274,7 @@ Template *TessTemplate_create(FILE *file,const char *sym)
+@@ -224,7 +275,7 @@ Template *TessTemplate_create(FILE *file,const char *sym)
  			// No errors thus far - add the atom template
  			// to the list we're creating...
  
@@ -225,7 +250,7 @@ index 1eb6914..27539c8 100644
  			n->succ=head;
  			head=n;
  			n->atom=A;
-@@ -269,6 +319,7 @@ Template *TessTemplate_create(FILE *file,const char *sym)
+@@ -269,6 +320,7 @@ Template *TessTemplate_create(FILE *file,const char *sym)
  	T->name=TessTemplate_name;
  	T->logE=TessTemplate_logE;
  	T->distWeight=TessTemplate_distWeight;
@@ -233,7 +258,7 @@ index 1eb6914..27539c8 100644
  
  	// Set up the data fields
  
-@@ -333,4 +384,78 @@ Template *TessTemplate_create(FILE *file,const char *sym)
+@@ -333,4 +385,78 @@ Template *TessTemplate_create(FILE *file,const char *sym)
  	return T;
  }
  

@@ -1,5 +1,5 @@
 diff --git a/src/Scanner.c b/src/Scanner.c
-index 19a35a7..d796132 100644
+index 19a35a7..2d0e528 100644
 --- a/src/Scanner.c
 +++ b/src/Scanner.c
 @@ -5,41 +5,37 @@
@@ -201,7 +201,7 @@ index 19a35a7..d796132 100644
  	}
  
  	return S;
-@@ -119,26 +184,8 @@ Scanner *Scanner_create(Molecule *M, Template *T,double r, double s)
+@@ -119,36 +184,16 @@ Scanner *Scanner_create(Molecule *M, Template *T,double r, double s)
  
  void Scanner_free(Scanner *S)
  {
@@ -228,7 +228,9 @@ index 19a35a7..d796132 100644
  		free(S);
  	}
  }
-@@ -147,8 +194,6 @@ Atom **Scanner_next(Scanner *S, int ignore_chain)
+ 
+-Atom **Scanner_next(Scanner *S, int ignore_chain)
++Atom **Scanner_next(Scanner *S, IgnoreType ignore_chain)
  {
  	int j,k;
  	double min,max;
