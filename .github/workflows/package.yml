@@ -15,6 +15,7 @@ jobs:
       with:
         submodules: true
     - name: Build manylinux wheels
+      if: "!contains(github.ref, 'rc') && !contains(github.ref, 'alpha')"
       uses: pypa/cibuildwheel@v2.21.3
       env:
         CIBW_ARCHS: aarch64
@@ -35,6 +36,7 @@ jobs:
       with:
         submodules: true
     - name: Build manylinux wheels
+      if: "!contains(github.ref, 'rc') && !contains(github.ref, 'alpha')"
       uses: pypa/cibuildwheel@v2.21.3
       env:
         CIBW_ARCHS: x86_64
@@ -55,6 +57,7 @@ jobs:
       with:
         submodules: true
     - name: Build manylinux wheels
+      if: "!contains(github.ref, 'rc') && !contains(github.ref, 'alpha')"
       uses: pypa/cibuildwheel@v2.21.3
       env:
         CIBW_ARCHS: x86_64
@@ -75,6 +78,7 @@ jobs:
       with:
         submodules: true
     - name: Build manylinux wheels
+      if: "!contains(github.ref, 'rc') && !contains(github.ref, 'alpha')"
       uses: pypa/cibuildwheel@v2.21.3
       env:
         CIBW_ARCHS: arm64
@@ -99,6 +103,7 @@ jobs:
       with:
         arch: amd64
     - name: Build manylinux wheels
+      if: "!contains(github.ref, 'rc') && !contains(github.ref, 'alpha')"
       uses: pypa/cibuildwheel@v2.21.3
       env:
         CIBW_ARCHS: AMD64
@@ -187,7 +192,7 @@ jobs:
     environment: GitHub Releases
     runs-on: ubuntu-latest
     permissions: write-all
-    if: "!contains(github.ref, 'rc')"
+    if: "!contains(github.ref, 'rc') && !contains(github.ref, 'alpha')"
     name: Release
     needs: upload
     steps:
@@ -201,7 +206,7 @@ jobs:
   aur:
     environment: Arch User Repository
     runs-on: ubuntu-latest
-    if: "!contains(github.ref, 'rc')"
+    if: "!contains(github.ref, 'rc') && !contains(github.ref, 'alpha')"
     name: Update AUR package
     needs:
     - sdist
