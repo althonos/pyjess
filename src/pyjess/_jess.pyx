@@ -1051,13 +1051,13 @@ cdef class Template:
                 self._tess.distance[j][i] = dist
 
         # compute dimension
-        residues = { 
+        residues = {
             (
-                self._tess.atom[i].resSeq , 
+                self._tess.atom[i].resSeq ,
                 self._tess.atom[i].chainID1,
                 self._tess.atom[i].chainID2,
             )
-            for i in range(count) 
+            for i in range(count)
         }
         self._tess.dim = len(residues)
 
@@ -1331,13 +1331,13 @@ cdef class Query:
                         hit.rmsd = rmsd
                         hit_tpl = tpl
                         hit_found = True
-                        
+
                 # check if we already made it to the next template,
                 # or if we need to short-circuit the iteration and
                 # force the query to move to the next template as
                 # we found too many candidates already.
                 if <uintptr_t> tpl != self._prev_tpl:
-                    self._candidates = 0 
+                    self._candidates = 0
                 else:
                     self._candidates += 1
                 if self._max_candidates != -1 and self._candidates > self._max_candidates:
@@ -1655,24 +1655,32 @@ cdef class Jess:
                 dynamic distance after adding the global distance cutoff
                 and the individual atom distance cutoff defined for each
                 atom of the template.
-            max_candidates (`int` or `None`): The maximum number of candidate 
-                hits to report *by template*.
-            ignore_chain (`str`): Whether to check or ignore the chain of
-                the atoms to match. The different supported modes are:
-                    - `None`: Force the atoms in the molecule to belong 
-                      to different (resp. same) chains if so in the case 
-                      in the template.
-                    - ``residues``: Allow atoms to belong to different 
-                      (resp. same) chains even if it is not the case in 
-                      the template, but force all atoms of a residue to
-                      belong to the same chain.
-                    - ``atoms``: Allow atoms to belong to any chain, 
-                      independently to the template or the residue they
-                      belong to.
+            max_candidates (`int` or `None`): The maximum number of candidate
+                hits to report by template. If a non-`None` value is given,
+                it may speed up querying for unspecific templates, but also
+                produce results potentially inconsistent with Jess.
+            ignore_chain (`str` or `None`): Whether to check or ignore the
+                chain of the atoms to match. The different supported modes
+                are:
+
+                - `None`: Force the atoms in the molecule to belong
+                  to different (resp. same) chains if so is the case
+                  in the template.
+                - ``residues``: Allow atoms to belong to different
+                  (resp. same) chains even if it is not the case in
+                  the template, but force all atoms of a residue to
+                  belong to the same chain.
+                - ``atoms``: Allow atoms to belong to any chain,
+                  independently to the template or the residue they
+                  belong to.
+
             best_match (`bool`): Pass `True` to return only the best match
-                to each template.
+                to each template, based on RMSD. In case of ties, the
+                first match is returned. Note that a match must still
+                be passing the RMSD threshold given in ``rmsd_threshold``
+                to be returned.
             reorder (`bool`): Whether to enable template atom reordering
-                to accelerate matching in the scanner algorithm. Pass 
+                to accelerate matching in the scanner algorithm. Pass
                 `False` to reverse to the original, slower algorithm
                 which matches atoms in the same order as they appear in
                 the template, at the cost of longer run times.
@@ -1683,9 +1691,9 @@ cdef class Jess:
         Caution:
             Since ``v0.6.0``, this function uses an optimized variant of
             the Jess scanning algorithm which minimized the number of steps
-            needed to generate matches, by re-ordering the order the 
+            needed to generate matches, by re-ordering the order the
             template atoms are iterated upon. Because of this change,
-            the query may return *exactly* the same matches but in an order 
+            the query may return *exactly* the same matches but in an order
             that *differs* from the original Jess version. If you really
             need results in the original order, set ``reorder`` to `False`.
 
@@ -1716,7 +1724,7 @@ cdef class Jess:
                 DeprecationWarning,
             )
             ignore_chain=None
-        
+
         cdef Query query = Query.__new__(Query)
         query.max_candidates = max_candidates
         query.ignore_chain = ignore_chain
