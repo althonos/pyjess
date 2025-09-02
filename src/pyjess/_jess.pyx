@@ -1279,18 +1279,6 @@ cdef class Query:
                     self._rewind()
                     break
 
-                # check if we already made it to the next template,
-                # or if we need to short-circuit the iteration and
-                # force the query to move to the next template as
-                # we found too many candidates already.
-                if <uintptr_t> tpl != self._prev_tpl:
-                    self._candidates = 0 
-                else:
-                    self._candidates += 1
-                if self._candidates == self._max_candidates:
-                    jess.jess.JessQuery_nextTemplate(self._jq)
-                    continue
-
                 # load superposition and compute RMSD for the current iteration
                 sup = jess.jess.JessQuery_superposition(self._jq)
                 rmsd = jess.super.Superposition_rmsd(sup)
@@ -1323,6 +1311,18 @@ cdef class Query:
                         hit.rmsd = rmsd
                         hit_tpl = tpl
                         hit_found = True
+                        
+                # check if we already made it to the next template,
+                # or if we need to short-circuit the iteration and
+                # force the query to move to the next template as
+                # we found too many candidates already.
+                if <uintptr_t> tpl != self._prev_tpl:
+                    self._candidates = 0 
+                else:
+                    self._candidates += 1
+                if self._max_candidates != -1 and self._candidates > self._max_candidates:
+                    self._candidates = 0
+                    jess.jess.JessQuery_nextTemplate(self._jq)
 
                 # free superposition items (as relevant data was copied in
                 # the Hit if needed) and return hits immediately if we are

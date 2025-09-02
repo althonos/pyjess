@@ -133,6 +133,30 @@ class TestJess(unittest.TestCase):
         self.assertIsInstance(hits[0].template, MyTemplate)
 
     @unittest.skipUnless(files, "importlib.resources not available")
+    def test_query_max_candidates(self):
+        with files(data).joinpath("template_01.qry").open() as f:
+            template = Template.load(f)
+            jess = Jess([template])
+        with files(data).joinpath("pdb1lnb.pdb").open() as f:
+            molecule = Molecule.load(f)
+
+        hits = list(jess.query(molecule, 2, 5, 5))
+        self.assertEqual(len(hits), 3)
+
+        hits = list(jess.query(molecule, 2, 5, 5, max_candidates=3))
+        self.assertEqual(len(hits), 3)
+
+        hits = list(jess.query(molecule, 2, 5, 5, max_candidates=2))
+        self.assertEqual(len(hits), 2)
+
+        hits = list(jess.query(molecule, 2, 5, 5, max_candidates=1))
+        self.assertEqual(len(hits), 1)
+
+        with self.assertRaises(ValueError):
+            hits = list(jess.query(molecule, 2, 5, 5, max_candidates=-1))
+        
+
+    @unittest.skipUnless(files, "importlib.resources not available")
     def test_query(self):
         with files(data).joinpath("template_01.qry").open() as f:
             template = Template.load(f)
