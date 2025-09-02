@@ -1638,7 +1638,7 @@ cdef class Jess:
         double max_dynamic_distance,
         *,
         object max_candidates = None,
-        str ignore_chain = None,
+        object ignore_chain = None,
         bint best_match = False,
         bint reorder = True,
     ):
