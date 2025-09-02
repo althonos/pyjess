@@ -6,7 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.1...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.2...HEAD
+
+
+## [v0.7.0-alpha.2] - 2025-09-02
+[v0.7.0-alpha.2]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.1...v0.7.0-alpha.2
+
+### Fixed
+- `max_candidates` causing `Query` to stop before reaching the actual number of maximum candidates.
+
+### Changed
+- **breaking**: Use string variants instead of `bool` to control the behaviour of `ignore_chain` argument.
+- Use unrolled string comparison to compare atom names instead of `strcasecmp` in Jess code.
 
 
 ## [v0.7.0-alpha.1] - 2025-09-02

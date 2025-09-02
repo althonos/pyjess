@@ -133,7 +133,8 @@ structures to the $m=7607$ templates of
 | ``v0.5.0``  | 586.3       | 142.7                       | x1.05       |
 | ``v0.5.1``  | 365.6       | 228.9                       | x1.69       |
 | ``v0.5.2``  | 327.2       | 255.7                       | x1.88       |
-| ``v0.6.0``  | 54.5        | 1535.4                      | **x11.34**  |
+| ``v0.6.0``  | 54.5        | 1535.4                      | x11.34      |
+| ``v0.7.0``  | 52.4        | 1597.5                      | **x11.80**  |
 
 *Benchmarks were run on a quiet [i7-1255U](https://www.intel.com/content/www/us/en/products/sku/226259/intel-core-i71255u-processor-12m-cache-up-to-4-70-ghz/specifications.html) CPU running @4.70GHz with 10 physical cores / 12 logical
 cores.*
