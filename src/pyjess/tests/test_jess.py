@@ -92,7 +92,6 @@ class TestJess(unittest.TestCase):
         self.assertEqual(len(jess[:1]), 1)
         self.assertEqual(len(jess[1:]), 0)
 
-
     @unittest.skipUnless(files, "importlib.resources not available")
     def test_multiple_query_split(self):
         with files(data).joinpath("template_01.qry").open() as f:
@@ -155,7 +154,6 @@ class TestJess(unittest.TestCase):
         with self.assertRaises(ValueError):
             hits = list(jess.query(molecule, 2, 5, 5, max_candidates=-1))
         
-
     @unittest.skipUnless(files, "importlib.resources not available")
     def test_query(self):
         with files(data).joinpath("template_01.qry").open() as f:
@@ -335,3 +333,42 @@ class TestJess(unittest.TestCase):
                 self.assertAlmostEqual(atom.occupancy, float(atom_line[55:61]), places=3)
                 self.assertAlmostEqual(atom.temperature_factor, float(atom_line[61:67]), places=3)
 
+    @unittest.skipUnless(files, "importlib.resources not available")
+    def test_ignore_chain_none(self):
+        with files(data).joinpath("4.1.2.tpl").open() as f:
+            template = Template.load(f)
+            jess = Jess([template])
+        with files(data).joinpath("5ayx.EF.pdb").open() as f:
+            molecule = Molecule.load(f)
+        
+        hits = list(jess.query(molecule, 3, 3, 3, ignore_chain=None))
+        self.assertEqual(len(hits), 0)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    def test_ignore_chain_residues(self):
+        with files(data).joinpath("4.1.2.tpl").open() as f:
+            template = Template.load(f)
+            jess = Jess([template])
+        with files(data).joinpath("5ayx.EF.pdb").open() as f:
+            molecule = Molecule.load(f)
+        
+        hits = list(jess.query(molecule, 3, 3, 3, ignore_chain="residues"))
+        self.assertEqual(len(hits), 2)
+        for hit in hits:
+            atoms = hit.atoms(transform=False)
+            for i in range(1, len(atoms)):
+                if atoms[i-1].residue_number == atoms[i].residue_number:
+                    self.assertEqual(atoms[i-1].chain_id, atoms[i].chain_id)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    def test_ignore_chain_atoms(self):
+        with files(data).joinpath("4.1.2.tpl").open() as f:
+            template = Template.load(f)
+            jess = Jess([template])
+        with files(data).joinpath("5ayx.EF.pdb").open() as f:
+            molecule = Molecule.load(f)
+        
+        hits = list(jess.query(molecule, 3, 3, 3, ignore_chain="atoms"))
+        self.assertEqual(len(hits), 7)
+        
+        

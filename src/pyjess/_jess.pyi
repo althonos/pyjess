@@ -172,7 +172,7 @@ class Query(Generic[_T], Iterator[Hit[_T]]):
     @property
     def molecule(self) -> Molecule: ...
     @property
-    def ignore_chain(self) -> bool: ...
+    def ignore_chain(self) -> Literal[None, "atoms", "residues"]: ...
     @property
     def rmsd_threshold(self) -> float: ...
     @property
@@ -219,7 +219,7 @@ class Jess(Generic[_T], Sequence[_T]):
         max_dynamic_distance: float,
         *,
         max_candidates: Optional[int] = None,
-        ignore_chain: bool = False,
+        ignore_chain: Literal[None, "atoms", "residues"] = None,
         best_match: bool = False,
         reorder: bool = True,
     ) -> Query[_T]: ...
