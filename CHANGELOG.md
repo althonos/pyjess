@@ -6,7 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.1...HEAD
+
+
+## [v0.7.0-alpha.1] - 2025-09-02
+[v0.7.0-alpha.1]: https://github.com/althonos/pyjess/compare/v0.6.0...v0.7.0-alpha.1
+
+### Fixed
+- **breaking**: Incorrect handling of `max_candidates` in `Jess.query`, causing PyJess to erroneously ignore some templates.
+
+### Changed
+- **breaking**: Set the `max_candidates` default value to `None` in `Jess.query`, disabling max candidates filtering by default.
 
 
 ## [v0.6.0] - 2025-09-01
