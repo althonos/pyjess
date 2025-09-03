@@ -165,7 +165,8 @@ in the [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) format.
 
 ## ⚖️ License
 
-This library is provided under the [MIT License](https://choosealicense.com/licenses/mit/). The JESS code is distributed under the [MIT License](https://choosealicense.com/licenses/mit/) as well.
+This library is provided under the [MIT License](https://choosealicense.com/licenses/mit/). 
+The JESS code is distributed under the [MIT License](https://choosealicense.com/licenses/mit/) as well.
 
 *This project is in no way not affiliated, sponsored, or otherwise endorsed
 by the JESS authors. It was developed
