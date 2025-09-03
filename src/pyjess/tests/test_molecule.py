@@ -5,7 +5,14 @@ import tempfile
 import textwrap
 import sys
 
+from .utils import files
+from . import data
 from .._jess import Atom, Molecule
+
+try:
+    import gemmi
+except ImportError:
+    gemmi = None
 
 MOLECULE = textwrap.dedent(
     """
@@ -139,3 +146,26 @@ class TestMolecule(unittest.TestCase):
         self.assertEqual(list(mol1), list(mol2))
         self.assertEqual(mol1.id, mol2.id)
         self.assertEqual(mol1, mol2)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    @unittest.skipUnless(gemmi, "gemmi not available")
+    def test_load_consistency(self):
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            pdb_molecule = Molecule.load(f, format="pdb")
+        with files(data).joinpath("1AMY.cif").open() as f:
+            cif_molecule = Molecule.load(f, format="cif")
+        for pdb_atom, cif_atom in zip(pdb_molecule, cif_molecule):
+            self.assertEqual(pdb_atom.serial, cif_atom.serial)
+            self.assertEqual(pdb_atom.name, cif_atom.name)
+            self.assertEqual(pdb_atom.altloc, cif_atom.altloc)
+            self.assertEqual(pdb_atom.residue_name, cif_atom.residue_name)
+            self.assertEqual(pdb_atom.chain_id, cif_atom.chain_id)
+            self.assertEqual(pdb_atom.residue_number, cif_atom.residue_number)
+            self.assertEqual(pdb_atom.insertion_code, cif_atom.insertion_code)
+            self.assertAlmostEqual(pdb_atom.x, cif_atom.x, places=5)
+            self.assertAlmostEqual(pdb_atom.y, cif_atom.y, places=5)
+            self.assertAlmostEqual(pdb_atom.z, cif_atom.z, places=5)
+            self.assertAlmostEqual(pdb_atom.occupancy, cif_atom.occupancy, places=5)
+            self.assertAlmostEqual(pdb_atom.temperature_factor, cif_atom.temperature_factor, places=5)
+            self.assertAlmostEqual(pdb_atom.element, cif_atom.element, places=5)
+            self.assertAlmostEqual(pdb_atom.charge, cif_atom.charge, places=5)

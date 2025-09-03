@@ -70,6 +70,113 @@ def nullcontext(return_value=None):
 
 # --- Classes ----------------------------------------------------------------
 
+cdef class _MoleculeParser:
+    cdef str id
+
+    def __init__(self, str id = None):
+        self.id = id
+
+cdef class _PDBMoleculeParser(_MoleculeParser):
+    cdef bint ignore_endmdl
+
+    def __init__(self, str id = None, bint ignore_endmdl = False):
+        super().__init__(id=id)
+        self.ignore_endmdl = ignore_endmdl
+    
+    def loads(self, text, molecule_type):
+        return self.load(io.StringIO(text), molecule_type)
+
+    def load(self, file, molecule_type):
+        cdef str id = self.id
+        try:
+            handle = open(file)
+        except TypeError:
+            handle = nullcontext(file)
+        with handle as f:
+            atoms = []
+            for line in f:
+                if line.startswith("HEADER"):
+                    if id is None:
+                        id = line[62:66].strip() or None
+                elif line.startswith(("ATOM", "HETATM")):
+                    atoms.append(Atom.loads(line))
+                elif line.startswith("ENDMDL"):
+                    if not self.ignore_endmdl:
+                        break
+        return molecule_type(atoms, id=id)
+
+
+cdef class _CIFMoleculeParser(_MoleculeParser):
+    cdef object gemmi
+
+    _COLUMNS = [
+        'id', 
+        'type_symbol',
+        'label_atom_id',
+        'label_alt_id',
+        'label_comp_id',
+        'label_asym_id',
+        'label_seq_id',
+        'pdbx_PDB_ins_code',
+        'Cartn_x', 
+        'Cartn_y', 
+        'Cartn_z',
+        'occupancy',
+        'B_iso_or_equiv',
+        'pdbx_formal_charge',
+        '?group_PDB',
+    ]
+
+    def __init__(self, str id = None):
+        super().__init__(id=id)
+        self.gemmi = __import__('gemmi')
+    
+    def _load_block(self, document, molecule_type):
+        block = document.sole_block()
+        table = block.find('_atom_site.', self._COLUMNS)
+        group_idx = self._COLUMNS.index('?group_PDB')
+
+        if not table:
+            raise ValueError("missing columns in CIF files")
+
+        atoms = []
+        for row in table:
+            if table.has_column(group_idx) and row[group_idx] != "ATOM":
+                continue
+            atom = Atom(
+                serial=int(row[0]),
+                element=row[1],
+                name=row[2],
+                altloc=' ' if row[3] == "." else row[3], # FIXME: replace with None?
+                residue_name=row[4],
+                chain_id=row[5],
+                residue_number=int(row[6]),
+                insertion_code=' ' if row[7] == "?" else row[7],
+                x=float(row[8]),
+                y=float(row[9]),
+                z=float(row[10]),
+                occupancy=float(row[11]),
+                temperature_factor=float(row[12]),
+                # str segment = '', # FIXME?
+                charge=0 if row[13] == "?" else int(row[13]),
+            )
+            atoms.append(atom)
+
+        id = block.name if self.id is None else self.id
+        return molecule_type(atoms, id=id)
+
+    def loads(self, text, molecule_type):
+        document = self.gemmi.cif.read_string(text)
+        return self._load_block(document, molecule_type)
+
+    def load(self, file, molecule_type):
+        if hasattr(file, "read"):
+            document = self.gemmi.cif.read_string(file.read())
+        else:
+            document = self.gemmi.cif.read_file(file)
+        return self._load_block(document, molecule_type)
+        
+
 cdef class Molecule:
     """A molecule structure, as a sequence of `Atom` objects.
 
@@ -84,7 +191,7 @@ cdef class Molecule:
     cdef str        _id
 
     @classmethod
-    def loads(cls, text, str id = None, bint ignore_endmdl = False):
+    def loads(cls, text, str format = "pdb", *, str id = None, bint ignore_endmdl = False):
         """Load a molecule from a PDB string.
 
         Arguments:
@@ -110,7 +217,7 @@ cdef class Molecule:
         return cls.load(io.StringIO(text), id=id, ignore_endmdl=ignore_endmdl)
 
     @classmethod
-    def load(cls, file, str id = None, bint ignore_endmdl = False):
+    def load(cls, file, str format = "pdb", *, str id = None, bint ignore_endmdl = False):
         """Load a molecule from a PDB file.
 
         Arguments:
@@ -124,27 +231,23 @@ cdef class Molecule:
                 the atoms from the PDB file. By default, the parser only
                 reads the atoms of the first model, and stops at the first
                 ``ENDMDL`` line.
+            format (`str`): The format to parse the file. Supported formats
+                are: ``pdb`` for the Protein Data Bank format, or ``cif``
+                for Crystallographic Information File format (additionally 
+                requires the `gemmi` module).
 
         Returns:
             `~pyjess.Molecule`: The molecule parsed from the PDB file.
 
         """
-        try:
-            handle = open(file)
-        except TypeError:
-            handle = nullcontext(file)
-        with handle as f:
-            atoms = []
-            for line in f:
-                if line.startswith("HEADER"):
-                    if id is None:
-                        id = line[62:66].strip() or None
-                elif line.startswith(("ATOM", "HETATM")):
-                    atoms.append(Atom.loads(line))
-                elif line.startswith("ENDMDL"):
-                    if not ignore_endmdl:
-                        break
-        return cls(atoms, id=id)
+        cdef _MoleculeParser parser
+        if format == "pdb":
+            parser = _PDBMoleculeParser(id=id, ignore_endmdl=ignore_endmdl)
+        elif format == "cif":
+            parser = _CIFMoleculeParser(id=id)
+        else:
+            raise ValueError(f"invalid value for `format` argument: {format!r}")
+        return parser.load(file, molecule_type=cls)
 
     def __cinit__(self):
         self._mol = NULL
@@ -424,6 +527,7 @@ cdef class Atom:
         copy_token(self._atom.segID, segment.encode('ascii').ljust(3, b'\0'), 3)
         copy_token(self._atom.element, element.encode('ascii').ljust(2, b'\0'), 2)
 
+        # FIXME
         _name = bytearray(name, 'ascii')
         if len(_name) < 4:
             _name.insert(0, ord('_'))
