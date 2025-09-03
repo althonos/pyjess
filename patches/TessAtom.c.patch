@@ -1,5 +1,5 @@
 diff --git a/src/TessAtom.c b/src/TessAtom.c
-index e1cce1a..eecf682 100644
+index e1cce1a..3f06daa 100644
 --- a/src/TessAtom.c
 +++ b/src/TessAtom.c
 @@ -7,40 +7,13 @@
@@ -54,7 +54,7 @@ index e1cce1a..eecf682 100644
  	{
  		{ 'A',"ALA" },
  		{ 'C',"CYS" },
-@@ -66,10 +39,12 @@ static const char *TessAtom_convertResidue(char p)
+@@ -66,18 +39,20 @@ static const char *TessAtom_convertResidue(char p)
  		{ 'M',"MET" },
  		{ 'N',"ASN" },
  		{ 'P',"PRO" },
@@ -67,6 +67,16 @@ index e1cce1a..eecf682 100644
  		{ 'V',"VAL" },
  		{ 'W',"TRP" },
  		{ 'Y',"TYR" },
+ 		{ 'X',"XXX" }
+ 	};
+ 
+-	for(k=0; k<21 && p!=table[k].one; k++);
+-	return k<21 ? table[k].three:NULL;
++	for(k=0; k<23 && p!=table[k].one; k++);
++	return k<23 ? table[k].three:NULL;
+ }
+ 
+ TessAtom *TessAtom_create(const char *s)
 @@ -91,7 +66,7 @@ TessAtom *TessAtom_create(const char *s)
  	int rq;
  	const char *q;
