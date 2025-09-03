@@ -4,7 +4,7 @@ Optimizations
 .. currentmodule:: pyjess
 
 While PyJess started as a Cython wrapper of Jess, it also 
-contains several optimizations to make the code write better
+contains several optimizations to make the software perform better
 while maintaining consistency with the original Jess code.
 Some of these optimizations are described below, as well as
 the version where they were introduced.

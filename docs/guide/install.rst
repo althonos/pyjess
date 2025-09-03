@@ -15,11 +15,18 @@ PyPi
 PyJess is hosted on GitHub, but the easiest way to install it is to download
 the latest release from its `PyPi repository <https://pypi.python.org/pypi/pyjess>`_.
 It will install all dependencies then install ``pyjess`` either from a wheel if
-one is available, or from source after compiling the Rust code :
+one is available, or from source after compiling the C source code from Jess :
 
 .. code:: console
 
 	$ pip install --user pyjess
+
+To install additional dependencies required for parsing mmCIF files in 
+addition to PDB files, run instead:
+
+.. code:: console
+
+	$ pip install --user pyjess[cif]
 
 
 Conda

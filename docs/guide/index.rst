@@ -8,6 +8,7 @@ This section contains guides and documents about PyJess usage.
    :caption: Getting Started
 
     Installation <install>
+    Command Line Interface <cli>
 
 .. toctree::
    :maxdepth: 1

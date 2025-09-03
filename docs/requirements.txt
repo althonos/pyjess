@@ -13,3 +13,4 @@ nbsphinx ~=0.8
 sphinxcontrib-jquery ~=4.1
 sphinx-design
 pydata-sphinx-theme
+sphinx-argparse
