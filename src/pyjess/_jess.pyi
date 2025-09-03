@@ -17,9 +17,23 @@ __version__: str
 
 class Molecule(Sequence[Atom]):
     @classmethod
-    def load(cls, file: Union[TextIO, str, os.PathLike[str]], id: Optional[str] = None, ignore_endmdl: bool = False) -> Molecule: ...
+    def load(
+        cls,
+        file: Union[TextIO, str, os.PathLike[str]],
+        format: Literal["pdb", "cif"] = "pdb",
+        *,
+        id: Optional[str] = None,
+        ignore_endmdl: bool = False
+    ) -> Molecule: ...
     @classmethod
-    def loads(cls, text: str, id: Optional[str] = None, ignore_endmdl: bool = False) -> Molecule: ...
+    def loads(
+        cls,
+        text: str,
+        format: Literal["pdb", "cif"] = "pdb",
+        *,
+        id: Optional[str] = None,
+        ignore_endmdl: bool = False,
+    ) -> Molecule: ...
     def __init__(self, atoms: Sequence[Atom] = (), id: Optional[str] = None): ...
     def __len__(self) -> int: ...
     @typing.overload
