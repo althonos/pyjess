@@ -197,7 +197,7 @@ class TestMolecule(unittest.TestCase):
     def test_from_gemmi(self):
         with files(data).joinpath("1AMY.pdb").open() as f:
             model = gemmi.read_pdb_string(f.read())
-            gemmi_mol = Molecule.from_gemmi(model[0])
+            gemmi_mol = Molecule.from_gemmi(model)
         with files(data).joinpath("1AMY.pdb").open() as f:
             pdb_mol = Molecule.load(f, format="pdb")
         for pdb_atom, gemmi_atom in zip(pdb_mol, gemmi_mol):

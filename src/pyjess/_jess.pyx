@@ -1819,6 +1819,10 @@ cdef class Hit:
             transform (`bool`): Whether or not to transform coordinates
                 of the molecule atoms into template frame.
 
+        Raises:
+            `RuntimeError`: When attempting to dump a `Hit` which was 
+                obtained from a `Template` which has no `~Template.id`.
+
         .. versionadded:: 0.7.0
 
         """
@@ -1838,6 +1842,10 @@ cdef class Hit:
             transform (`bool`): Whether or not to transform coordinates
                 of the molecule atoms into template frame.
 
+        Raises:
+            `RuntimeError`: When attempting to dump a `Hit` which was 
+                obtained from a `Template` which has no `~Template.id`.
+
         .. versionadded:: 0.7.0
 
         """
@@ -1852,9 +1860,12 @@ cdef class Hit:
         cdef double[3] x
         cdef int       count   = self.template._tpl.count(self.template._tpl)
 
+        if self.template.id is None:
+            raise RuntimeError("cannot dump `Hit` where `self.template.id` is `None`")
+
         file.write("REMARK ")
         file.write(self._molecule.id)
-        file.write(f"{self.rmsd:5.3f} ")
+        file.write(f" {self.rmsd:5.3f} ")
         file.write(self.template.id)
         file.write(f" Det={self.determinant:4,.1f} log(E)~ {self.log_evalue:4.2f}\n")
 
