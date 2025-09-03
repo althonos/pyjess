@@ -1,5 +1,5 @@
 diff --git a/src/TessAtom.c b/src/TessAtom.c
-index e1cce1a..9ba021e 100644
+index e1cce1a..eecf682 100644
 --- a/src/TessAtom.c
 +++ b/src/TessAtom.c
 @@ -7,40 +7,13 @@
@@ -45,7 +45,29 @@ index e1cce1a..9ba021e 100644
  // ==================================================================
  // Methods of type TessAtom (ARGGH!!!)
  // ==================================================================
-@@ -91,7 +64,7 @@ TessAtom *TessAtom_create(const char *s)
+@@ -51,7 +24,7 @@ static const char *TessAtom_convertResidue(char p)
+ 
+ 	int k;
+ 	struct _dummy {char one; const char *three; };
+-	static const struct _dummy table[21] =
++	static const struct _dummy table[23] =
+ 	{
+ 		{ 'A',"ALA" },
+ 		{ 'C',"CYS" },
+@@ -66,10 +39,12 @@ static const char *TessAtom_convertResidue(char p)
+ 		{ 'M',"MET" },
+ 		{ 'N',"ASN" },
+ 		{ 'P',"PRO" },
++		{ 'O',"PYL" },
+ 		{ 'Q',"GLN" },
+ 		{ 'R',"ARG" },
+ 		{ 'S',"SER" },
+ 		{ 'T',"THR" },
++		{ 'U',"SEC" },
+ 		{ 'V',"VAL" },
+ 		{ 'W',"TRP" },
+ 		{ 'Y',"TYR" },
+@@ -91,7 +66,7 @@ TessAtom *TessAtom_create(const char *s)
  	int rq;
  	const char *q;
  	const char *tmp;
@@ -54,7 +76,7 @@ index e1cce1a..9ba021e 100644
  
  
  	// 0. Parse the record as a standard PDB atom. We must
-@@ -157,8 +130,8 @@ TessAtom *TessAtom_create(const char *s)
+@@ -157,8 +132,8 @@ TessAtom *TessAtom_create(const char *s)
  	// Set up all the pointers to the
  	// residue name and atom name fields
  
@@ -65,7 +87,7 @@ index e1cce1a..9ba021e 100644
  	p+=sizeof(char*)*ac;
  	for(m=0; m<ac; m++)
  	{
-@@ -166,7 +139,7 @@ TessAtom *TessAtom_create(const char *s)
+@@ -166,7 +141,7 @@ TessAtom *TessAtom_create(const char *s)
  		p+=5;
  	}
  
@@ -74,7 +96,7 @@ index e1cce1a..9ba021e 100644
  	p+=sizeof(char*)*rc;
  	for(m=0; m<rc; m++)
  	{
-@@ -259,41 +232,7 @@ TessAtom *TessAtom_create(const char *s)
+@@ -259,41 +234,7 @@ TessAtom *TessAtom_create(const char *s)
  }
  
  //Riziotis edit
@@ -116,7 +138,7 @@ index e1cce1a..9ba021e 100644
  static int TessAtom_isCarbon(const Atom *A)
  {
  	return A->name[0]=='_' && A->name[1]=='C' ? 1:0;
-@@ -327,9 +266,9 @@ static int TessAtom_isInSamePosition(const TessAtom *T, const Atom *A)
+@@ -327,9 +268,9 @@ static int TessAtom_isInSamePosition(const TessAtom *T, const Atom *A)
  
  static int TessAtom_isMainChain(const Atom *A)
  {
@@ -129,7 +151,7 @@ index e1cce1a..9ba021e 100644
  
  	return 0;
  }
-@@ -340,7 +279,7 @@ static int TessAtom_matchName(const TessAtom *T, const Atom *A)
+@@ -340,7 +281,7 @@ static int TessAtom_matchName(const TessAtom *T, const Atom *A)
  
  	for(k=0; k<T->nameCount; k++)
  	{
@@ -138,7 +160,7 @@ index e1cce1a..9ba021e 100644
  	}
  
  	return 0;
-@@ -352,7 +291,7 @@ static int TessAtom_matchResName(const TessAtom *T, const Atom *A)
+@@ -352,7 +293,7 @@ static int TessAtom_matchResName(const TessAtom *T, const Atom *A)
  
  	for(k=0; k<T->resNameCount; k++)
  	{
@@ -147,7 +169,7 @@ index e1cce1a..9ba021e 100644
  	}
  
  	return 0;
-@@ -507,5 +446,65 @@ int TessAtom_match(const TessAtom *T, const Atom *A)
+@@ -507,5 +448,65 @@ int TessAtom_match(const TessAtom *T, const Atom *A)
  	}
  }
  

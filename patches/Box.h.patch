@@ -1,9 +1,9 @@
 diff --git a/src/Box.h b/src/Box.h
 new file mode 100644
-index 0000000..ca8384d
+index 0000000..9d8693b
 --- /dev/null
 +++ b/src/Box.h
-@@ -0,0 +1,87 @@
+@@ -0,0 +1,80 @@
 +// ==================================================================
 +// Box.h
 +// Copyright (c) Martin Larralde, 2025
@@ -44,13 +44,6 @@ index 0000000..ca8384d
 +
 +extern Box *Box_create(const double* restrict, const double* restrict);
 +extern void Box_free(Box*);
-+
-+// ==================================================================
-+// Local "functions"
-+// ==================================================================
-+
-+#define min(x,y) (x<y ? x:y)
-+#define max(x,y) (x>y ? x:y)
 +
 +// ==================================================================
 +// Oracles
