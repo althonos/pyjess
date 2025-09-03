@@ -496,21 +496,21 @@ cdef class Atom:
         *,
         int serial,
         str name,
-        str altloc,
         str residue_name,
         str chain_id,
         int residue_number,
-        str insertion_code,
         double x,
         double y,
         double z,
         double occupancy = 0.0,
         double temperature_factor = 0.0,
+        str altloc = ' ',
+        str insertion_code = ' ',
         str segment = '',
         str element = '',
         int charge = 0,
     ):
-        """__init__(self, *, serial, name, altloc, residue_name, chain_id, residue_number, insertion_code, x, y, z, occupancy=0.0, temperature_factor=0.0, segment='', element='', charge=0)\n--\n
+        """__init__(self, *, serial, name, residue_name, chain_id, residue_number, x, y, z, occupancy=0.0, temperature_factor=0.0, altloc=' ', insertion_code=' ', segment='', element='', charge=0)\n--\n
 
         Create a new atom.
 
