@@ -6,7 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.2...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.3...HEAD
+
+
+## [v0.7.0-alpha.3] - 2025-09-03
+[v0.7.0-alpha.3]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.2...v0.7.0-alpha.3
+
+### Added
+- Support for parsing `Molecule` objects from CIF files using [`gemmi`](https://gemmi.readthedocs.io/).
+
+### Changed
+- **breaking**: Make `id` and `ignore_endmdl` arguments of `Molecule.load` and `Molecule.loads` keyword-only.
+- Make `altloc` and `insertion_code` arguments of `Atom` optional.
 
 
 ## [v0.7.0-alpha.2] - 2025-09-02
