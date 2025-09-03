@@ -192,11 +192,11 @@ cdef class Molecule:
 
     @classmethod
     def loads(
-        cls, 
-        text, 
-        str format = "pdb", 
-        *, 
-        str id = None, 
+        cls,
+        text,
+        str format = "pdb",
+        *,
+        str id = None,
         bint ignore_endmdl = False,
         bint use_author = False,
     ):
@@ -315,11 +315,11 @@ cdef class Molecule:
         """Create a new `~pyjess.Molecule` from a `Bio.PDB.Structure`.
 
         Arguments:
-            structure (`Bio.PDB.Structure` or `Bio.PDB.Model`): The 
+            structure (`Bio.PDB.Structure` or `Bio.PDB.Model`): The
                 Biopython object containing the structure data.
 
         Returns:
-            `~pyjess.Molecule`: A molecule object suitable for using 
+            `~pyjess.Molecule`: A molecule object suitable for using
             in `Jess.query`.
 
         .. versionadded:: 0.7.0
@@ -328,7 +328,7 @@ cdef class Molecule:
         atoms = []
         for c in structure.get_chains():
             for r in c.get_residues():
-                _, residue_number, _ = r.id
+                _, residue_number, insertion_code = r.id
                 for a in r.get_atoms():
                     coord = a.get_coord()
                     atom = Atom(
@@ -337,16 +337,60 @@ cdef class Molecule:
                         y=coord[1],
                         z=coord[2],
                         altloc=a.altloc,
+                        charge=a.pqr_charge or 0,
                         occupancy=a.occupancy,
                         serial=a.serial_number,
                         residue_name=r.resname,
                         residue_number=residue_number,
+                        segment=r.segid,
+                        insertion_code=insertion_code,
                         chain_id=c.id,
                         temperature_factor=a.bfactor,
                         element=a.element,
                     )
                     atoms.append(atom)
         return cls(atoms, id=structure.id)
+
+    @classmethod
+    def from_gemmi(cls, object structure):
+        """Create a new `~pyjess.Molecule` from a `gemmi.Structure`.
+
+        Arguments:
+            structure (`gemmi.Structure`): The ``gemmi`` object
+                object containing the structure data.
+
+        Returns:
+            `~pyjess.Molecule`: A molecule object suitable for using
+            in `Jess.query`.
+
+        .. versionadded:: 0.7.0
+
+        """
+        atoms = []
+        for model in structure:
+            for cra in model.all():
+                a = cra.atom
+                r = cra.residue
+                c = cra.chain
+                atom = Atom(
+                    name=a.padded_name(),
+                    x=a.pos[0],
+                    y=a.pos[1],
+                    z=a.pos[2],
+                    altloc=' ' if a.altloc == '\0' else a.altloc,
+                    charge=a.charge,
+                    element=a.element.name.upper(),
+                    occupancy=a.occ,
+                    temperature_factor=a.b_iso,
+                    serial=a.serial,
+                    segment=r.segment,
+                    residue_name=r.name,
+                    residue_number=r.seqid.num,
+                    chain_id=c.name,
+                    insertion_code=r.seqid.icode,
+                )
+                atoms.append(atom)
+        return cls(atoms, id=structure.name)
 
     def __cinit__(self):
         self._mol = NULL
@@ -599,7 +643,7 @@ cdef class Atom:
             raise ValueError(f"Invalid atom name: {name!r}")
         if len(residue_name) > 3:
             raise ValueError(f"Invalid residue name: {residue_name!r}")
-        if len(segment) > 3:
+        if len(segment) > 4:
             raise ValueError(f"Invalid segment: {segment!r}")
         if len(element) > 2:
             raise ValueError(f"Invalid element: {element!r}")
@@ -623,7 +667,7 @@ cdef class Atom:
         self._atom.tempFactor = temperature_factor
         self._atom.charge = charge
         copy_token(self._atom.resName, residue_name.encode('ascii').ljust(3, b'\0'), 3)
-        copy_token(self._atom.segID, segment.encode('ascii').ljust(3, b'\0'), 3)
+        copy_token(self._atom.segID, segment.encode('ascii').ljust(4, b'\0'), 4)
         copy_token(self._atom.element, element.encode('ascii').ljust(2, b'\0'), 2)
 
         # FIXME
@@ -723,7 +767,7 @@ cdef class Atom:
         """`str`: The segment identifier.
         """
         assert self._atom is not NULL
-        return self._atom.segID[:3].decode('ascii').strip('_')
+        return self._atom.segID[:4].decode('ascii').strip('_')
 
     @property
     def element(self):

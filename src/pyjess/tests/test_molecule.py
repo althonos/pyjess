@@ -34,6 +34,22 @@ MOLECULE = textwrap.dedent(
 
 class TestMolecule(unittest.TestCase):
 
+    def assertAtomEqual(self, a1, a2):
+        self.assertEqual(a1.serial, a2.serial)
+        self.assertEqual(a1.name, a2.name)
+        self.assertEqual(a1.altloc, a2.altloc)
+        self.assertEqual(a1.residue_name, a2.residue_name)
+        self.assertEqual(a1.chain_id, a2.chain_id)
+        self.assertEqual(a1.residue_number, a2.residue_number)
+        self.assertEqual(a1.insertion_code, a2.insertion_code)
+        self.assertEqual(a1.element, a2.element)
+        self.assertAlmostEqual(a1.x, a2.x, places=5)
+        self.assertAlmostEqual(a1.y, a2.y, places=5)
+        self.assertAlmostEqual(a1.z, a2.z, places=5)
+        self.assertAlmostEqual(a1.occupancy, a2.occupancy, places=5)
+        self.assertAlmostEqual(a1.temperature_factor, a2.temperature_factor, places=5)
+        self.assertAlmostEqual(a1.charge, a2.charge, places=5)
+
     def _create_atom(self, **kwargs):
         default = dict(serial=1, name='N', altloc=' ', residue_name='GLN', chain_id='A', residue_number=3, x=8.171, y=-51.403, z=42.886, segment='', insertion_code=' ', occupancy=1.0, temperature_factor=55.63, charge=0, element='N')
         default.update(kwargs)
@@ -162,20 +178,7 @@ class TestMolecule(unittest.TestCase):
         # the CIF parser ignores the HETATM, so we may have less atoms in there
         self.assertLessEqual(len(cif_molecule), len(pdb_molecule))
         for pdb_atom, cif_atom in zip(pdb_molecule, cif_molecule):
-            self.assertEqual(pdb_atom.serial, cif_atom.serial)
-            self.assertEqual(pdb_atom.name, cif_atom.name)
-            self.assertEqual(pdb_atom.altloc, cif_atom.altloc)
-            self.assertEqual(pdb_atom.residue_name, cif_atom.residue_name)
-            self.assertEqual(pdb_atom.chain_id, cif_atom.chain_id)
-            self.assertEqual(pdb_atom.residue_number, cif_atom.residue_number)
-            self.assertEqual(pdb_atom.insertion_code, cif_atom.insertion_code)
-            self.assertEqual(pdb_atom.element, cif_atom.element)
-            self.assertAlmostEqual(pdb_atom.x, cif_atom.x, places=5)
-            self.assertAlmostEqual(pdb_atom.y, cif_atom.y, places=5)
-            self.assertAlmostEqual(pdb_atom.z, cif_atom.z, places=5)
-            self.assertAlmostEqual(pdb_atom.occupancy, cif_atom.occupancy, places=5)
-            self.assertAlmostEqual(pdb_atom.temperature_factor, cif_atom.temperature_factor, places=5)
-            self.assertAlmostEqual(pdb_atom.charge, cif_atom.charge, places=5)
+            self.assertAtomEqual(pdb_atom, cif_atom)
 
     @unittest.skipUnless(files, "importlib.resources not available")
     @unittest.skipUnless(Bio, "biopython not available")
@@ -187,17 +190,15 @@ class TestMolecule(unittest.TestCase):
         with files(data).joinpath("1AMY.pdb").open() as f:
             pdb_mol = Molecule.load(f, format="pdb")
         for pdb_atom, bio_atom in zip(pdb_mol, bio_mol):
-            self.assertEqual(pdb_atom.serial, bio_atom.serial)
-            self.assertEqual(pdb_atom.name, bio_atom.name)
-            self.assertEqual(pdb_atom.altloc, bio_atom.altloc)
-            self.assertEqual(pdb_atom.residue_name, bio_atom.residue_name)
-            self.assertEqual(pdb_atom.chain_id, bio_atom.chain_id)
-            self.assertEqual(pdb_atom.residue_number, bio_atom.residue_number)
-            self.assertEqual(pdb_atom.insertion_code, bio_atom.insertion_code)
-            self.assertEqual(pdb_atom.element, bio_atom.element)
-            self.assertAlmostEqual(pdb_atom.x, bio_atom.x, places=5)
-            self.assertAlmostEqual(pdb_atom.y, bio_atom.y, places=5)
-            self.assertAlmostEqual(pdb_atom.z, bio_atom.z, places=5)
-            self.assertAlmostEqual(pdb_atom.occupancy, bio_atom.occupancy, places=5)
-            self.assertAlmostEqual(pdb_atom.temperature_factor, bio_atom.temperature_factor, places=5)
-            self.assertAlmostEqual(pdb_atom.charge, bio_atom.charge, places=5)
+            self.assertAtomEqual(pdb_atom, bio_atom)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    @unittest.skipUnless(gemmi, "gemmi not available")
+    def test_from_gemmi(self):
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            model = gemmi.read_pdb_string(f.read())
+            gemmi_mol = Molecule.from_gemmi(model[0])
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            pdb_mol = Molecule.load(f, format="pdb")
+        for pdb_atom, gemmi_atom in zip(pdb_mol, gemmi_mol):
+            self.assertAtomEqual(pdb_atom, gemmi_atom)

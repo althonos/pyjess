@@ -1,6 +1,6 @@
 import os
 import typing
-from typing import Any, Generic, Union, Optional, Sequence, Iterator, Iterable, List, TextIO, Sized, TypeVar, Tuple
+from typing import Any, Dict, Generic, Union, Optional, Sequence, Iterator, Iterable, List, TextIO, Sized, TypeVar, Tuple
 
 try:
     from typing import Literal
@@ -8,9 +8,15 @@ except ImportError:
     from typing_extensions import Literal  # type: ignore
 
 try:
-    from Bio.PDB import Model, Structure
+    from Bio.PDB.Model import Model
+    from Bio.PDB.Structure import Structure
 except ImportError:
-    Model = Structure = Any
+    Model = Structure = Any  # type: ignore
+
+try:
+    import gemmi
+except ImportError:
+    gemmi = Any    # type: ignore
 
 
 MATCH_MODE = Literal[
@@ -24,6 +30,8 @@ __version__: str
 class Molecule(Sequence[Atom]):
     @classmethod
     def from_biopython(cls, structure: Union[Structure, Model]) -> Molecule: ...
+    @classmethod
+    def from_gemmi(cls, structure: gemmi.Structure) -> Molecule: ...
     @classmethod
     def load(
         cls,
