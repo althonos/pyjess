@@ -47,6 +47,7 @@ classifiers = [
 
 [project.optional-dependencies]
 test = ["importlib-resources ; python_version < '3.9'"]
+cif = ["gemmi ~=0.7.0"]
 
 [tool.scikit-build]
 build-dir = "build/{build_type}"
