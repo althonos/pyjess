@@ -50,7 +50,7 @@ test = ["importlib-resources ; python_version < '3.9'"]
 cif = ["gemmi ~=0.7.0"]
 
 [project.scripts]
-pyjess = "pyjess.cli:main
+pyjess = "pyjess.cli:main"
 
 [project.entry-points.console_scripts]
 pyjess = "pyjess.cli:main"

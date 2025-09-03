@@ -155,7 +155,7 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
                 x=float(row[8]),
                 y=float(row[9]),
                 z=float(row[10]),
-                occupancy=float(row[11]),
+                occupancy=0.0 if row[11] == '.' else float(row[11]),
                 temperature_factor=float(row[12]),
                 # str segment = '', # FIXME?
                 charge=0 if not row.has(13) or row[13] == "?" else int(row[13]),
