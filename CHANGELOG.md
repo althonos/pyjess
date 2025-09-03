@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.4...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.5...HEAD
+
+
+## [v0.7.0-alpha.5] - 2025-09-03
+[v0.7.0-alpha.5]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.5...v0.7.0-alpha.5
+
+### Fixed
+- Issue with new residue support introduced in `v0.7.0-alpha.4`.
 
 
 ## [v0.7.0-alpha.4] - 2025-09-03
