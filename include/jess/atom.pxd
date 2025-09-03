@@ -10,8 +10,8 @@ cdef extern from "Atom.h" nogil:
         int resSeq
         char iCode
         double[3] x
-        double occupancy
-        double tempFactor
+        float occupancy
+        float tempFactor
         char[4] segID
         char[3] element
         int charge
