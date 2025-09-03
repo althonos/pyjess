@@ -191,17 +191,25 @@ cdef class Molecule:
     cdef str        _id
 
     @classmethod
-    def loads(cls, text, str format = "pdb", *, str id = None, bint ignore_endmdl = False):
+    def loads(
+        cls, 
+        text, 
+        str format = "pdb", 
+        *, 
+        str id = None, 
+        bint ignore_endmdl = False,
+        bint use_author = False,
+    ):
         """Load a molecule from a PDB string.
 
         Arguments:
-            file (`str`, `os.PathLike`, or file-like object): Either the path
-                to a file, or a file-like object opened in **text mode**
-                containing a molecule.
+            text (`str`): The serialized molecule to parse into a new
+                object.
             format (`str`): The format to parse the file. Supported formats
-                are: ``pdb`` for the Protein Data Bank format, or ``cif``
+                are: ``pdb`` for the Protein Data Bank format, ``cif``
                 for Crystallographic Information File format (additionally
-                requires the `gemmi` module).
+                requires the `gemmi` module), or ``detect`` to attempt
+                auto-detection (the default).
 
         Keyword Arguments:
             id (`str`, optional): The identifier of the molecule. If `None`
@@ -211,11 +219,11 @@ cdef class Molecule:
             ignore_endmdl (`bool`): Pass `True` to make the parser read all
                 the atoms from the PDB file. By default, the parser only
                 reads the atoms of the first model, and stops at the first
-                ``ENDMDL`` line. *Ignored for CIF files.*
+                ``ENDMDL`` line. *Ignored for CIF files*.
             use_author (`bool`): Pass `True` to use the author-defined
                 labels while parsing CIF files, e.g. read the chain name
                 from ``_atom_site.auth_asym_id`` rather than
-                ``_atom_site.label_asym_id``.
+                ``_atom_site.label_asym_id``. *Ignored for PDB files*.
 
         Returns:
             `~pyjess.Molecule`: The molecule parsed from the PDB file.
@@ -228,12 +236,14 @@ cdef class Molecule:
             The ``format`` argument, and support for CIF parsing.
 
         """
-        return cls.load(io.StringIO(text), id=id, ignore_endmdl=ignore_endmdl)
+        if format == "detect":
+            format = "cif" if text.lstrip().startswith(("data_", "loop_")) else "pdb"
+        return cls.load(io.StringIO(text), format=format, id=id, ignore_endmdl=ignore_endmdl)
 
     @classmethod
     def load(
         cls,
-        file, str format = "pdb",
+        file, str format = "detect",
         *,
         str id = None,
         bint ignore_endmdl = False,
@@ -246,9 +256,10 @@ cdef class Molecule:
                 to a file, or a file-like object opened in **text mode**
                 containing a molecule.
             format (`str`): The format to parse the file. Supported formats
-                are: ``pdb`` for the Protein Data Bank format, or ``cif``
+                are: ``pdb`` for the Protein Data Bank format, ``cif``
                 for Crystallographic Information File format (additionally
-                requires the `gemmi` module).
+                requires the `gemmi` module), or ``detect`` to attempt
+                auto-detection (the default).
 
         Keyword Arguments:
             id (`str`, optional): The identifier of the molecule. If `None`
@@ -258,11 +269,11 @@ cdef class Molecule:
             ignore_endmdl (`bool`): Pass `True` to make the parser read all
                 the atoms from the PDB file. By default, the parser only
                 reads the atoms of the first model, and stops at the first
-                ``ENDMDL`` line. *Ignored for CIF files.*
+                ``ENDMDL`` line. *Ignored for CIF files*.
             use_author (`bool`): Pass `True` to use the author-defined
                 labels while parsing CIF files, e.g. read the chain name
                 from ``_atom_site.auth_asym_id`` rather than
-                ``_atom_site.label_asym_id``.
+                ``_atom_site.label_asym_id``. *Ignored for PDB files*.
 
         Returns:
             `~pyjess.Molecule`: The molecule parsed from the PDB file.
@@ -272,6 +283,25 @@ cdef class Molecule:
 
         """
         cdef _MoleculeParser parser
+        if format == "detect":
+            try:
+                handle = open(file)
+            except TypeError:
+                handle = nullcontext(file)
+            with handle as f:
+                if f.seekable():
+                    peek = f.read(5)
+                    f.seek(0)
+                else:
+                    f = f.read()
+                    peek = f[5:]
+                if peek.startswith(("data_", "loop_")):
+                    parser = _CIFMoleculeParser(id=id, use_author=use_author)
+                else:
+                    parser = _PDBMoleculeParser(id=id, ignore_endmdl=ignore_endmdl)
+                if isinstance(f, str):
+                    return parser.loads(f, molecule_type=cls)
+                return parser.load(f, molecule_type=cls)
         if format == "pdb":
             parser = _PDBMoleculeParser(id=id, ignore_endmdl=ignore_endmdl)
         elif format == "cif":

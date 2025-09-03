@@ -20,7 +20,7 @@ class Molecule(Sequence[Atom]):
     def load(
         cls,
         file: Union[TextIO, str, os.PathLike[str]],
-        format: Literal["pdb", "cif"] = "pdb",
+        format: Literal["pdb", "cif", "detect"] = "detect",
         *,
         id: Optional[str] = None,
         ignore_endmdl: bool = False,
@@ -30,7 +30,7 @@ class Molecule(Sequence[Atom]):
     def loads(
         cls,
         text: str,
-        format: Literal["pdb", "cif"] = "pdb",
+        format: Literal["pdb", "cif", "detect"] = "detect",
         *,
         id: Optional[str] = None,
         ignore_endmdl: bool = False,
