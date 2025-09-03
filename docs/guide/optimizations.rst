@@ -256,3 +256,20 @@ as it creates a new `Scanner` which allocates memory for each `Template` / `Mole
 pair to match. Effectively, most of these buffers can actually be reused 
 across `Templates` for a given `Molecule`, provided sufficient bookkeeping. Our
 implementation keeps allocation to a minimum across an entire `Query`.
+
+
+Manual case-insensitive string comparison
+-----------------------------------------
+
+.. versionadded:: 0.7.0
+
+The original Jess code uses the ``strcasecmp`` function to compare atom names,
+an operation that is perfomed on most match modes. This function is optimized
+for long strings: for instance, the GNU libc contains an AVX2 implementation 
+of the equality code. In Jess, however, this function is usually called with 
+very short strings (3 or 4 characters). 
+
+To reduce overhead due to calling an external function, and encourage the 
+compiler to unroll the equality comparison loop, we implement name 
+comparison in an inline function defined in the ``TessAtom.h`` header. On 
+a single template, this saved around 5% of the CPU cycles.
