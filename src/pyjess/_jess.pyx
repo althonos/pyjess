@@ -103,6 +103,8 @@ cdef class _PDBMoleculeParser(_MoleculeParser):
                 elif line.startswith("ENDMDL"):
                     if not self.ignore_endmdl:
                         break
+                elif line.lower().startswith(("data_", "loop_")):
+                    raise ValueError("mmCIF data tags found, file is not in PDB format")
         return molecule_type(atoms, id=id)
 
 
