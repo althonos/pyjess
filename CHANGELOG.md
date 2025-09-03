@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.3...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.4...HEAD
+
+
+## [v0.7.0-alpha.4] - 2025-09-03
+[v0.7.0-alpha.4]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.3...v0.7.0-alpha.4
+
+### Added
+- Support for [Selenocysteine](https://en.wikipedia.org/wiki/Selenocysteine) and [Pyrrolysine](https://en.wikipedia.org/wiki/Pyrrolysine) residues in `TemplateAtom`.
 
 
 ## [v0.7.0-alpha.3] - 2025-09-03
