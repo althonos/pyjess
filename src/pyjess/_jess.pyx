@@ -82,7 +82,7 @@ cdef class _PDBMoleculeParser(_MoleculeParser):
     def __init__(self, str id = None, bint ignore_endmdl = False):
         super().__init__(id=id)
         self.ignore_endmdl = ignore_endmdl
-    
+
     def loads(self, text, molecule_type):
         return self.load(io.StringIO(text), molecule_type)
 
@@ -108,32 +108,31 @@ cdef class _PDBMoleculeParser(_MoleculeParser):
 
 cdef class _CIFMoleculeParser(_MoleculeParser):
     cdef object gemmi
+    cdef bint use_author
 
-    _COLUMNS = [
-        'id', 
-        'type_symbol',
-        'label_atom_id',
-        'label_alt_id',
-        'label_comp_id',
-        'label_asym_id',
-        'label_seq_id',
-        '?pdbx_PDB_ins_code',
-        'Cartn_x', 
-        'Cartn_y', 
-        'Cartn_z',
-        'occupancy',
-        'B_iso_or_equiv',
-        '?pdbx_formal_charge',
-        '?group_PDB',
+    _PRIMARY_COLUMNS = [
+        'id', 'type_symbol', 'label_atom_id', 'label_alt_id', 'label_comp_id',
+        'label_asym_id', 'label_seq_id', '?pdbx_PDB_ins_code', 'Cartn_x',
+        'Cartn_y', 'Cartn_z', 'occupancy', 'B_iso_or_equiv',
+        '?pdbx_formal_charge', '?group_PDB',
     ]
 
-    def __init__(self, str id = None):
+    _AUTH_COLUMNS = [
+        'id', 'type_symbol', 'auth_atom_id', 'label_alt_id', 'auth_comp_id',
+        'auth_asym_id', 'auth_seq_id', '?pdbx_PDB_ins_code', 'Cartn_x',
+        'Cartn_y', 'Cartn_z', 'occupancy', 'B_iso_or_equiv',
+        '?pdbx_formal_charge', '?group_PDB',
+    ]
+
+    def __init__(self, str id = None, bint use_author = False):
         super().__init__(id=id)
         self.gemmi = __import__('gemmi')
-    
+        self.use_author = use_author
+
     def _load_block(self, document, molecule_type):
         block = document.sole_block()
-        table = block.find('_atom_site.', self._COLUMNS)
+        cols = self._AUTH_COLUMNS if self.use_author else self._PRIMARY_COLUMNS
+        table = block.find('_atom_site.', cols)
 
         if not table:
             raise ValueError("missing columns in CIF files")
@@ -174,7 +173,7 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
         else:
             document = self.gemmi.cif.read_file(file)
         return self._load_block(document, molecule_type)
-        
+
 
 cdef class Molecule:
     """A molecule structure, as a sequence of `Atom` objects.
@@ -199,7 +198,7 @@ cdef class Molecule:
                 containing a molecule.
             format (`str`): The format to parse the file. Supported formats
                 are: ``pdb`` for the Protein Data Bank format, or ``cif``
-                for Crystallographic Information File format (additionally 
+                for Crystallographic Information File format (additionally
                 requires the `gemmi` module).
 
         Keyword Arguments:
@@ -211,6 +210,10 @@ cdef class Molecule:
                 the atoms from the PDB file. By default, the parser only
                 reads the atoms of the first model, and stops at the first
                 ``ENDMDL`` line. *Ignored for CIF files.*
+            use_author (`bool`): Pass `True` to use the author-defined
+                labels while parsing CIF files, e.g. read the chain name
+                from ``_atom_site.auth_asym_id`` rather than
+                ``_atom_site.label_asym_id``.
 
         Returns:
             `~pyjess.Molecule`: The molecule parsed from the PDB file.
@@ -223,7 +226,14 @@ cdef class Molecule:
         return cls.load(io.StringIO(text), id=id, ignore_endmdl=ignore_endmdl)
 
     @classmethod
-    def load(cls, file, str format = "pdb", *, str id = None, bint ignore_endmdl = False):
+    def load(
+        cls,
+        file, str format = "pdb",
+        *,
+        str id = None,
+        bint ignore_endmdl = False,
+        bint use_author = False,
+    ):
         """Load a molecule from a PDB file.
 
         Arguments:
@@ -232,7 +242,7 @@ cdef class Molecule:
                 containing a molecule.
             format (`str`): The format to parse the file. Supported formats
                 are: ``pdb`` for the Protein Data Bank format, or ``cif``
-                for Crystallographic Information File format (additionally 
+                for Crystallographic Information File format (additionally
                 requires the `gemmi` module).
 
         Keyword Arguments:
@@ -244,6 +254,10 @@ cdef class Molecule:
                 the atoms from the PDB file. By default, the parser only
                 reads the atoms of the first model, and stops at the first
                 ``ENDMDL`` line. *Ignored for CIF files.*
+            use_author (`bool`): Pass `True` to use the author-defined
+                labels while parsing CIF files, e.g. read the chain name
+                from ``_atom_site.auth_asym_id`` rather than
+                ``_atom_site.label_asym_id``.
 
         Returns:
             `~pyjess.Molecule`: The molecule parsed from the PDB file.
@@ -256,7 +270,7 @@ cdef class Molecule:
         if format == "pdb":
             parser = _PDBMoleculeParser(id=id, ignore_endmdl=ignore_endmdl)
         elif format == "cif":
-            parser = _CIFMoleculeParser(id=id)
+            parser = _CIFMoleculeParser(id=id, use_author=use_author)
         else:
             raise ValueError(f"invalid value for `format` argument: {format!r}")
         return parser.load(file, molecule_type=cls)

@@ -23,7 +23,8 @@ class Molecule(Sequence[Atom]):
         format: Literal["pdb", "cif"] = "pdb",
         *,
         id: Optional[str] = None,
-        ignore_endmdl: bool = False
+        ignore_endmdl: bool = False,
+        use_author: bool = False,
     ) -> Molecule: ...
     @classmethod
     def loads(
@@ -33,6 +34,7 @@ class Molecule(Sequence[Atom]):
         *,
         id: Optional[str] = None,
         ignore_endmdl: bool = False,
+        use_author: bool = False,
     ) -> Molecule: ...
     def __init__(self, atoms: Sequence[Atom] = (), id: Optional[str] = None): ...
     def __len__(self) -> int: ...
