@@ -157,7 +157,6 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
                 z=float(row[10]),
                 occupancy=0.0 if row[11] == '.' else float(row[11]),
                 temperature_factor=float(row[12]),
-                # str segment = '', # FIXME?
                 charge=0 if not row.has(13) or row[13] == "?" else int(row[13]),
             )
             atoms.append(atom)
@@ -232,6 +231,13 @@ cdef class Molecule:
             `Molecule.load` to load a PDB molecule from a file-like
             object or from a path.
 
+        Caution:
+            Parsing from PDB file retains the heteroatoms (``HETATM`` lines)
+            while parsing from mmCIF usually discard them. This is because
+            mmCIF files store heteroatoms but do not require them to
+            have an associated residue number, which can throw off the way
+            atoms are modeled in Jess.
+
         .. versionadded:: 0.7.0
             The ``format`` argument, and support for CIF parsing.
 
@@ -277,6 +283,16 @@ cdef class Molecule:
 
         Returns:
             `~pyjess.Molecule`: The molecule parsed from the PDB file.
+
+        See Also:
+            `Molecule.loads` to load a PDB molecule from a string.
+
+        Caution:
+            Parsing from PDB file retains the heteroatoms (``HETATM`` lines)
+            while parsing from mmCIF usually discard them. This is because
+            mmCIF files store heteroatoms but do not require them to
+            have an associated residue number, which can throw off the way
+            atoms are modeled in Jess.
 
         .. versionadded:: 0.7.0
             The ``format`` argument, and support for CIF parsing.
