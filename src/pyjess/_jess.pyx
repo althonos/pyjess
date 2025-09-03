@@ -222,6 +222,9 @@ cdef class Molecule:
             `Molecule.load` to load a PDB molecule from a file-like
             object or from a path.
 
+        .. versionadded:: 0.7.0
+            The ``format`` argument, and support for CIF parsing.
+
         """
         return cls.load(io.StringIO(text), id=id, ignore_endmdl=ignore_endmdl)
 
@@ -262,8 +265,8 @@ cdef class Molecule:
         Returns:
             `~pyjess.Molecule`: The molecule parsed from the PDB file.
 
-        Note:
-            When parsing CIF files, the "primary" identifiers are used
+        .. versionadded:: 0.7.0
+            The ``format`` argument, and support for CIF parsing.
 
         """
         cdef _MoleculeParser parser

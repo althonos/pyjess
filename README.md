@@ -55,7 +55,7 @@ package:
 $ conda install -c bioconda pyjess
 ```
 
-Check the [*install* page](https://pyjess.readthedocs.io/en/stable/install.html)
+Check the [*install* page](https://pyjess.readthedocs.io/en/stable/guide/install.html)
 of the documentation for other ways to install PyJess on your machine.
 
 
@@ -123,9 +123,9 @@ If running Jess in parallel, make sure to use `v0.2.1` or later to use the code 
 
 ## ⏱️ Benchmarks
 
-The following table reports the runtime of PyJess to match $n=132$ protein 
-structures to the $m=7607$ templates of 
-[EnzyMM](https://github.com/RayHackett/enzymm), using $J=12$ threads to parallelize.
+The following table reports the runtime of PyJess to match N=132 protein 
+structures to the M=7607 templates of 
+[EnzyMM](https://github.com/RayHackett/enzymm), using J=12 threads to parallelize.
 
 | Version     | Runtime (s) | Match Speed (N * M / s * J) | Speedup     |
 | ----------- | ----------- | --------------------------- | ----------- |
@@ -136,8 +136,8 @@ structures to the $m=7607$ templates of
 | ``v0.6.0``  | 54.5        | 1535.4                      | x11.34      |
 | ``v0.7.0``  | 52.4        | 1597.5                      | **x11.80**  |
 
-*Benchmarks were run on a quiet [i7-1255U](https://www.intel.com/content/www/us/en/products/sku/226259/intel-core-i71255u-processor-12m-cache-up-to-4-70-ghz/specifications.html) CPU running @4.70GHz with 10 physical cores / 12 logical
-cores.*
+*Benchmarks were run on a quiet [i7-1255U](https://www.intel.com/content/www/us/en/products/sku/226259/intel-core-i71255u-processor-12m-cache-up-to-4-70-ghz/specifications.html) 
+CPU running @4.70GHz with 10 physical cores / 12 logical cores.*
 
 ## 💭 Feedback
 
