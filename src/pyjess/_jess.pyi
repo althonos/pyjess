@@ -7,6 +7,12 @@ try:
 except ImportError:
     from typing_extensions import Literal  # type: ignore
 
+try:
+    from Bio.PDB import Model, Structure
+except ImportError:
+    Model = Structure = Any
+
+
 MATCH_MODE = Literal[
     -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 100, 101, 102, 103, 104, 105, 106, 107
 ]
@@ -16,6 +22,8 @@ _SELF = TypeVar("_SELF")
 __version__: str
 
 class Molecule(Sequence[Atom]):
+    @classmethod
+    def from_biopython(cls, structure: Union[Structure, Model]) -> Molecule: ...
     @classmethod
     def load(
         cls,

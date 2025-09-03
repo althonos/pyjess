@@ -310,6 +310,44 @@ cdef class Molecule:
             raise ValueError(f"invalid value for `format` argument: {format!r}")
         return parser.load(file, molecule_type=cls)
 
+    @classmethod
+    def from_biopython(cls, object structure):
+        """Create a new `~pyjess.Molecule` from a `Bio.PDB.Structure`.
+
+        Arguments:
+            structure (`Bio.PDB.Structure` or `Bio.PDB.Model`): The 
+                Biopython object containing the structure data.
+
+        Returns:
+            `~pyjess.Molecule`: A molecule object suitable for using 
+            in `Jess.query`.
+
+        .. versionadded:: 0.7.0
+
+        """
+        atoms = []
+        for c in structure.get_chains():
+            for r in c.get_residues():
+                _, residue_number, _ = r.id
+                for a in r.get_atoms():
+                    coord = a.get_coord()
+                    atom = Atom(
+                        name=a.fullname,
+                        x=coord[0],
+                        y=coord[1],
+                        z=coord[2],
+                        altloc=a.altloc,
+                        occupancy=a.occupancy,
+                        serial=a.serial_number,
+                        residue_name=r.resname,
+                        residue_number=residue_number,
+                        chain_id=c.id,
+                        temperature_factor=a.bfactor,
+                        element=a.element,
+                    )
+                    atoms.append(atom)
+        return cls(atoms, id=structure.id)
+
     def __cinit__(self):
         self._mol = NULL
 

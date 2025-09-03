@@ -14,6 +14,11 @@ try:
 except ImportError:
     gemmi = None
 
+try:
+    import Bio.PDB
+except ImportError:
+    Bio = None
+
 MOLECULE = textwrap.dedent(
     """
     HEADER    DNA RECOMBINATION                       05-DEC-97   1A0P              
@@ -154,6 +159,8 @@ class TestMolecule(unittest.TestCase):
             pdb_molecule = Molecule.load(f, format="pdb")
         with files(data).joinpath("1AMY.cif").open() as f:
             cif_molecule = Molecule.load(f, format="cif")
+        # the CIF parser ignores the HETATM, so we may have less atoms in there
+        self.assertLessEqual(len(cif_molecule), len(pdb_molecule))
         for pdb_atom, cif_atom in zip(pdb_molecule, cif_molecule):
             self.assertEqual(pdb_atom.serial, cif_atom.serial)
             self.assertEqual(pdb_atom.name, cif_atom.name)
@@ -162,10 +169,35 @@ class TestMolecule(unittest.TestCase):
             self.assertEqual(pdb_atom.chain_id, cif_atom.chain_id)
             self.assertEqual(pdb_atom.residue_number, cif_atom.residue_number)
             self.assertEqual(pdb_atom.insertion_code, cif_atom.insertion_code)
+            self.assertEqual(pdb_atom.element, cif_atom.element)
             self.assertAlmostEqual(pdb_atom.x, cif_atom.x, places=5)
             self.assertAlmostEqual(pdb_atom.y, cif_atom.y, places=5)
             self.assertAlmostEqual(pdb_atom.z, cif_atom.z, places=5)
             self.assertAlmostEqual(pdb_atom.occupancy, cif_atom.occupancy, places=5)
             self.assertAlmostEqual(pdb_atom.temperature_factor, cif_atom.temperature_factor, places=5)
-            self.assertAlmostEqual(pdb_atom.element, cif_atom.element, places=5)
             self.assertAlmostEqual(pdb_atom.charge, cif_atom.charge, places=5)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    @unittest.skipUnless(Bio, "biopython not available")
+    def test_from_biopython(self):
+        parser = Bio.PDB.PDBParser()
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            structure = parser.get_structure('1amy', f)
+            bio_mol = Molecule.from_biopython(structure)
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            pdb_mol = Molecule.load(f, format="pdb")
+        for pdb_atom, bio_atom in zip(pdb_mol, bio_mol):
+            self.assertEqual(pdb_atom.serial, bio_atom.serial)
+            self.assertEqual(pdb_atom.name, bio_atom.name)
+            self.assertEqual(pdb_atom.altloc, bio_atom.altloc)
+            self.assertEqual(pdb_atom.residue_name, bio_atom.residue_name)
+            self.assertEqual(pdb_atom.chain_id, bio_atom.chain_id)
+            self.assertEqual(pdb_atom.residue_number, bio_atom.residue_number)
+            self.assertEqual(pdb_atom.insertion_code, bio_atom.insertion_code)
+            self.assertEqual(pdb_atom.element, bio_atom.element)
+            self.assertAlmostEqual(pdb_atom.x, bio_atom.x, places=5)
+            self.assertAlmostEqual(pdb_atom.y, bio_atom.y, places=5)
+            self.assertAlmostEqual(pdb_atom.z, bio_atom.z, places=5)
+            self.assertAlmostEqual(pdb_atom.occupancy, bio_atom.occupancy, places=5)
+            self.assertAlmostEqual(pdb_atom.temperature_factor, bio_atom.temperature_factor, places=5)
+            self.assertAlmostEqual(pdb_atom.charge, bio_atom.charge, places=5)
