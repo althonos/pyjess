@@ -18,10 +18,10 @@ References:
 # --- C imports --------------------------------------------------------------
 
 cimport cython
-from cpython.unicode cimport PyUnicode_FromStringAndSize
+from cpython.unicode cimport PyUnicode_FromStringAndSize, PyUnicode_FromFormat
 
 from libc.math cimport isnan, exp, INFINITY, NAN
-from libc.stdio cimport FILE, fclose, fdopen, printf
+from libc.stdio cimport FILE, fclose, fdopen, printf, sprintf
 from libc.stdint cimport uintptr_t
 from libc.stdlib cimport calloc, realloc, free, malloc
 from libc.string cimport memcpy, memset, strncpy, strdup
@@ -55,11 +55,20 @@ __version__ = PROJECT_VERSION
 
 # --- Utils ------------------------------------------------------------------
 
-cdef inline void copy_token(char* dst, const char* src, size_t n) noexcept nogil:
+cdef inline void encode_token(char* dst, const char* src, size_t n) noexcept nogil:
     cdef size_t i
     for i in range(n):
         if src[i] == ord(' ') or src[i] == 0:
             dst[i] = ord('_')
+        else:
+            dst[i] = src[i]
+    dst[n] = 0
+
+cdef inline void decode_token(char* dst, const char* src, size_t n) noexcept nogil:
+    cdef size_t i
+    for i in range(n):
+        if src[i] == ord('_') or src[i] == 0:
+            dst[i] = ord(' ')
         else:
             dst[i] = src[i]
     dst[n] = 0
@@ -682,15 +691,15 @@ cdef class Atom:
         self._atom.occupancy = occupancy
         self._atom.tempFactor = temperature_factor
         self._atom.charge = charge
-        copy_token(self._atom.resName, residue_name.encode('ascii').ljust(3, b'\0'), 3)
-        copy_token(self._atom.segID, segment.encode('ascii').ljust(4, b'\0'), 4)
-        copy_token(self._atom.element, element.encode('ascii').ljust(2, b'\0'), 2)
+        encode_token(self._atom.resName, residue_name.encode('ascii').ljust(3, b'\0'), 3)
+        encode_token(self._atom.segID, segment.encode('ascii').ljust(4, b'\0'), 4)
+        encode_token(self._atom.element, element.encode('ascii').ljust(2, b'\0'), 2)
 
         # FIXME
         _name = bytearray(name, 'ascii')
         if len(_name) < 4:
             _name.insert(0, ord('_'))
-        copy_token(self._atom.name, _name.ljust(4, b'\0'), 4)
+        encode_token(self._atom.name, _name.ljust(4, b'\0'), 4)
 
     def __copy__(self):
         return self.copy()
@@ -1004,14 +1013,14 @@ cdef class TemplateAtom:
                 raise ValueError(f"Invalid atom name: {name!r}")
             elif len(_name) < 3:
                 _name.insert(0, ord('_'))
-            copy_token(self._atom.name[m], _name.ljust(4, b'\0'), 4)
+            encode_token(self._atom.name[m], _name.ljust(4, b'\0'), 4)
 
         # copy residue names
         for m, name in enumerate(residue_names):
             _name = name.encode('ascii') if isinstance(name, str) else name
             if len(_name) > 3:
                 raise ValueError(f"Invalid residue name: {name!r}")
-            copy_token(self._atom.resName[m], _name.ljust(3, b'\0'), 3)
+            encode_token(self._atom.resName[m], _name.ljust(3, b'\0'), 3)
 
     cdef dict _state(self):
         return {
@@ -1676,6 +1685,18 @@ cdef class Hit:
         for i, atom in enumerate(state["atoms"]):
             memcpy(&self._atoms[i], atom._atom, sizeof(_Atom))
 
+    cdef void _transform_atom(self, double* x, const double* src):
+        cdef size_t        i
+        cdef size_t        j
+        cdef const double* M = self._rotation
+        cdef const double* c = self._centre[0]
+        cdef const double* v = self._centre[1]
+
+        for i in range(3):
+            x[i] = v[i]
+            for j in range(3):
+                x[i] += M[3*i + j] * (src[j] - c[j])
+
     @property
     def determinant(self):
         """`float`: The determinant of the rotation matrix.
@@ -1744,15 +1765,11 @@ cdef class Hit:
             if transform:
                 atom._atom = <_Atom*> malloc(sizeof(_Atom))
                 memcpy(atom._atom, &self._atoms[k], sizeof(_Atom))
-                for i in range(3):
-                    atom._atom.x[i] = v[i]
-                    for j in range(3):
-                        atom._atom.x[i] += M[3*i + j] * (self._atoms[k].x[j] - c[j])
+                self._transform_atom(atom._atom.x, self._atoms[k].x)
             else:
                 atom.owned = True
                 atom.owner = self
                 atom._atom = &self._atoms[k]
-
             atoms.append(atom)
 
         return atoms
@@ -1788,13 +1805,89 @@ cdef class Hit:
         mol = self._molecule.copy()
         for k in range(mol._mol.count):
             atom = mol._mol.atom[k]
-            for i in range(3):
-                atom.x[i] = v[i]
-                for j in range(3):
-                    atom.x[i] += M[3*i + j] * (self._molecule._mol.atom[k].x[j] - c[j])
+            self._transform_atom(atom.x, self._molecule._mol.atom[k].x)
 
         return mol
 
+    cpdef str dumps(self, str format="pdb", bint transform=True):
+        """Write the hit to a string.
+
+        Arguments:
+            format (`str`): The format in which to write the hit. 
+                Currently only supports ``pdb``, which writes the hits
+                in the same format as Jess.
+            transform (`bool`): Whether or not to transform coordinates
+                of the molecule atoms into template frame.
+
+        .. versionadded:: 0.7.0
+
+        """
+        file = io.StringIO()
+        self.dump(file, format=format, transform=transform)
+        return file.getvalue()
+
+    cpdef void dump(self, object file, str format="pdb", bint transform=True):
+        """Write the hit to a file.
+
+        Arguments:
+            file (file-like object): A file opened in *text* mode where the
+                hit will be written.
+            format (`str`): The format in which to write the hit. 
+                Currently only supports ``pdb``, which writes the hits
+                in the same format as Jess.
+            transform (`bool`): Whether or not to transform coordinates
+                of the molecule atoms into template frame.
+
+        .. versionadded:: 0.7.0
+
+        """
+        assert self.template._tpl is not NULL
+        assert self._molecule._mol is not NULL
+
+        cdef _Atom*    atom
+        cdef size_t    k
+        cdef char[80]  buffer
+        cdef char[5]   name
+        cdef char[5]   resname 
+        cdef double[3] x
+        cdef int       count   = self.template._tpl.count(self.template._tpl)
+
+        file.write("REMARK ")
+        file.write(self._molecule.id)
+        file.write(f"{self.rmsd:5.3f} ")
+        file.write(self.template.id)
+        file.write(f" Det={self.determinant:4,.1f} log(E)~ {self.log_evalue:4.2f}\n")
+
+        for k in range(count):
+            atom = &self._atoms[k]
+            decode_token(name, atom.name, 4)
+            decode_token(resname, atom.resName, 3)
+            if transform:
+                self._transform_atom(x, atom.x)
+            else:
+                memcpy(x, atom.x, 3*sizeof(double))
+            n = sprintf(
+                buffer,
+                "ATOM  %5i%5s%c%-3s%c%c%4i%-4c%8.3f%8.3f%8.3f%6.2f%6.2f\n",
+                atom.serial,
+                name,
+                atom.altLoc,
+                resname,
+                atom.chainID1,
+                atom.chainID2,
+                atom.resSeq,
+                atom.iCode,
+                x[0],
+                x[1],
+                x[2],
+                atom.occupancy,
+                atom.tempFactor,
+                atom.segID,
+                atom.element,
+                atom.charge
+            )
+            file.write(PyUnicode_FromStringAndSize(buffer, n))
+        file.write("ENDMDL\n")
 
 cdef class Jess:
     """A handle to run Jess over a list of templates.

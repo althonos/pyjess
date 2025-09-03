@@ -271,18 +271,11 @@ def main(
                         best_match=args.best_match,
                     )
                     for hit in query:
-                        print(f"REMARK {mol.id} {hit.rmsd:5.3f} {hit.template.id} Det={hit.determinant:4,.1f} log(E)~ {hit.log_evalue:4.2f}", file=stdout)
-                        for atom in hit.atoms(transform=args.transform):
-                            name = atom.name
-                            name = f"  {name:<3}" if len(name) < 4 else name
-                            print(
-                                f"ATOM  {atom.serial:5}{name}{atom.altloc}{atom.residue_name:<3}{atom.chain_id:>2}{atom.residue_number:4}{atom.insertion_code:4}{atom.x:8.3f}{atom.y:8.3f}{atom.z:8.3f}{atom.occupancy:6.2f}{atom.temperature_factor:6.2f}",
-                                file=stdout,
-                            )
-                        print("ENDMDL\n", file=stdout)
+                        hit.dump(stdout, format="pdb", transform=args.transform)
+                        stdout.write("\n")
 
         except Exception as err:
-            print("Error: {}".format(err))
+            print("Error: {}".format(err), file=stderr)
             return getattr(err, "errno", 1)
         else:
             return 0
