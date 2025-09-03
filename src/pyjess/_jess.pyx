@@ -117,13 +117,13 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
         'label_comp_id',
         'label_asym_id',
         'label_seq_id',
-        'pdbx_PDB_ins_code',
+        '?pdbx_PDB_ins_code',
         'Cartn_x', 
         'Cartn_y', 
         'Cartn_z',
         'occupancy',
         'B_iso_or_equiv',
-        'pdbx_formal_charge',
+        '?pdbx_formal_charge',
         '?group_PDB',
     ]
 
@@ -134,14 +134,13 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
     def _load_block(self, document, molecule_type):
         block = document.sole_block()
         table = block.find('_atom_site.', self._COLUMNS)
-        group_idx = self._COLUMNS.index('?group_PDB')
 
         if not table:
             raise ValueError("missing columns in CIF files")
 
         atoms = []
         for row in table:
-            if table.has_column(group_idx) and row[group_idx] != "ATOM":
+            if table.has_column(14) and row[14] != "ATOM":
                 continue
             atom = Atom(
                 serial=int(row[0]),
@@ -151,14 +150,14 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
                 residue_name=row[4],
                 chain_id=row[5],
                 residue_number=int(row[6]),
-                insertion_code=' ' if row[7] == "?" else row[7],
+                insertion_code=' ' if not row.has(7) or row[7] == "?" else row[7],
                 x=float(row[8]),
                 y=float(row[9]),
                 z=float(row[10]),
                 occupancy=float(row[11]),
                 temperature_factor=float(row[12]),
                 # str segment = '', # FIXME?
-                charge=0 if row[13] == "?" else int(row[13]),
+                charge=0 if not row.has(13) or row[13] == "?" else int(row[13]),
             )
             atoms.append(atom)
 
@@ -197,14 +196,21 @@ cdef class Molecule:
         Arguments:
             file (`str`, `os.PathLike`, or file-like object): Either the path
                 to a file, or a file-like object opened in **text mode**
-                containing a PDB molecule.
+                containing a molecule.
+            format (`str`): The format to parse the file. Supported formats
+                are: ``pdb`` for the Protein Data Bank format, or ``cif``
+                for Crystallographic Information File format (additionally 
+                requires the `gemmi` module).
+
+        Keyword Arguments:
             id (`str`, optional): The identifier of the molecule. If `None`
                 given, the parser will attempt to extract it from the
-                ``HEADER`` line.
+                ``HEADER`` line (for PDB files) or the block name (for CIF
+                files).
             ignore_endmdl (`bool`): Pass `True` to make the parser read all
                 the atoms from the PDB file. By default, the parser only
                 reads the atoms of the first model, and stops at the first
-                ``ENDMDL`` line.
+                ``ENDMDL`` line. *Ignored for CIF files.*
 
         Returns:
             `~pyjess.Molecule`: The molecule parsed from the PDB file.
@@ -223,21 +229,27 @@ cdef class Molecule:
         Arguments:
             file (`str`, `os.PathLike`, or file-like object): Either the path
                 to a file, or a file-like object opened in **text mode**
-                containing a PDB molecule.
-            id (`str`, optional): The identifier of the molecule. If `None`
-                given, the parser will attempt to extract it from the
-                ``HEADER`` line.
-            ignore_endmdl (`bool`): Pass `True` to make the parser read all
-                the atoms from the PDB file. By default, the parser only
-                reads the atoms of the first model, and stops at the first
-                ``ENDMDL`` line.
+                containing a molecule.
             format (`str`): The format to parse the file. Supported formats
                 are: ``pdb`` for the Protein Data Bank format, or ``cif``
                 for Crystallographic Information File format (additionally 
                 requires the `gemmi` module).
 
+        Keyword Arguments:
+            id (`str`, optional): The identifier of the molecule. If `None`
+                given, the parser will attempt to extract it from the
+                ``HEADER`` line (for PDB files) or the block name (for CIF
+                files).
+            ignore_endmdl (`bool`): Pass `True` to make the parser read all
+                the atoms from the PDB file. By default, the parser only
+                reads the atoms of the first model, and stops at the first
+                ``ENDMDL`` line. *Ignored for CIF files.*
+
         Returns:
             `~pyjess.Molecule`: The molecule parsed from the PDB file.
+
+        Note:
+            When parsing CIF files, the "primary" identifiers are used
 
         """
         cdef _MoleculeParser parser
