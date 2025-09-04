@@ -69,7 +69,9 @@ Jess if you are using it in an academic work, for instance as:
 
 ## 💡 Example
 
-Load [`Template`](https://pyjess.readthedocs.io/en/latest/api/template.html#pyjess.Template) 
+#### Prepare templates
+
+Load [`Template`](https://pyjess.readthedocs.io/en/latest/api/template.html#pyjess.Template)
 objects to be used as references from different template files:
 
 ```python
@@ -81,14 +83,45 @@ for path in sorted(pathlib.Path("vendor/jess/examples").glob("template_*.qry")):
     templates.append(pyjess.Template.load(path, id=path.stem))
 ```
 
-Create a [`Jess`](https://pyjess.readthedocs.io/en/latest/api/jess.html#pyjess.Jess) instance and use it to query a [`Molecule`](https://pyjess.readthedocs.io/en/latest/api/molecule.html#pyjess.Molecule) (a PDB structure)
-against the stored templates:
+#### Prepare query structures
+
+Load a [`Molecule`](https://pyjess.readthedocs.io/en/latest/api/molecule.html#pyjess.Molecule)
+(a PDB structure) from a PDB file, create one with the Python API, or
+convert it from a [`Bio.Model`](https://biopython.org/docs/1.76/api/Bio.PDB.Model.html),
+[`gemmi.Model`](https://gemmi.readthedocs.io/en/latest/mol.html#model),
+or [`biotite.structure.AtomArray`](https://www.biotite-python.org/latest/apidoc/biotite.structure.AtomArray.html)
+object:
+
+```python
+# load from PDB file or mmCIF file
+mol = pyjess.Molecule.load("vendor/jess/examples/test_pdbs/pdb1a0p.ent")
+
+# load with BioPython
+parser = Bio.PDB.PDBParser()
+structure = parser.get_structure('pdb1a0p', "vendor/jess/examples/test_pdbs/pdb1a0p.ent")
+mol = Molecule.from_biopython(structure, id="1a0p")
+
+# load with Gemmi
+structure = gemmi.read_pdb_string("vendor/jess/examples/test_pdbs/pdb1a0p.ent")
+mol = Molecule.from_gemmi(structure[0], id="1a0p")
+
+# load with Biotite
+pdb_file = biotite.structure.io.pdb.PDBFile.read(f)
+structure = pdb_file.get_structure(altloc="all", extra_fields=["atom_id", "b_factor", "occupancy", "charge"])
+mol = Molecule.from_biotite(structure[0])
+```
+
+### Match templates
+
+Create a [`Jess`](https://pyjess.readthedocs.io/en/latest/api/jess.html#pyjess.Jess)
+instance and use it to query a against the stored templates:
 
 ```python
 jess = pyjess.Jess(templates)
-mol = pyjess.Molecule.load("vendor/jess/examples/test_pdbs/pdb1a0p.ent")
 query = jess.query(mol, rmsd_threshold=2.0, distance_cutoff=3.0, max_dynamic_distance=3.0)
 ```
+
+### Process hits
 
 The hits are computed iteratively, and the different output statistics are
 computed on-the-fly when requested:
@@ -100,13 +133,19 @@ for hit in query:
         print(atom.name, atom.x, atom.y, atom.z)
 ```
 
+Hits can also be rendered in PDB format like in the original Jess output,
+either by writing to a file directly, or to a Python string:
+```python
+for hit in query:
+    hit.dump(sys.stdout, format="pdb")
+```
 
 ## 🧶 Thread-safety
 
-Once a [`Jess`](https://pyjess.readthedocs.io/en/latest/api/jess.html#pyjess.Jess) 
+Once a [`Jess`](https://pyjess.readthedocs.io/en/latest/api/jess.html#pyjess.Jess)
 instance has been created, the templates cannot be edited anymore,
-making the [`Jess.query`](https://pyjess.readthedocs.io/en/latest/api/jess.html#pyjess.Jess.query) method re-entrant and thread-safe. This allows querying 
-several molecules against the same templates in parallel using e.g a 
+making the [`Jess.query`](https://pyjess.readthedocs.io/en/latest/api/jess.html#pyjess.Jess.query) method re-entrant and thread-safe. This allows querying
+several molecules against the same templates in parallel using e.g a
 [`ThreadPool`](https://docs.python.org/3/library/multiprocessing.html#multiprocessing.pool.ThreadPool):
 
 ```python
@@ -123,8 +162,8 @@ If running Jess in parallel, make sure to use `v0.2.1` or later to use the code 
 
 ## ⏱️ Benchmarks
 
-The following table reports the runtime of PyJess to match N=132 protein 
-structures to the M=7607 templates of 
+The following table reports the runtime of PyJess to match N=132 protein
+structures to the M=7607 templates of
 [EnzyMM](https://github.com/RayHackett/enzymm), using J=12 threads to parallelize.
 
 | Version     | Runtime (s) | Match Speed (N * M / s * J) | Speedup     |
@@ -136,7 +175,7 @@ structures to the M=7607 templates of
 | ``v0.6.0``  | 54.5        | 1535.4                      | x11.34      |
 | ``v0.7.0``  | 52.4        | 1597.5                      | **x11.80**  |
 
-*Benchmarks were run on a quiet [i7-1255U](https://www.intel.com/content/www/us/en/products/sku/226259/intel-core-i71255u-processor-12m-cache-up-to-4-70-ghz/specifications.html) 
+*Benchmarks were run on a quiet [i7-1255U](https://www.intel.com/content/www/us/en/products/sku/226259/intel-core-i71255u-processor-12m-cache-up-to-4-70-ghz/specifications.html)
 CPU running @4.70GHz with 10 physical cores / 12 logical cores.*
 
 ## 💭 Feedback
@@ -165,7 +204,7 @@ in the [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) format.
 
 ## ⚖️ License
 
-This library is provided under the [MIT License](https://choosealicense.com/licenses/mit/). 
+This library is provided under the [MIT License](https://choosealicense.com/licenses/mit/).
 The JESS code is distributed under the [MIT License](https://choosealicense.com/licenses/mit/) as well.
 
 *This project is in no way not affiliated, sponsored, or otherwise endorsed

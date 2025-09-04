@@ -19,6 +19,11 @@ try:
 except ImportError:
     Bio = None
 
+try:
+    from biotite.structure.io.pdb import PDBFile
+except ImportError:
+    PDBFile = None
+
 MOLECULE = textwrap.dedent(
     """
     HEADER    DNA RECOMBINATION                       05-DEC-97   1A0P              
@@ -189,6 +194,8 @@ class TestMolecule(unittest.TestCase):
             bio_mol = Molecule.from_biopython(structure)
         with files(data).joinpath("1AMY.pdb").open() as f:
             pdb_mol = Molecule.load(f, format="pdb")
+        self.assertEqual(len(pdb_mol), 3339)
+        self.assertEqual(len(bio_mol), 3339)
         for pdb_atom, bio_atom in zip(pdb_mol, bio_mol):
             self.assertAtomEqual(pdb_atom, bio_atom)
 
@@ -196,9 +203,25 @@ class TestMolecule(unittest.TestCase):
     @unittest.skipUnless(gemmi, "gemmi not available")
     def test_from_gemmi(self):
         with files(data).joinpath("1AMY.pdb").open() as f:
-            model = gemmi.read_pdb_string(f.read())
-            gemmi_mol = Molecule.from_gemmi(model)
+            structure = gemmi.read_pdb_string(f.read())
+            gemmi_mol = Molecule.from_gemmi(structure[0])
         with files(data).joinpath("1AMY.pdb").open() as f:
             pdb_mol = Molecule.load(f, format="pdb")
+        self.assertEqual(len(pdb_mol), 3339)
+        self.assertEqual(len(gemmi_mol), 3339)
         for pdb_atom, gemmi_atom in zip(pdb_mol, gemmi_mol):
             self.assertAtomEqual(pdb_atom, gemmi_atom)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    @unittest.skipUnless(PDBFile, "biotite not available")
+    def test_from_biotite(self):
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            pdb_file = PDBFile.read(f)
+            structure = pdb_file.get_structure(altloc="all", extra_fields=["atom_id", "b_factor", "occupancy", "charge"])
+            biotite_mol = Molecule.from_biotite(structure[0])
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            pdb_mol = Molecule.load(f, format="pdb")
+        self.assertEqual(len(pdb_mol), 3339)
+        self.assertEqual(len(biotite_mol), 3339)
+        for pdb_atom, biotite_atom in zip(pdb_mol, biotite_mol):
+            self.assertAtomEqual(pdb_atom, biotite_atom)

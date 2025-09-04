@@ -336,12 +336,15 @@ cdef class Molecule:
         return parser.load(file, molecule_type=cls)
 
     @classmethod
-    def from_biopython(cls, object structure):
+    def from_biopython(cls, object structure, str id = None):
         """Create a new `~pyjess.Molecule` from a `Bio.PDB.Structure`.
 
         Arguments:
             structure (`Bio.PDB.Structure` or `Bio.PDB.Model`): The
                 Biopython object containing the structure data.
+            id (`str` or `None`): The identifier to give to the newly 
+                created molecule. If `None` given, will use the value of
+                ``structure.id``.
 
         Returns:
             `~pyjess.Molecule`: A molecule object suitable for using
@@ -377,12 +380,14 @@ cdef class Molecule:
         return cls(atoms, id=structure.id)
 
     @classmethod
-    def from_gemmi(cls, object structure):
-        """Create a new `~pyjess.Molecule` from a `gemmi.Structure`.
+    def from_gemmi(cls, object model, str id=None):
+        """Create a new `~pyjess.Molecule` from a `gemmi.Model`.
 
         Arguments:
-            structure (`gemmi.Structure`): The ``gemmi`` object
-                object containing the structure data.
+            structure (`gemmi.Model`): The ``gemmi`` object
+                containing the structure data.
+            id (`str` or `None`): The identifier to give to the newly 
+                created molecule.
 
         Returns:
             `~pyjess.Molecule`: A molecule object suitable for using
@@ -392,30 +397,78 @@ cdef class Molecule:
 
         """
         atoms = []
-        for model in structure:
-            for cra in model.all():
-                a = cra.atom
-                r = cra.residue
-                c = cra.chain
-                atom = Atom(
-                    name=a.padded_name(),
-                    x=a.pos[0],
-                    y=a.pos[1],
-                    z=a.pos[2],
-                    altloc=' ' if a.altloc == '\0' else a.altloc,
-                    charge=a.charge,
-                    element=a.element.name.upper(),
-                    occupancy=a.occ,
-                    temperature_factor=a.b_iso,
-                    serial=a.serial,
-                    segment=r.segment,
-                    residue_name=r.name,
-                    residue_number=r.seqid.num,
-                    chain_id=c.name,
-                    insertion_code=r.seqid.icode,
+        for cra in model.all():
+            a = cra.atom
+            r = cra.residue
+            c = cra.chain
+            atom = Atom(
+                name=a.padded_name(),
+                x=a.pos[0],
+                y=a.pos[1],
+                z=a.pos[2],
+                altloc=' ' if a.altloc == '\0' else a.altloc,
+                charge=a.charge,
+                element=a.element.name.upper(),
+                occupancy=a.occ,
+                temperature_factor=a.b_iso,
+                serial=a.serial,
+                segment=r.segment,
+                residue_name=r.name,
+                residue_number=r.seqid.num,
+                chain_id=c.name,
+                insertion_code=r.seqid.icode,
+            )
+            atoms.append(atom)
+        return cls(atoms, id=id)
+
+    @classmethod
+    def from_biotite(cls, object atom_array, str id=None):
+        """Create a new `~pyjess.Molecule` from a `biotite.structure.AtomArray`.
+
+        Arguments:
+            structure (`biotite.structure.AtomArray`): The ``biotite``
+                object containing the structure data.
+
+        Returns:
+            `~pyjess.Molecule`: A molecule object suitable for using
+            in `Jess.query`.
+
+        Caution:
+            If loading data with the `biotite.structure.io.pdb.PDBFile` module, 
+            ensure that you are requesting all atoms and all extra fields 
+            in `~biotite.structure.io.pdb.PDBFile.get_structure`::
+
+                db_file = PDBFile.read("data/1AMY.pdb")
+                structure = pdb_file.get_structure(
+                    altloc="all",
+                    extra_fields=["atom_id", "b_factor", "occupancy", "charge"],
                 )
-                atoms.append(atom)
-        return cls(atoms, id=structure.name)
+                molecule = Molecule.from_biotite(structure[0])
+
+        .. versionadded:: 0.7.0
+
+        """
+        atoms = []
+        for a in atom_array:
+            atom = Atom(
+                name=str(a.atom_name),
+                x=a.coord[0],
+                y=a.coord[1],
+                z=a.coord[2],
+                altloc=str(getattr(a, 'altloc', ' ')),
+                charge=getattr(a, 'charge', 0),
+                element=str(a.element),
+                occupancy=getattr(a, 'occupancy', 1.0),
+                temperature_factor=a.b_factor,
+                serial=a.atom_id,
+                segment=str(getattr(a, 'segment', '')),
+                residue_name=str(a.res_name),
+                residue_number=a.res_id,
+                chain_id=str(a.chain_id),
+                insertion_code=str(a.ins_code).ljust(1),
+            )
+            atoms.append(atom)
+        return cls(atoms)
 
     def __cinit__(self):
         self._mol = NULL
