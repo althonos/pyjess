@@ -87,10 +87,12 @@ cdef class _MoleculeParser:
 
 cdef class _PDBMoleculeParser(_MoleculeParser):
     cdef bint ignore_endmdl
+    cdef bint skip_hetatm
 
-    def __init__(self, str id = None, bint ignore_endmdl = False):
+    def __init__(self, str id = None, bint ignore_endmdl = False, bint skip_hetatm = False):
         super().__init__(id=id)
         self.ignore_endmdl = ignore_endmdl
+        self.skip_hetatm = skip_hetatm
 
     def loads(self, text, molecule_type):
         return self.load(io.StringIO(text), molecule_type)
@@ -107,7 +109,9 @@ cdef class _PDBMoleculeParser(_MoleculeParser):
                 if line.startswith("HEADER"):
                     if id is None:
                         id = line[62:66].strip() or None
-                elif line.startswith(("ATOM", "HETATM")):
+                elif line.startswith("ATOM"):
+                    atoms.append(Atom.loads(line))
+                elif not self.skip_hetatm and line.startswith("HETATM"):
                     atoms.append(Atom.loads(line))
                 elif line.startswith("ENDMDL"):
                     if not self.ignore_endmdl:
@@ -120,6 +124,7 @@ cdef class _PDBMoleculeParser(_MoleculeParser):
 cdef class _CIFMoleculeParser(_MoleculeParser):
     cdef object gemmi
     cdef bint use_author
+    cdef bint skip_hetatm
 
     _PRIMARY_COLUMNS = [
         'id', 'type_symbol', 'label_atom_id', 'label_alt_id', 'label_comp_id',
@@ -135,10 +140,11 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
         '?pdbx_formal_charge', '?group_PDB',
     ]
 
-    def __init__(self, str id = None, bint use_author = False):
+    def __init__(self, str id = None, bint use_author = False, bint skip_hetatm = False):
         super().__init__(id=id)
         self.gemmi = __import__('gemmi')
         self.use_author = use_author
+        self.skip_hetatm = skip_hetatm
 
     def _load_block(self, document, molecule_type):
         block = document.sole_block()
@@ -207,6 +213,7 @@ cdef class Molecule:
         str id = None,
         bint ignore_endmdl = False,
         bint use_author = False,
+        bint skip_hetatm = False,
     ):
         """Load a molecule from a PDB string.
 
@@ -253,7 +260,13 @@ cdef class Molecule:
         """
         if format == "detect":
             format = "cif" if text.lstrip().startswith(("data_", "loop_")) else "pdb"
-        return cls.load(io.StringIO(text), format=format, id=id, ignore_endmdl=ignore_endmdl)
+        return cls.load(
+            io.StringIO(text), 
+            format=format, 
+            id=id, 
+            ignore_endmdl=ignore_endmdl,
+            skip_hetatm=skip_hetatm,
+        )
 
     @classmethod
     def load(
@@ -263,6 +276,7 @@ cdef class Molecule:
         str id = None,
         bint ignore_endmdl = False,
         bint use_author = False,
+        bint skip_hetatm = False,
     ):
         """Load a molecule from a PDB file.
 
@@ -289,6 +303,8 @@ cdef class Molecule:
                 labels while parsing CIF files, e.g. read the chain name
                 from ``_atom_site.auth_asym_id`` rather than
                 ``_atom_site.label_asym_id``. *Ignored for PDB files*.
+            skip_hetatm (`bool`): Pass `True` to skip parsing of heteroatoms
+                (``HETATM``) in the input file.
 
         Returns:
             `~pyjess.Molecule`: The molecule parsed from the PDB file.
@@ -304,7 +320,7 @@ cdef class Molecule:
             atoms are modeled in Jess.
 
         .. versionadded:: 0.7.0
-            The ``format`` argument, and support for CIF parsing.
+            The ``format`` and ``skip_hetatm`` arguments, and mmCIF support.
 
         """
         cdef _MoleculeParser parser
@@ -321,9 +337,17 @@ cdef class Molecule:
                     f = f.read()
                     peek = f[5:]
                 if peek.startswith(("data_", "loop_")):
-                    parser = _CIFMoleculeParser(id=id, use_author=use_author)
+                    parser = _CIFMoleculeParser(
+                        id=id, 
+                        use_author=use_author,
+                        skip_hetatm=skip_hetatm,
+                    )
                 else:
-                    parser = _PDBMoleculeParser(id=id, ignore_endmdl=ignore_endmdl)
+                    parser = _PDBMoleculeParser(
+                        id=id, 
+                        ignore_endmdl=ignore_endmdl, 
+                        skip_hetatm=skip_hetatm,
+                    )
                 if isinstance(f, str):
                     return parser.loads(f, molecule_type=cls)
                 return parser.load(f, molecule_type=cls)

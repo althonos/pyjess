@@ -48,6 +48,7 @@ class Molecule(Sequence[Atom]):
         id: Optional[str] = None,
         ignore_endmdl: bool = False,
         use_author: bool = False,
+        skip_hetatm: bool = False,
     ) -> Molecule: ...
     @classmethod
     def loads(
@@ -58,6 +59,7 @@ class Molecule(Sequence[Atom]):
         id: Optional[str] = None,
         ignore_endmdl: bool = False,
         use_author: bool = False,
+        skip_hetatm: bool = False,
     ) -> Molecule: ...
     def __init__(self, atoms: Sequence[Atom] = (), id: Optional[str] = None): ...
     def __len__(self) -> int: ...
