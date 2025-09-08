@@ -111,7 +111,7 @@ cdef class _PDBMoleculeParser(_MoleculeParser):
                         id = line[62:66].strip() or None
                 elif line.startswith("ATOM"):
                     atoms.append(Atom.loads(line))
-                elif not self.skip_hetatm and line.startswith("HETATM"):
+                elif line.startswith("HETATM") and not self.skip_hetatm:
                     atoms.append(Atom.loads(line))
                 elif line.startswith("ENDMDL"):
                     if not self.ignore_endmdl:
@@ -150,14 +150,32 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
         block = document.sole_block()
         cols = self._AUTH_COLUMNS if self.use_author else self._PRIMARY_COLUMNS
         table = block.find('_atom_site.', cols)
+        max_residue_number = 0
 
         if not table:
             raise ValueError("missing columns in CIF files")
 
         atoms = []
         for row in table:
-            if table.has_column(14) and row[14] != "ATOM":
+            if row[14] != "ATOM" and (row[14] != "HETATM" or self.skip_hetatm):
                 continue
+
+            if row[6] == "." and row[14] == "HETATM":
+                warnings.warn(
+                    (
+                        "HETATM line found without residue number. Consider "
+                        "parsing with use_author=True to use author-defined "
+                        "residue numbers, or skip_hetatm=True to disable "
+                        "parsing of HETATM altogether."
+                    ),
+                    UserWarning,
+                )
+                residue_number = max_residue_number
+                max_residue_number += 1
+            else:
+                residue_number = int(row[6])
+                max_residue_number = max(residue_number, max_residue_number)
+
             atom = Atom(
                 serial=int(row[0]),
                 element=row[1],
@@ -165,7 +183,7 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
                 altloc=' ' if row[3] == "." else row[3], # FIXME: replace with None?
                 residue_name=row[4],
                 chain_id=row[5],
-                residue_number=int(row[6]),
+                residue_number=residue_number,
                 insertion_code=' ' if not row.has(7) or row[7] == "?" else row[7],
                 x=float(row[8]),
                 y=float(row[9]),
@@ -352,9 +370,17 @@ cdef class Molecule:
                     return parser.loads(f, molecule_type=cls)
                 return parser.load(f, molecule_type=cls)
         if format == "pdb":
-            parser = _PDBMoleculeParser(id=id, ignore_endmdl=ignore_endmdl)
+            parser = _PDBMoleculeParser(
+                id=id, 
+                ignore_endmdl=ignore_endmdl,
+                skip_hetatm=skip_hetatm
+            )
         elif format == "cif":
-            parser = _CIFMoleculeParser(id=id, use_author=use_author)
+            parser = _CIFMoleculeParser(
+                id=id, 
+                use_author=use_author,
+                skip_hetatm=skip_hetatm,
+            )
         else:
             raise ValueError(f"invalid value for `format` argument: {format!r}")
         return parser.load(file, molecule_type=cls)

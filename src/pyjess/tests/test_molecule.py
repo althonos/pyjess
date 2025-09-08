@@ -1,9 +1,11 @@
+import itertools
 import os
 import pickle
 import unittest
 import tempfile
 import textwrap
 import sys
+import warnings
 
 from .utils import files
 from . import data
@@ -38,6 +40,22 @@ MOLECULE = textwrap.dedent(
 
 
 class TestMolecule(unittest.TestCase):
+
+    def assertHeteroAtomEqual(self, a1, a2):
+        # self.assertEqual(a1.serial, a2.serial)
+        self.assertEqual(a1.name, a2.name)
+        self.assertEqual(a1.altloc, a2.altloc)
+        self.assertEqual(a1.residue_name, a2.residue_name)
+        # self.assertEqual(a1.chain_id, a2.chain_id)
+        # self.assertEqual(a1.residue_number, a2.residue_number)
+        self.assertEqual(a1.insertion_code, a2.insertion_code)
+        self.assertEqual(a1.element, a2.element)
+        self.assertAlmostEqual(a1.x, a2.x, places=5)
+        self.assertAlmostEqual(a1.y, a2.y, places=5)
+        self.assertAlmostEqual(a1.z, a2.z, places=5)
+        self.assertAlmostEqual(a1.occupancy, a2.occupancy, places=5)
+        self.assertAlmostEqual(a1.temperature_factor, a2.temperature_factor, places=5)
+        self.assertAlmostEqual(a1.charge, a2.charge, places=5)
 
     def assertAtomEqual(self, a1, a2):
         self.assertEqual(a1.serial, a2.serial)
@@ -175,14 +193,56 @@ class TestMolecule(unittest.TestCase):
 
     @unittest.skipUnless(files, "importlib.resources not available")
     @unittest.skipUnless(gemmi, "gemmi not available")
-    def test_load_consistency(self):
+    def test_load_consistency_no_skip_hetatm(self):
         with files(data).joinpath("1AMY.pdb").open() as f:
             pdb_molecule = Molecule.load(f, format="pdb")
         with files(data).joinpath("1AMY.cif").open() as f:
-            cif_molecule = Molecule.load(f, format="cif")
-        # the CIF parser ignores the HETATM, so we may have less atoms in there
-        self.assertLessEqual(len(cif_molecule), len(pdb_molecule))
-        for pdb_atom, cif_atom in zip(pdb_molecule, cif_molecule):
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                cif_molecule = Molecule.load(f, format="cif")
+        self.assertEqual(len(cif_molecule), 3339)
+        self.assertEqual(len(pdb_molecule), 3339)
+        for pdb_atom, cif_atom in itertools.islice(zip(pdb_molecule, cif_molecule), 3184):
+            self.assertAtomEqual(pdb_atom, cif_atom)
+        for pdb_atom, cif_atom in itertools.islice(zip(pdb_molecule, cif_molecule), 3184, 3339):
+            self.assertHeteroAtomEqual(pdb_atom, cif_atom)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    @unittest.skipUnless(gemmi, "gemmi not available")
+    def test_load_consistency_no_skip_hetatm_use_author(self):
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            pdb_molecule = Molecule.load(f, format="pdb")
+        with files(data).joinpath("1AMY.cif").open() as f:
+            cif_molecule = Molecule.load(f, format="cif", use_author=True)
+        self.assertEqual(len(cif_molecule), 3339)
+        self.assertEqual(len(pdb_molecule), 3339)
+        for pdb_atom, cif_atom in itertools.islice(zip(pdb_molecule, cif_molecule), 3184):
+            self.assertAtomEqual(pdb_atom, cif_atom)
+        for pdb_atom, cif_atom in itertools.islice(zip(pdb_molecule, cif_molecule), 3184, 3339):
+            self.assertHeteroAtomEqual(pdb_atom, cif_atom)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    @unittest.skipUnless(gemmi, "gemmi not available")
+    def test_load_consistency_skip_hetatm(self):
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            pdb_molecule = Molecule.load(f, format="pdb", skip_hetatm=True)
+        with files(data).joinpath("1AMY.cif").open() as f:
+            cif_molecule = Molecule.load(f, format="cif", skip_hetatm=True)
+        self.assertEqual(len(cif_molecule), 3184)
+        self.assertEqual(len(pdb_molecule), 3184)
+        for pdb_atom, cif_atom in itertools.islice(zip(pdb_molecule, cif_molecule), 3184):
+            self.assertAtomEqual(pdb_atom, cif_atom)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    @unittest.skipUnless(gemmi, "gemmi not available")
+    def test_load_consistency_skip_hetatm_use_author(self):
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            pdb_molecule = Molecule.load(f, format="pdb", skip_hetatm=True)
+        with files(data).joinpath("1AMY.cif").open() as f:
+            cif_molecule = Molecule.load(f, format="cif", skip_hetatm=True, use_author=True)
+        self.assertEqual(len(cif_molecule), 3184)
+        self.assertEqual(len(pdb_molecule), 3184)
+        for pdb_atom, cif_atom in itertools.islice(zip(pdb_molecule, cif_molecule), 3184):
             self.assertAtomEqual(pdb_atom, cif_atom)
 
     @unittest.skipUnless(files, "importlib.resources not available")
