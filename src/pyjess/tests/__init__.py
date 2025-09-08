@@ -1,5 +1,6 @@
 from . import (
     test_atom,
+    test_doctest,
     test_hit,
     test_jess,
     test_molecule,
@@ -8,6 +9,7 @@ from . import (
 )
 
 def load_tests(loader, suite, pattern):
+    suite.addTests(loader.loadTestsFromModule(test_doctest))
     suite.addTests(loader.loadTestsFromModule(test_atom))
     suite.addTests(loader.loadTestsFromModule(test_hit))
     suite.addTests(loader.loadTestsFromModule(test_jess))

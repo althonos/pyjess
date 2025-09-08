@@ -19,7 +19,7 @@ References:
 
 cimport cython
 from cpython.unicode cimport (
-    PyUnicode_FromStringAndSize, 
+    PyUnicode_FromStringAndSize,
     PyUnicode_FromFormat,
 )
 
@@ -282,9 +282,9 @@ cdef class Molecule:
         if format == "detect":
             format = "cif" if text.lstrip().startswith(("data_", "loop_")) else "pdb"
         return cls.load(
-            io.StringIO(text), 
-            format=format, 
-            id=id, 
+            io.StringIO(text),
+            format=format,
+            id=id,
             ignore_endmdl=ignore_endmdl,
             skip_hetatm=skip_hetatm,
         )
@@ -359,14 +359,14 @@ cdef class Molecule:
                     peek = f[5:]
                 if peek.startswith(("data_", "loop_")):
                     parser = _CIFMoleculeParser(
-                        id=id, 
+                        id=id,
                         use_author=use_author,
                         skip_hetatm=skip_hetatm,
                     )
                 else:
                     parser = _PDBMoleculeParser(
-                        id=id, 
-                        ignore_endmdl=ignore_endmdl, 
+                        id=id,
+                        ignore_endmdl=ignore_endmdl,
                         skip_hetatm=skip_hetatm,
                     )
                 if isinstance(f, str):
@@ -374,13 +374,13 @@ cdef class Molecule:
                 return parser.load(f, molecule_type=cls)
         if format == "pdb":
             parser = _PDBMoleculeParser(
-                id=id, 
+                id=id,
                 ignore_endmdl=ignore_endmdl,
                 skip_hetatm=skip_hetatm
             )
         elif format == "cif":
             parser = _CIFMoleculeParser(
-                id=id, 
+                id=id,
                 use_author=use_author,
                 skip_hetatm=skip_hetatm,
             )
@@ -395,7 +395,7 @@ cdef class Molecule:
         Arguments:
             structure (`Bio.PDB.Structure` or `Bio.PDB.Model`): The
                 Biopython object containing the structure data.
-            id (`str` or `None`): The identifier to give to the newly 
+            id (`str` or `None`): The identifier to give to the newly
                 created molecule. If `None` given, will use the value of
                 ``structure.id``.
 
@@ -439,7 +439,7 @@ cdef class Molecule:
         Arguments:
             structure (`gemmi.Model`): The ``gemmi`` object
                 containing the structure data.
-            id (`str` or `None`): The identifier to give to the newly 
+            id (`str` or `None`): The identifier to give to the newly
                 created molecule.
 
         Returns:
@@ -487,8 +487,8 @@ cdef class Molecule:
             in `Jess.query`.
 
         Caution:
-            If loading data with the `biotite.structure.io.pdb.PDBFile` module, 
-            ensure that you are requesting all atoms and all extra fields 
+            If loading data with the `biotite.structure.io.pdb.PDBFile` module,
+            ensure that you are requesting all atoms and all extra fields
             in `~biotite.structure.io.pdb.PDBFile.get_structure`::
 
                 db_file = PDBFile.read("data/1AMY.pdb")
@@ -1919,14 +1919,14 @@ cdef class Hit:
         """Write the hit to a string.
 
         Arguments:
-            format (`str`): The format in which to write the hit. 
+            format (`str`): The format in which to write the hit.
                 Currently only supports ``pdb``, which writes the hits
                 in the same format as Jess.
             transform (`bool`): Whether or not to transform coordinates
                 of the molecule atoms into template frame.
 
         Raises:
-            `RuntimeError`: When attempting to dump a `Hit` which was 
+            `RuntimeError`: When attempting to dump a `Hit` which was
                 obtained from a `Template` which has no `~Template.id`.
 
         .. versionadded:: 0.7.0
@@ -1942,14 +1942,14 @@ cdef class Hit:
         Arguments:
             file (file-like object): A file opened in *text* mode where the
                 hit will be written.
-            format (`str`): The format in which to write the hit. 
+            format (`str`): The format in which to write the hit.
                 Currently only supports ``pdb``, which writes the hits
                 in the same format as Jess.
             transform (`bool`): Whether or not to transform coordinates
                 of the molecule atoms into template frame.
 
         Raises:
-            `RuntimeError`: When attempting to dump a `Hit` which was 
+            `RuntimeError`: When attempting to dump a `Hit` which was
                 obtained from a `Template` which has no `~Template.id`.
 
         .. versionadded:: 0.7.0
@@ -1962,7 +1962,7 @@ cdef class Hit:
         cdef size_t    k
         cdef char[80]  buffer
         cdef char[5]   name
-        cdef char[5]   resname 
+        cdef char[5]   resname
         cdef double[3] x
         cdef int       count   = self.template._tpl.count(self.template._tpl)
 
@@ -2008,6 +2008,44 @@ cdef class Hit:
 
 cdef class Jess:
     """A handle to run Jess over a list of templates.
+
+    Example:
+        Create a `Jess` object from a list of templates::
+
+            >>> t1 = Template.load("1.3.3.tpl")
+            >>> t2 = Template.load("4.1.2.tpl")
+            >>> jess = Jess([t1, t2])
+
+        Once initialized, the `Jess` object cannot be modified further.
+        Use the `~Jess.query` method to query the templates with a
+        molecule::
+
+            >>> molecule = Molecule.load("1AMY.pdb")
+            >>> query = jess.query(molecule, 2, 2, 2)
+
+        The returned `Query` object is an iterator that can be
+        advanced through a ``for`` loop, or with the `next` built-in
+        function to get the first hit:
+
+            >>> hit = next(query)
+            >>> hit.rmsd
+            1.4386...
+
+        The hit can also be formatted in PDB format like in the 
+        original JESS code::
+
+            >>> print(hit.dumps(format="pdb"), end="")
+            REMARK 1AMY 1.439 2om2 Det= 1.0 log(E)~ 1.11
+            ATOM    729  CA  THR A  94      34.202 -24.426   8.851  1.00  2.00
+            ATOM    732  CB  THR A  94      35.157 -23.467   8.101  1.00  4.66
+            ATOM    733  OG1 THR A  94      36.338 -23.247   8.871  1.00  9.85
+            ATOM    746  CD  GLU A  96      41.454 -29.509   8.013  1.00 24.05
+            ATOM    748  OE2 GLU A  96      42.536 -29.680   7.441  1.00 34.44
+            ATOM    747  OE1 GLU A  96      41.212 -28.521   8.708  1.00 18.56
+            ATOM    437  CZ  ARG A  55      44.471 -26.619  10.181  1.00  8.51
+            ATOM    436  NE  ARG A  55      44.334 -27.346  11.290  1.00  9.05
+            ATOM    438  NH1 ARG A  55      43.590 -26.751   9.179  1.00 13.17
+            ENDMDL
 
     .. versionadded:: 0.4.0
        Equality, hashing and pickle protocol support.
