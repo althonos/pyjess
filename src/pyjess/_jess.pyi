@@ -18,6 +18,11 @@ try:
 except ImportError:
     gemmi = Any    # type: ignore
 
+try:
+    import biotite.structure
+except ImportError:
+    biotite = Any    # type: ignore
+
 
 MATCH_MODE = Literal[
     -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 100, 101, 102, 103, 104, 105, 106, 107
@@ -32,6 +37,8 @@ class Molecule(Sequence[Atom]):
     def from_biopython(cls, structure: Union[Structure, Model]) -> Molecule: ...
     @classmethod
     def from_gemmi(cls, structure: gemmi.Structure) -> Molecule: ...
+    @classmethod
+    def from_biotite(cls, atom_array: biotite.structure.AtomArray, id: Optional[str] = None) -> Molecule: ...
     @classmethod
     def load(
         cls,
