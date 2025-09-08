@@ -18,7 +18,10 @@ References:
 # --- C imports --------------------------------------------------------------
 
 cimport cython
-from cpython.unicode cimport PyUnicode_FromStringAndSize, PyUnicode_FromFormat
+from cpython.unicode cimport (
+    PyUnicode_FromStringAndSize, 
+    PyUnicode_FromFormat,
+)
 
 from libc.math cimport isnan, exp, INFINITY, NAN
 from libc.stdio cimport FILE, fclose, fdopen, printf, sprintf
@@ -916,7 +919,7 @@ cdef class Atom:
         """`str`: The identifier of the chain the atom belongs to.
         """
         assert self._atom is not NULL
-        return "{}{}".format(chr(self._atom.chainID1), chr(self._atom.chainID2)).strip()
+        return PyUnicode_FromFormat("%c%c", self._atom.chainID1, self._atom.chainID2).strip()
 
     @property
     def occupancy(self):
@@ -1197,7 +1200,7 @@ cdef class TemplateAtom:
         assert self._atom is not NULL
         cdef char c1 = jess.tess_atom.TessAtom_chainID1(self._atom)
         cdef char c2 = jess.tess_atom.TessAtom_chainID2(self._atom)
-        return "{}{}".format(chr(c1), chr(c2)).strip()
+        return PyUnicode_FromFormat("%c%c", c1, c2).strip()
 
     @property
     def x(self):
