@@ -22,15 +22,10 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
-          # - "pypy-3.7"
-          # - "pypy-3.8"
-          # - "pypy-3.9"
-          # - "pypy-3.10"
-        optional-dependencies:
-          - ''
-          - 'gemmi'
-          - 'biopython'
-          - 'biotite'
+          - "pypy-3.7"
+          - "pypy-3.8"
+          - "pypy-3.9"
+          - "pypy-3.10"
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -44,12 +39,15 @@ jobs:
       run: python -m pip install -U pip wheel setuptools
     - name: Install Python requirements
       run: python -m pip install -r .github/workflows/requirements.txt
-    - name: Install Python requirements
-      if: matrix.optional-dependencies != ''
-      run: python -m pip install ${{ matrix.optional-dependencies }}
     - name: Build C extension in debug mode
       run: python -m pip install -e . -vv --no-build-isolation 
-    - name: Test package
+    - name: Test package without optional dependencies
+      run: python -m unittest pyjess.tests -vv
+    - name: Install Python requirements
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+      run: python -m pip install gemmi biopython biotite
+    - name: Test package with optional dependencies
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
       run: python -m unittest pyjess.tests -vv
     # - name: Upload to Codecov
     #   if: matrix.python-impl == 'CPython'
@@ -76,15 +74,10 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
-          # - "pypy-3.7"
-          # - "pypy-3.8"
-          # - "pypy-3.9"
-          # - "pypy-3.10"
-        optional-dependencies:
-          - ''
-          - 'gemmi'
-          - 'biopython'
-          - 'biotite'
+          - "pypy-3.7"
+          - "pypy-3.8"
+          - "pypy-3.9"
+          - "pypy-3.10"
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -102,12 +95,15 @@ jobs:
       run: python -m pip install -U pip wheel setuptools
     - name: Install Python requirements
       run: python -m pip install -r .github/workflows/requirements.txt
-    - name: Install Python requirements
-      if: matrix.optional-dependencies != ''
-      run: python -m pip install ${{ matrix.optional-dependencies }}
     - name: Build C extension in debug mode
       run: python -m pip install -e . -vv --no-build-isolation 
-    - name: Test package
+    - name: Test package without optional dependencies
+      run: python -m unittest pyjess.tests -vv
+    - name: Install Python requirements
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+      run: python -m pip install gemmi biopython biotite
+    - name: Test package with optional dependencies
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
       run: python -m unittest pyjess.tests -vv
     # - name: Upload to Codecov
     #   if: matrix.python-impl == 'CPython'
@@ -134,15 +130,10 @@ jobs:
           - "3.11"
           - "3.12"
           - "3.13"
-          # - "pypy-3.7"
-          # - "pypy-3.8"
-          # - "pypy-3.9"
-          # - "pypy-3.10"
-        optional-dependencies:
-          - ''
-          - 'gemmi'
-          - 'biopython'
-          - 'biotite'
+          - "pypy-3.7"
+          - "pypy-3.8"
+          - "pypy-3.9"
+          - "pypy-3.10"
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -157,10 +148,13 @@ jobs:
       run: python -m pip install -U pip wheel setuptools
     - name: Install Python requirements
       run: python -m pip install -r .github/workflows/requirements.txt
-    - name: Install Python requirements
-      if: matrix.optional-dependencies != ''
-      run: python -m pip install ${{ matrix.optional-dependencies }}
     - name: Build C extension
       run: python -m pip install . -vv --no-build-isolation 
-    - name: Test without coverage
+    - name: Test package without optional dependencies
+      run: python -m unittest pyjess.tests -vv
+    - name: Install Python requirements
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
+      run: python -m pip install gemmi biopython biotite
+    - name: Test package with optional dependencies
+      if: ${{ !startsWith(matrix.python-version, 'pypy') }}
       run: python -m unittest pyjess.tests -vv
