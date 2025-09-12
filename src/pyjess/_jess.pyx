@@ -18,9 +18,11 @@ References:
 # --- C imports --------------------------------------------------------------
 
 cimport cython
+from cpython.exc cimport PyErr_WarnEx
 from cpython.unicode cimport (
     PyUnicode_FromStringAndSize,
     PyUnicode_FromFormat,
+    PyUnicode_AsASCIIString,
 )
 
 from libc.math cimport isnan, exp, INFINITY, NAN
@@ -47,12 +49,8 @@ from jess.tess_atom cimport TessAtom as _TessAtom
 
 # --- Python imports ---------------------------------------------------------
 
-import contextlib
 import functools
 import io
-import itertools
-import os
-import warnings
 
 __version__ = PROJECT_VERSION
 
@@ -76,9 +74,13 @@ cdef inline void decode_token(char* dst, const char* src, size_t n) noexcept nog
             dst[i] = src[i]
     dst[n] = 0
 
-@contextlib.contextmanager
-def nullcontext(return_value=None):
-    yield return_value
+class nullcontext:
+    def __init__(self, return_value=None):
+        self.retval = return_value
+    def __enter__(self):
+        return self.retval
+    def __exit__(self, exc_type, exc_value, traceback):
+        return False
 
 # --- Classes ----------------------------------------------------------------
 
@@ -101,13 +103,14 @@ cdef class _PDBMoleculeParser(_MoleculeParser):
         return self.load(io.StringIO(text), molecule_type)
 
     def load(self, file, molecule_type):
-        cdef str id = self.id
+        cdef str  line
+        cdef str  id    = self.id
+        cdef list atoms = []
         try:
             handle = open(file)
         except TypeError:
             handle = nullcontext(file)
         with handle as f:
-            atoms = []
             for line in f:
                 if line.startswith("HEADER"):
                     if id is None:
@@ -164,14 +167,13 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
                 continue
 
             if row[6] == "." and row[14] == "HETATM":
-                warnings.warn(
-                    (
-                        "HETATM line found without residue number. Consider "
-                        "parsing with use_author=True to use author-defined "
-                        "residue numbers, or skip_hetatm=True to disable "
-                        "parsing of HETATM altogether."
-                    ),
+                PyErr_WarnEx(
                     UserWarning,
+                    "HETATM line found without residue number. Consider "
+                    "parsing with use_author=True to use author-defined "
+                    "residue numbers, or skip_hetatm=True to disable "
+                    "parsing of HETATM altogether.",
+                    3,
                 )
                 residue_number = max_residue_number
                 max_residue_number += 1
@@ -292,7 +294,8 @@ cdef class Molecule:
     @classmethod
     def load(
         cls,
-        file, str format = "detect",
+        file, 
+        str format = "detect",
         *,
         str id = None,
         bint ignore_endmdl = False,
@@ -345,6 +348,8 @@ cdef class Molecule:
 
         """
         cdef _MoleculeParser parser
+        cdef str             peek
+
         if format == "detect":
             try:
                 handle = open(file)
@@ -406,7 +411,7 @@ cdef class Molecule:
         .. versionadded:: 0.7.0
 
         """
-        atoms = []
+        cdef list atoms = []
         for c in structure.get_chains():
             for r in c.get_residues():
                 _, residue_number, insertion_code = r.id
@@ -449,7 +454,7 @@ cdef class Molecule:
         .. versionadded:: 0.7.0
 
         """
-        atoms = []
+        cdef list atoms = []
         for cra in model.all():
             a = cra.atom
             r = cra.residue
@@ -501,7 +506,7 @@ cdef class Molecule:
         .. versionadded:: 0.7.0
 
         """
-        atoms = []
+        cdef list atoms = []
         for a in atom_array:
             atom = Atom(
                 name=str(a.atom_name),
@@ -770,6 +775,11 @@ cdef class Atom:
                 long.
 
         """
+        cdef bytearray _name
+        cdef bytes     _residue_name
+        cdef bytes     _segment
+        cdef bytes     _element
+
         if len(name) > 4:
             raise ValueError(f"Invalid atom name: {name!r}")
         if len(residue_name) > 3:
@@ -785,6 +795,10 @@ cdef class Atom:
         if self._atom is NULL:
             raise MemoryError("Failed to allocate atom")
 
+        _residue_name = PyUnicode_AsASCIIString(residue_name)
+        _segment = PyUnicode_AsASCIIString(segment)
+        _element = PyUnicode_AsASCIIString(element)
+
         self._atom.serial = serial
         self._atom.altLoc = ord(altloc)
         self._atom.chainID1 = ord(chain_id[0]) if len(chain_id) > 0 else 0
@@ -797,9 +811,9 @@ cdef class Atom:
         self._atom.occupancy = occupancy
         self._atom.tempFactor = temperature_factor
         self._atom.charge = charge
-        encode_token(self._atom.resName, residue_name.encode('ascii').ljust(3, b'\0'), 3)
-        encode_token(self._atom.segID, segment.encode('ascii').ljust(4, b'\0'), 4)
-        encode_token(self._atom.element, element.encode('ascii').ljust(2, b'\0'), 2)
+        encode_token(self._atom.resName, _residue_name.ljust(3, b'\0'), 3)
+        encode_token(self._atom.segID, _segment.ljust(4, b'\0'), 4)
+        encode_token(self._atom.element, _element.ljust(2, b'\0'), 2)
 
         # FIXME: is alignment proper?
         _name = bytearray(name, 'ascii')
@@ -1331,12 +1345,13 @@ cdef class Template:
             `~pyjess.Template`: The template parsed from the given file.
 
         """
+        cdef str  line
+        cdef list atoms = []
         try:
             handle = open(file)
         except TypeError:
             handle = nullcontext(file)
         with handle as f:
-            atoms = []
             for line in f:
                 if line.startswith("ATOM"):
                     atoms.append(TemplateAtom.loads(line))
@@ -1709,10 +1724,10 @@ cdef class Query:
 
                     if nan:
                         with gil:
-                            warnings.warn(
-                                "Jess returned a superposition matrix with NaN values",
+                            PyErr_WarnEx(
                                 UserWarning,
-                                stacklevel=2,
+                                "Jess returned a superposition matrix with NaN values",
+                                2,
                             )
                     else:
                         self._copy_atoms(tpl, hit)
@@ -2231,19 +2246,21 @@ cdef class Jess:
         """
 
         if ignore_chain is True:
-            warnings.warn(
+            PyErr_WarnEx(
+                DeprecationWarning,
                 "`ignore_chain` parameter expects string parameters "
                 "to specificy the mode since PyJess v0.7.0. "
                 "Use `ignore_chain='atoms'` instead of `ignore_chain=True`",
-                DeprecationWarning,
+                2,
             )
             ignore_chain="atoms"
         elif ignore_chain is False:
-            warnings.warn(
+            PyErr_WarnEx(
+                DeprecationWarning,
                 "`ignore_chain` parameter expects string parameters "
                 "to specificy the mode since PyJess v0.7.0. "
                 "Use `ignore_chain=None` instead of `ignore_chain=False`",
-                DeprecationWarning,
+                2,
             )
             ignore_chain=None
 

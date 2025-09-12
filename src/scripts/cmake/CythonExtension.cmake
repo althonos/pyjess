@@ -40,6 +40,7 @@ if(CMAKE_BUILD_TYPE STREQUAL Debug)
     -X warn.unused_arg=True
     -X warn.unused_result=True
     -X warn.multiple_declarators=True
+    --annotate-fullc
   )
   if(NOT Python_INTERPRETER_ID STREQUAL PyPy)
     set(CYTHON_DIRECTIVES
