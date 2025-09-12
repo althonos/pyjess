@@ -57,6 +57,7 @@ pyjess = "pyjess.cli:main"
 
 [tool.scikit-build]
 build-dir = "build/{build_type}"
+wheel.py-api = "cp38"
 editable.rebuild = true
 editable.verbose = false
 sdist.exclude = ["vendor/jess/examples"]
