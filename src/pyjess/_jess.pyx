@@ -801,7 +801,7 @@ cdef class Atom:
         encode_token(self._atom.segID, segment.encode('ascii').ljust(4, b'\0'), 4)
         encode_token(self._atom.element, element.encode('ascii').ljust(2, b'\0'), 2)
 
-        # FIXME
+        # FIXME: is alignment proper?
         _name = bytearray(name, 'ascii')
         if len(_name) < 4:
             _name.insert(0, ord('_'))
@@ -1115,9 +1115,10 @@ cdef class TemplateAtom:
                 _name = bytearray(name, 'ascii')
             else:
                 _name = bytearray(name)
+            # FIXME: is alignment proper?
             if len(_name) > 4:
                 raise ValueError(f"Invalid atom name: {name!r}")
-            elif len(_name) < 3:
+            elif len(_name) <= 3:
                 _name.insert(0, ord('_'))
             encode_token(self._atom.name[m], _name.ljust(4, b'\0'), 4)
 
