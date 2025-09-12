@@ -56,7 +56,7 @@ pyjess = "pyjess.cli:main"
 pyjess = "pyjess.cli:main"
 
 [tool.scikit-build]
-build-dir = "build/{build_type}"
+build-dir = "build/{build_type}-{cache_tag}"
 wheel.py-api = "cp38"
 editable.rebuild = true
 editable.verbose = false
