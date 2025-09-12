@@ -294,7 +294,7 @@ cdef class Molecule:
     @classmethod
     def load(
         cls,
-        file, 
+        file,
         str format = "detect",
         *,
         str id = None,
@@ -632,17 +632,32 @@ cdef class Molecule:
         return self._id
 
     cpdef Molecule conserved(self, double cutoff = 0.0):
+        """Get a molecule containing only a subset of conserved atoms.
+
+        Arguments:
+            cutoff (`float`): The conservation cutoff for atoms. Atoms
+                with a `~Atom.temperature_factor` lower than this value
+                will be removed from the result.
+
+        Returns:
+            `~pyjess.Molecule`: A new molecule with atoms below the
+            conservation cutoff removed.
+
+        """
         assert self._mol is not NULL
-        cdef Atom atom
-        return type(self)(
-            id=self.id,
-            atoms=[
-                atom
-                for atom in self
-                if cutoff <= 0.0
-                or atom._atom.tempFactor >= cutoff
-            ]
-        )
+
+        cdef size_t i
+        cdef list   atoms
+
+        if cutoff <= 0.0:
+            return self.copy()
+
+        atoms = []
+        for i in range(self._mol.count):
+            if self._mol.atom[i].tempFactor >= cutoff:
+                atoms.append(self[i])
+
+        return type(self)(id=self.id, atoms=atoms)
 
     cpdef Molecule copy(self):
         """Create a copy of this molecule and its atoms.
@@ -958,16 +973,22 @@ cdef class Atom:
 
     @property
     def x(self):
+        """`float`: The atom coordinate in the 1st dimension.
+        """
         assert self._atom is not NULL
         return self._atom.x[0]
 
     @property
     def y(self):
+        """`float`: The atom coordinate in the 2nd dimension.
+        """
         assert self._atom is not NULL
         return self._atom.x[1]
 
     @property
     def z(self):
+        """`float`: The atom coordinate in the 3rd dimension.
+        """
         assert self._atom is not NULL
         return self._atom.x[2]
 
@@ -1538,6 +1559,8 @@ cdef class Template:
 
     @property
     def id(self):
+        """`str` or `None`: An identifier for the template, if any.
+        """
         assert self._tpl is not NULL
 
         cdef const char* name = self._tpl.name(self._tpl)
