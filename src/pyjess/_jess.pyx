@@ -1275,7 +1275,10 @@ cdef class TemplateAtom:
         .. versionadded:: 0.4.0
 
         """
-        return type(self)(**self._state())
+        cdef TemplateAtom atom = TemplateAtom.__new__(TemplateAtom)
+        with nogil:
+            atom._atom = jess.tess_atom.TessAtom_copy(self._atom)
+        return atom
 
 
 cdef class Template:
@@ -1535,11 +1538,18 @@ cdef class Template:
         return self._tess.dim
 
     cpdef Template copy(self):
-        return Template(
-            self,
-            self.id
-        )
+        """Create a copy of the template.
 
+        Returns:
+            `~pyjess.Template`: A new template object with identical
+            attributes and a copy of the `TemplateAtom` it contains.
+
+        """
+        cdef Template tpl = Template.__new__(Template)
+        with nogil:
+            tpl._tpl = self._tpl.copy(self._tpl)
+            tpl._tess = <_TessTemplate*> &tpl._tpl[1]
+        return tpl
 
 cdef class Query:
     """A query over templates with a given molecule.
@@ -2032,7 +2042,7 @@ cdef class Jess:
             >>> hit.rmsd
             1.4386...
 
-        The hit can also be formatted in PDB format like in the 
+        The hit can also be formatted in PDB format like in the
         original JESS code::
 
             >>> print(hit.dumps(format="pdb"), end="")

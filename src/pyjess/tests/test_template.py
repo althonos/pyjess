@@ -111,6 +111,7 @@ class TestTemplate(unittest.TestCase):
         tpl2 = tpl1.copy()
         self.assertEqual(len(tpl1), len(tpl2))
         self.assertEqual(tpl1, tpl2)
+        self.assertEqual(list(tpl1), list(tpl2))
 
     def test_pickle_roundtrip(self):
         tpl1 = Template.loads(TEMPLATE, id="tpl1")
