@@ -6,11 +6,32 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.5...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.6...HEAD
+
+
+## [v0.7.0-alpha.6] - 2025-09-12
+[v0.7.0-alpha.6]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.5...v0.7.0-alpha.6
+
+### Added
+- Command Line Interface with the same features as the Jess CLI.
+- `Molecule.from_biopython`, `Molecule.from_biotite` and `Molecule.from_gemmi` to create a `Molecule` with objects from other libraries.
+- `Hit.dump` and `Hit.dumps` methods to write a hit to PDB format.
+- `Molecule.load` option to skip parsing of `HETATM` from PDB files.
+
+### Fixed
+- Issue with alignment of atom names in `TemplateAtom`.
+- Validate data in PDB parser to ensure it is not parsing a mmCIF file.
+- Parsing of mmCIF files with atoms missing occupancy values.
+- Incorrect alignment of `TemplateAtom` names for names of less than 4 characters.
+
+### Changed
+- Setup deployment of Limited API wheels for CPython 3.8 onwards.
+- Implement format detection between PDB and mmCIF in `Molecule.load`.
+- Implement `Template.copy` and `TemplateAtom.copy` using C-level API rather than Python copy.
 
 
 ## [v0.7.0-alpha.5] - 2025-09-03
-[v0.7.0-alpha.5]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.5...v0.7.0-alpha.5
+[v0.7.0-alpha.5]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.4...v0.7.0-alpha.5
 
 ### Fixed
 - Issue with new residue support introduced in `v0.7.0-alpha.4`.
