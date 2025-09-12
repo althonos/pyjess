@@ -89,7 +89,7 @@ macro(cython_extension _name)
   string(REPLACE "/" "." _target ${_dest_folder}.${_name})
 
   # Add Python module
-  if(NOT "${SKBUILD_SABI_VERSION}" STREQUAL "")
+  if((NOT "${SKBUILD_SABI_VERSION}" STREQUAL "") AND (NOT CMAKE_BUILD_TYPE STREQUAL Debug))
     message(STATUS "Building in Limited API mode for Python: ${SKBUILD_SABI_VERSION}")
     python_add_library(${_target} MODULE WITH_SOABI USE_SABI "${SKBUILD_SABI_VERSION}" ${_name}.pyx ${_name}.c ${CYTHON_EXTENSION_EXTRA_SOURCES})
   else()
