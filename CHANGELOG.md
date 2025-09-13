@@ -6,75 +6,38 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.6...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0...HEAD
 
 
-## [v0.7.0-alpha.6] - 2025-09-12
-[v0.7.0-alpha.6]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.5...v0.7.0-alpha.6
+## [v0.7.0] - 2025-09-13
+[v0.7.0]: https://github.com/althonos/pyjess/compare/v0.6.0...v0.7.0
 
 ### Added
 - Command Line Interface with the same features as the Jess CLI.
 - `Molecule.from_biopython`, `Molecule.from_biotite` and `Molecule.from_gemmi` to create a `Molecule` with objects from other libraries.
 - `Hit.dump` and `Hit.dumps` methods to write a hit to PDB format.
 - `Molecule.load` option to skip parsing of `HETATM` from PDB files.
-
-### Fixed
-- Issue with alignment of atom names in `TemplateAtom`.
-- Validate data in PDB parser to ensure it is not parsing a mmCIF file.
-- Parsing of mmCIF files with atoms missing occupancy values.
-- Incorrect alignment of `TemplateAtom` names for names of less than 4 characters.
-
-### Changed
-- Setup deployment of Limited API wheels for CPython 3.8 onwards.
-- Implement format detection between PDB and mmCIF in `Molecule.load`.
-- Implement `Template.copy` and `TemplateAtom.copy` using C-level API rather than Python copy.
-
-
-## [v0.7.0-alpha.5] - 2025-09-03
-[v0.7.0-alpha.5]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.4...v0.7.0-alpha.5
-
-### Fixed
-- Issue with new residue support introduced in `v0.7.0-alpha.4`.
-
-
-## [v0.7.0-alpha.4] - 2025-09-03
-[v0.7.0-alpha.4]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.3...v0.7.0-alpha.4
-
-### Added
 - Support for [Selenocysteine](https://en.wikipedia.org/wiki/Selenocysteine) and [Pyrrolysine](https://en.wikipedia.org/wiki/Pyrrolysine) residues in `TemplateAtom`.
-
-
-## [v0.7.0-alpha.3] - 2025-09-03
-[v0.7.0-alpha.3]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.2...v0.7.0-alpha.3
-
-### Added
 - Support for parsing `Molecule` objects from CIF files using [`gemmi`](https://gemmi.readthedocs.io/).
-
-### Changed
-- **breaking**: Make `id` and `ignore_endmdl` arguments of `Molecule.load` and `Molecule.loads` keyword-only.
-- Make `altloc` and `insertion_code` arguments of `Atom` optional.
-
-
-## [v0.7.0-alpha.2] - 2025-09-02
-[v0.7.0-alpha.2]: https://github.com/althonos/pyjess/compare/v0.7.0-alpha.1...v0.7.0-alpha.2
-
-### Fixed
-- `max_candidates` causing `Query` to stop before reaching the actual number of maximum candidates.
-
-### Changed
-- **breaking**: Use string variants instead of `bool` to control the behaviour of `ignore_chain` argument.
-- Use unrolled string comparison to compare atom names instead of `strcasecmp` in Jess code.
-
-
-## [v0.7.0-alpha.1] - 2025-09-02
-[v0.7.0-alpha.1]: https://github.com/althonos/pyjess/compare/v0.6.0...v0.7.0-alpha.1
 
 ### Fixed
 - **breaking**: Incorrect handling of `max_candidates` in `Jess.query`, causing PyJess to erroneously ignore some templates.
 - `Template.dimension` reporting incorrect numbers for identical residues across different residues.
+- Issue with alignment of atom names in `TemplateAtom`.
+- Validate data in PDB parser to ensure it is not parsing a mmCIF file.
+- Parsing of mmCIF files with atoms missing occupancy values.
+- Incorrect alignment of `TemplateAtom` names for names of less than 4 characters.
+- `max_candidates` causing `Query` to stop before reaching the actual number of maximum candidates.
 
 ### Changed
 - **breaking**: Set the `max_candidates` default value to `None` in `Jess.query`, disabling max candidates filtering by default.
+- **breaking**: Use string variants instead of `bool` to control the behaviour of `ignore_chain` argument.
+- **breaking**: Make `id` and `ignore_endmdl` arguments of `Molecule.load` and `Molecule.loads` keyword-only.
+- Use unrolled string comparison to compare atom names instead of `strcasecmp` in Jess code.
+- Make `altloc` and `insertion_code` arguments of `Atom` optional.
+- Setup deployment of Limited API wheels for CPython 3.8 onwards.
+- Implement format detection between PDB and mmCIF in `Molecule.load`.
+- Implement `Template.copy` and `TemplateAtom.copy` using C-level API rather than Python copy.
 
 
 ## [v0.6.0] - 2025-09-01
@@ -90,6 +53,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Changed
 - Hardcode space dimensions to 3 to encourage compilers to unroll loops over dimensions.
 - Recycle memory between templates within a query to reduce total amount of allocation/deallocation in hot paths.
+
 
 ## [v0.5.2] - 2025-08-26
 [v0.5.2]: https://github.com/althonos/pyjess/compare/v0.5.1...v0.5.2
