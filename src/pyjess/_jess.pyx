@@ -2,6 +2,73 @@
 # cython: language_level=3, linetrace=True, binding=True
 """Bindings to Jess, a 3D template matching software.
 
+Jess is an algorithm for constraint-based structural template matching
+proposed by Jonathan Barker *et al.*. It can be used to identify
+catalytic residues from a known template inside a protein structure. 
+Jess is an evolution of TESS, a geometric hashing algorithm developed by
+Andrew Wallace *et al.*, removing some pre-computation and
+structural requirements from the original algorithm. 
+
+PyJess is a Python module that provides bindings to Jess using
+`Cython <https://cython.org/>`_. It allows creating templates, querying 
+them with protein structures, and retrieving the hits using a Python API 
+without performing any external I/O. It's also more than 10x faster than 
+Jess thanks to algorithmic optimizations added to improve the original Jess 
+code while producing consistent results.
+
+Example:
+    Load templates from a file, either as a file-like object or 
+    given a filename::
+
+        >>> t1 = pyjess.Template.load("1.3.3.tpl")  # load from filename
+        >>> with open("4.1.2.tpl") as f:            # load from a file object
+        ...     t2 = pyjess.Template.load(f)
+
+    Load molecules from a file, either as a file-like object or given
+    a filename::
+
+        >>> mol = pyjess.Molecule.load("1AMY.pdb")
+        >>> mol[0]
+        Atom(serial=1, name='N', altloc=' ', residue_name='GLN', ...)
+
+    Create a `Jess` object storing the templates to support running 
+    queries on them. The individual templates can still be accessed by 
+    index::
+
+        >>> jess = pyjess.Jess([t1, t2])
+        >>> jess[0].id
+        '3r6v'
+
+    Run a query on the Jess object to retrieve all templates matching 
+    a `Molecule`, *in no particular order*::
+
+        >>> hits = jess.query(mol, 2, 2, 2)
+        >>> for hit in hits:
+        ...     print(hit.template.id, hit.rmsd)
+        2om2 1.4386...
+        2om2 1.4877...
+        2om2 1.4376...
+        2om2 1.5284...
+        2om2 1.4863...
+        2om2 1.4369...
+        2om2 1.4790...
+        2om2 1.1414...
+        2om2 1.0755...
+        2om2 1.1973...
+        2om2 1.1353...
+        2om2 1.0711...
+        2om2 1.1494...
+
+    By default, a template can match a molecule in more than one way, 
+    if several sets of atoms match the geometric constraints. Use the
+    ``best_match`` argument of `~Jess.query` to only retrieve the
+    best match per template::
+
+        >>> hits = jess.query(mol, 2, 2, 2, best_match=True)
+        >>> for hit in hits:
+        ...     print(hit.template.id, hit.rmsd)
+        2om2 1.071...
+
 References:
     - Barker, J. A., & Thornton, J. M. (2003). *An algorithm for
       constraint-based structural template matching: application to
