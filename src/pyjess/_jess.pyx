@@ -230,6 +230,7 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
 
         atoms = []
         for row in table:
+
             if row[14] != "ATOM" and (row[14] != "HETATM" or self.skip_hetatm):
                 continue
 
@@ -251,7 +252,7 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
             atom = Atom(
                 serial=int(row[0]),
                 element=row[1],
-                name=row[2],
+                name=row[2].strip('"'),
                 altloc=' ' if row[3] == "." else row[3], # FIXME: replace with None?
                 residue_name=row[4],
                 chain_id=row[5],
@@ -261,7 +262,7 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
                 y=float(row[9]),
                 z=float(row[10]),
                 occupancy=0.0 if row[11] == '.' else float(row[11]),
-                temperature_factor=float(row[12]),
+                temperature_factor=0.0 if row[12] == '.' else float(row[12]),
                 charge=0 if not row.has(13) or row[13] == "?" else int(row[13]),
             )
             atoms.append(atom)
