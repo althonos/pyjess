@@ -198,26 +198,34 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
     cdef object gemmi
     cdef bint use_author
     cdef bint skip_hetatm
+    cdef bint ignore_endmdl
 
     _PRIMARY_COLUMNS = [
         'id', 'type_symbol', 'label_atom_id', 'label_alt_id', 'label_comp_id',
         'label_asym_id', 'label_seq_id', '?pdbx_PDB_ins_code', 'Cartn_x',
         'Cartn_y', 'Cartn_z', 'occupancy', 'B_iso_or_equiv',
-        '?pdbx_formal_charge', '?group_PDB',
+        '?pdbx_formal_charge', '?group_PDB', 'pdbx_PDB_model_num',
     ]
 
     _AUTH_COLUMNS = [
         'id', 'type_symbol', 'auth_atom_id', 'label_alt_id', 'auth_comp_id',
         'auth_asym_id', 'auth_seq_id', '?pdbx_PDB_ins_code', 'Cartn_x',
         'Cartn_y', 'Cartn_z', 'occupancy', 'B_iso_or_equiv',
-        '?pdbx_formal_charge', '?group_PDB',
+        '?pdbx_formal_charge', '?group_PDB', 'pdbx_PDB_model_num',
     ]
 
-    def __init__(self, str id = None, bint use_author = False, bint skip_hetatm = False):
+    def __init__(
+        self,
+        str id = None,
+        bint use_author = False,
+        bint skip_hetatm = False,
+        bint ignore_endmdl = False,
+    ):
         super().__init__(id=id)
         self.gemmi = __import__('gemmi')
         self.use_author = use_author
         self.skip_hetatm = skip_hetatm
+        self.ignore_endmdl = ignore_endmdl
 
     def _load_block(self, document, molecule_type):
         block = document.sole_block()
@@ -230,6 +238,11 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
 
         atoms = []
         for row in table:
+
+            # row[15] contains _atom_site.pdbx_PDB_model_num
+            # by default (if ignore_endmdl is False) we break on model number
+            if not self.ignore_endmdl and row[15] != '1':
+                break
 
             if row[14] != "ATOM" and (row[14] != "HETATM" or self.skip_hetatm):
                 continue
@@ -325,7 +338,7 @@ cdef class Molecule:
             ignore_endmdl (`bool`): Pass `True` to make the parser read all
                 the atoms from the PDB file. By default, the parser only
                 reads the atoms of the first model, and stops at the first
-                ``ENDMDL`` line. *Ignored for CIF files*.
+                ``ENDMDL`` line - or for CIF files stops if the PDB model > 1
             use_author (`bool`): Pass `True` to use the author-defined
                 labels while parsing CIF files, e.g. read the chain name
                 from ``_atom_site.auth_asym_id`` rather than
@@ -390,7 +403,7 @@ cdef class Molecule:
             ignore_endmdl (`bool`): Pass `True` to make the parser read all
                 the atoms from the PDB file. By default, the parser only
                 reads the atoms of the first model, and stops at the first
-                ``ENDMDL`` line. *Ignored for CIF files*.
+                ``ENDMDL`` line - or for CIF files stops if the PDB model > 1.
             use_author (`bool`): Pass `True` to use the author-defined
                 labels while parsing CIF files, e.g. read the chain name
                 from ``_atom_site.auth_asym_id`` rather than
@@ -435,6 +448,7 @@ cdef class Molecule:
                         id=id,
                         use_author=use_author,
                         skip_hetatm=skip_hetatm,
+                        ignore_endmdl=ignore_endmdl,
                     )
                 else:
                     parser = _PDBMoleculeParser(
@@ -456,6 +470,7 @@ cdef class Molecule:
                 id=id,
                 use_author=use_author,
                 skip_hetatm=skip_hetatm,
+                ignore_endmdl=ignore_endmdl,
             )
         else:
             raise ValueError(f"invalid value for `format` argument: {format!r}")
