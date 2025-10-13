@@ -338,7 +338,7 @@ cdef class Molecule:
             ignore_endmdl (`bool`): Pass `True` to make the parser read all
                 the atoms from the PDB file. By default, the parser only
                 reads the atoms of the first model, and stops at the first
-                ``ENDMDL`` line - or for CIF files stops if the PDB model > 1
+                ``ENDMDL`` line - or for CIF files stops if the PDB model > 1.
             use_author (`bool`): Pass `True` to use the author-defined
                 labels while parsing CIF files, e.g. read the chain name
                 from ``_atom_site.auth_asym_id`` rather than
@@ -1876,7 +1876,6 @@ cdef class Hit:
         rmsd (`float`): The RMSD between the aligned structures.
         template (`~pyjess.Template`): The template that matched the
             query molecule.
-        molecule (`~pyjess.Molecule`): The query molecule.
 
     """
     cdef double[9]       _rotation

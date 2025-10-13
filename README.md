@@ -128,7 +128,7 @@ computed on-the-fly when requested:
 
 ```python
 for hit in query:
-    print(hit.molecule.id, hit.template.id, hit.rmsd, hit.log_evalue)
+    print(hit.molecule().id, hit.template.id, hit.rmsd, hit.log_evalue)
     for atom in hit.atoms():
         print(atom.name, atom.x, atom.y, atom.z)
 ```

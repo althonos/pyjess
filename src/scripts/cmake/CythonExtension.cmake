@@ -97,8 +97,6 @@ macro(cython_extension _name)
     message(STATUS "Building in latest API mode for Python: ${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}")
     python_add_library(${_target} MODULE WITH_SOABI ${_name}.pyx ${_name}.c ${CYTHON_EXTENSION_EXTRA_SOURCES})
   endif()
-
-  # python_add_library(${_target} MODULE WITH_SOABI ${_name}.pyx ${_name}.c ${CYTHON_EXTENSION_EXTRA_SOURCES})
   set_target_properties(${_target} PROPERTIES OUTPUT_NAME ${_name} )
   target_include_directories(${_target} AFTER PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}) 
   target_link_libraries(${_target} PUBLIC ${CYTHON_EXTENSION_LINKS})
