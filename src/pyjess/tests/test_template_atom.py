@@ -90,3 +90,10 @@ class TestTemplateAtom(unittest.TestCase):
         for attribute in ("atom_names", "residue_names", "chain_id", "x", "y", "z", "match_mode"):
             self.assertEqual(getattr(copy, attribute), getattr(atom, attribute))
         self.assertEqual(atom, copy)
+
+    def test_dumps_roundtrip(self):
+        atom = self._create_atom()
+        copy = TemplateAtom.loads(atom.dumps())
+        for attribute in ("atom_names", "residue_names", "chain_id", "x", "y", "z", "match_mode"):
+            self.assertEqual(getattr(copy, attribute), getattr(atom, attribute), attribute)
+        self.assertEqual(atom, copy)

@@ -86,6 +86,7 @@ References:
 
 cimport cython
 from cpython.exc cimport PyErr_WarnEx
+from cpython.bytes cimport PyBytes_FromStringAndSize
 from cpython.unicode cimport (
     PyUnicode_FromStringAndSize,
     PyUnicode_FromFormat,
@@ -150,6 +151,31 @@ class nullcontext:
         return self.retval
     def __exit__(self, exc_type, exc_value, traceback):
         return False
+
+cdef char[21][3] AA3 = [
+    ['A', 'L', 'A'], ['C', 'Y', 'S'], ['A', 'S', 'P'], ['G', 'L', 'U'],
+    ['P', 'H', 'E'], ['G', 'L', 'Y'], ['H', 'I', 'S'], ['I', 'L', 'E'],
+    ['L', 'Y', 'S'], ['L', 'E', 'U'], ['M', 'E', 'T'], ['A', 'S', 'N'],
+    ['P', 'R', 'O'], ['G', 'L', 'N'], ['A', 'R', 'G'], ['S', 'E', 'R'],
+    ['T', 'H', 'R'], ['V', 'A', 'L'], ['T', 'R', 'P'], ['T', 'Y', 'R'],
+    ['X', 'X', 'X'],
+]
+
+cdef char[21] AA1 = [
+    'A', 'C', 'D', 'E',
+    'F', 'G', 'H', 'I',
+    'K', 'L', 'M', 'N',
+    'P', 'Q', 'R', 'S',
+    'T', 'V', 'W', 'Y',
+    'X'
+]
+
+cdef inline char encode_resname(const char* src) noexcept nogil:
+    cdef size_t i
+    for i in range(21):
+        if AA3[i][0] == src[0] and AA3[i][1] == src[1] and AA3[i][2] == src[2]:
+            return AA1[i]
+    return 'X'
 
 # --- Classes ----------------------------------------------------------------
 
@@ -1206,10 +1232,19 @@ cdef class TemplateAtom:
         self._atom.pos[0] = x
         self._atom.pos[1] = y
         self._atom.pos[2] = z
-        self._atom.chainID1, self._atom.chainID2 = map(ord, chain_id.ljust(2))
         self._atom.nameCount = ac
         self._atom.resNameCount = rc
         self._atom.distWeight = distance_weight
+
+        # copy chain ID
+        if len(chain_id) == 2:
+            self._atom.chainID1 = ord(chain_id[0])
+            self._atom.chainID2 = ord(chain_id[1])
+        elif len(chain_id) == 1:
+            self._atom.chainID1 = ord(chain_id)
+            self._atom.chainID2 = ord(' ')
+        else:
+            self._atom.chainID1 = self._atom.chainID2 = ord(' ')
 
         # setup string pointers
         p = <char*> &self._atom[1]
@@ -1394,6 +1429,63 @@ cdef class TemplateAtom:
         with nogil:
             atom._atom = jess.tess_atom.TessAtom_copy(self._atom)
         return atom
+
+    cpdef str dumps(self):
+        """Write the template atom to a string.
+
+        Returns:
+            `str`: The serialized template atom.
+
+        .. versionadded:: 0.8.0
+
+        """
+        file = io.StringIO()
+        self.dump(file)
+        return file.getvalue()
+
+    cpdef void dump(self, object file):
+        """Write the template atom to a file.
+
+        Arguments:
+            file (file-like object): A file opened in *text* mode where the
+                template atom will be written.
+            
+        .. versionadded:: 0.8.0
+
+        """
+        assert self._atom is not NULL
+
+        cdef _TessAtom* atom
+        cdef size_t    k
+        cdef char[80]  buffer
+        cdef char[5]   name
+        cdef char[5]   resname
+
+        atom = self._atom
+        decode_token(name, atom.name[0], 4)
+        decode_token(resname, atom.resName[0], 3)
+        n = sprintf(
+            buffer,
+            "ATOM  %5i%5s %-3s %c%c%4i    %8.3f%8.3f%8.3f",
+            atom.code,
+            name,
+            resname,
+            atom.chainID1,
+            atom.chainID2,
+            atom.resSeq,
+            atom.pos[0],
+            atom.pos[1],
+            atom.pos[2],
+        )
+
+        memset(&buffer[n], ' ', 7*sizeof(char))
+        for k in range(1, atom.resNameCount):
+            buffer[n + k] = encode_resname(atom.resName[k])
+
+        n += 7
+        n += sprintf(&buffer[n], "%4.2f", atom.distWeight)
+
+        file.write(PyUnicode_FromStringAndSize(buffer, n))
 
 
 cdef class Template:
