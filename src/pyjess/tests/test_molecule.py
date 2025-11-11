@@ -1,10 +1,12 @@
 import itertools
+import io
 import os
 import pickle
 import unittest
 import tempfile
 import textwrap
 import sys
+import shutil
 import warnings
 
 from .utils import files
@@ -190,6 +192,47 @@ class TestMolecule(unittest.TestCase):
         self.assertEqual(list(mol1), list(mol2))
         self.assertEqual(mol1.id, mol2.id)
         self.assertEqual(mol1, mol2)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    @unittest.skipUnless(gemmi, "gemmi not available")
+    def test_load_mmcif_comment(self):
+        # load mmCIF file into a buffer and add a comment at the top
+        buffer = io.StringIO()
+        buffer.write("# this is a comment line \n")
+        buffer.write("# and a second comment line \n")
+        with files(data).joinpath("1AMY.cif").open() as f:
+            shutil.copyfileobj(f, buffer)
+            
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            # should work when explicitly given "CIF" formula
+            buffer.seek(0)
+            cif_molecule = Molecule.load(buffer, format="cif")
+            self.assertEqual(len(cif_molecule), 3339)
+            # should work when not given format
+            buffer.seek(0)
+            cif_molecule = Molecule.load(buffer, format="detect")
+            self.assertEqual(len(cif_molecule), 3339)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    @unittest.skipUnless(gemmi, "gemmi not available")
+    def test_loads_mmcif_comment(self):
+        # load mmCIF file into a buffer and add a comment at the top
+        buffer = io.StringIO()
+        buffer.write("# this is a comment line \n")
+        buffer.write("# and a second comment line \n")
+        with files(data).joinpath("1AMY.cif").open() as f:
+            shutil.copyfileobj(f, buffer)
+        text = buffer.getvalue()
+            
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            # should work when explicitly given "CIF" formula
+            cif_molecule = Molecule.loads(text, format="cif")
+            self.assertEqual(len(cif_molecule), 3339)
+            # should work when not given format
+            cif_molecule = Molecule.loads(text, format="detect")
+            self.assertEqual(len(cif_molecule), 3339)
 
     @unittest.skipUnless(files, "importlib.resources not available")
     @unittest.skipUnless(gemmi, "gemmi not available")

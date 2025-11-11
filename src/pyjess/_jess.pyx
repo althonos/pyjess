@@ -119,6 +119,8 @@ from jess.tess_atom cimport TessAtom as _TessAtom
 import functools
 import io
 
+from ._peekable import PeekableFile
+
 __version__ = PROJECT_VERSION
 
 # --- Utils ------------------------------------------------------------------
@@ -362,8 +364,6 @@ cdef class Molecule:
             The ``format`` argument, and support for CIF parsing.
 
         """
-        if format == "detect":
-            format = "cif" if text.lstrip().startswith(("data_", "loop_")) else "pdb"
         return cls.load(
             io.StringIO(text),
             format=format,
@@ -437,12 +437,11 @@ cdef class Molecule:
             except TypeError:
                 handle = nullcontext(file)
             with handle as f:
-                if f.seekable():
-                    peek = f.read(5)
-                    f.seek(0)
-                else:
-                    f = f.read()
-                    peek = f[5:]
+                f = PeekableFile(f)
+                peek = f.peek(10)
+                while peek.startswith("#"):
+                    f.readline()
+                    peek = f.peek(5)
                 if peek.startswith(("data_", "loop_")):
                     parser = _CIFMoleculeParser(
                         id=id,
@@ -456,10 +455,8 @@ cdef class Molecule:
                         ignore_endmdl=ignore_endmdl,
                         skip_hetatm=skip_hetatm,
                     )
-                if isinstance(f, str):
-                    return parser.loads(f, molecule_type=cls)
                 return parser.load(f, molecule_type=cls)
-        if format == "pdb":
+        elif format == "pdb":
             parser = _PDBMoleculeParser(
                 id=id,
                 ignore_endmdl=ignore_endmdl,
