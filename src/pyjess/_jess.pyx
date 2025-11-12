@@ -4,20 +4,20 @@
 
 Jess is an algorithm for constraint-based structural template matching
 proposed by Jonathan Barker *et al.*. It can be used to identify
-catalytic residues from a known template inside a protein structure. 
+catalytic residues from a known template inside a protein structure.
 Jess is an evolution of TESS, a geometric hashing algorithm developed by
 Andrew Wallace *et al.*, removing some pre-computation and
-structural requirements from the original algorithm. 
+structural requirements from the original algorithm.
 
 PyJess is a Python module that provides bindings to Jess using
-`Cython <https://cython.org/>`_. It allows creating templates, querying 
-them with protein structures, and retrieving the hits using a Python API 
-without performing any external I/O. It's also more than 10x faster than 
-Jess thanks to algorithmic optimizations added to improve the original Jess 
+`Cython <https://cython.org/>`_. It allows creating templates, querying
+them with protein structures, and retrieving the hits using a Python API
+without performing any external I/O. It's also more than 10x faster than
+Jess thanks to algorithmic optimizations added to improve the original Jess
 code while producing consistent results.
 
 Example:
-    Load templates from a file, either as a file-like object or 
+    Load templates from a file, either as a file-like object or
     given a filename::
 
         >>> t1 = pyjess.Template.load("1.3.3.tpl")  # load from filename
@@ -31,15 +31,15 @@ Example:
         >>> mol[0]
         Atom(serial=1, name='N', altloc=' ', residue_name='GLN', ...)
 
-    Create a `Jess` object storing the templates to support running 
-    queries on them. The individual templates can still be accessed by 
+    Create a `Jess` object storing the templates to support running
+    queries on them. The individual templates can still be accessed by
     index::
 
         >>> jess = pyjess.Jess([t1, t2])
         >>> jess[0].id
         '3r6v'
 
-    Run a query on the Jess object to retrieve all templates matching 
+    Run a query on the Jess object to retrieve all templates matching
     a `Molecule`, *in no particular order*::
 
         >>> hits = jess.query(mol, 2, 2, 2)
@@ -59,7 +59,7 @@ Example:
         2om2 1.0711...
         2om2 1.1494...
 
-    By default, a template can match a molecule in more than one way, 
+    By default, a template can match a molecule in more than one way,
     if several sets of atoms match the geometric constraints. Use the
     ``best_match`` argument of `~Jess.query` to only retrieve the
     best match per template::
@@ -1241,10 +1241,11 @@ cdef class TemplateAtom:
             self._atom.chainID1 = ord(chain_id[0])
             self._atom.chainID2 = ord(chain_id[1])
         elif len(chain_id) == 1:
-            self._atom.chainID1 = ord(chain_id)
-            self._atom.chainID2 = ord(' ')
+            self._atom.chainID1 = ord(' ')
+            self._atom.chainID2 = ord(chain_id[0])
         else:
-            self._atom.chainID1 = self._atom.chainID2 = ord(' ')
+            self._atom.chainID1 = ord(' ')
+            self._atom.chainID2 = ord('0')
 
         # setup string pointers
         p = <char*> &self._atom[1]
@@ -1279,7 +1280,7 @@ cdef class TemplateAtom:
                 raise ValueError(f"Invalid residue name: {name!r}")
             encode_token(self._atom.resName[m], _name.ljust(3, b'\0'), 3)
 
-    cdef dict _state(self):
+    cpdef dict _state(self):
         return {
             "chain_id": self.chain_id,
             "residue_number": self.residue_number,
@@ -1351,7 +1352,9 @@ cdef class TemplateAtom:
         assert self._atom is not NULL
         cdef char c1 = jess.tess_atom.TessAtom_chainID1(self._atom)
         cdef char c2 = jess.tess_atom.TessAtom_chainID2(self._atom)
-        return PyUnicode_FromFormat("%c%c", c1, c2).strip()
+        if c1 == ord(' '):
+            return PyUnicode_FromFormat("%c", c2)
+        return PyUnicode_FromFormat("%c%c", c1, c2)#.strip()
 
     @property
     def x(self):
@@ -1449,29 +1452,29 @@ cdef class TemplateAtom:
         Arguments:
             file (file-like object): A file opened in *text* mode where the
                 template atom will be written.
-            
+
         .. versionadded:: 0.8.0
 
         """
         assert self._atom is not NULL
 
-        cdef _TessAtom* atom
         cdef size_t    k
         cdef char[80]  buffer
         cdef char[5]   name
         cdef char[5]   resname
+        cdef _TessAtom* atom   = self._atom
 
-        atom = self._atom
         decode_token(name, atom.name[0], 4)
         decode_token(resname, atom.resName[0], 3)
+
         n = sprintf(
             buffer,
-            "ATOM  %5i%5s %-3s %c%c%4i    %8.3f%8.3f%8.3f",
+            "ATOM  %5i %4s %3s%c%c%4i    %8.3f%8.3f%8.3f",
             atom.code,
             name,
             resname,
-            atom.chainID1,
-            atom.chainID2,
+            jess.tess_atom.TessAtom_chainID1(self._atom),
+            jess.tess_atom.TessAtom_chainID2(self._atom),
             atom.resSeq,
             atom.pos[0],
             atom.pos[1],
@@ -1760,6 +1763,40 @@ cdef class Template:
             tpl._tpl = self._tpl.copy(self._tpl)
             tpl._tess = <_TessTemplate*> &tpl._tpl[1]
         return tpl
+
+    cpdef str dumps(self):
+        """Write the template to a string.
+
+        Returns:
+            `str`: The serialized template atom.
+
+        .. versionadded:: 0.8.0
+
+        """
+        file = io.StringIO()
+        self.dump(file)
+        return file.getvalue()
+
+    cpdef void dump(self, object file, bint write_id=True):
+        """Write the template to a file.
+
+        Arguments:
+            file (file-like object): A file opened in *text* mode where the
+                template will be written.
+            write_id (`bool`): Whether to write the identifier of the
+                template as a ``REMARK`` line.
+
+        .. versionadded:: 0.8.0
+
+        """
+        cdef str id_ = self.id
+        if write_id and id_ is not None:
+            file.write(f"REMARK PDB_ID {id_}\n")
+        for template_atom in self:
+            template_atom.dump(file)
+            file.write("\n")
+        file.write("END\n")
+
 
 cdef class Query:
     """A query over templates with a given molecule.

@@ -119,6 +119,12 @@ class TestTemplate(unittest.TestCase):
         self.assertEqual(len(tpl1), len(tpl2))
         self.assertEqual(tpl1, tpl2)
 
+    def test_dumps_roundtrip(self):
+        tpl1 = Template.loads(TEMPLATE, id="tpl1")
+        tpl2 = Template.loads(tpl1.dumps())
+        self.assertEqual(len(tpl1), len(tpl2))
+        self.assertEqual(tpl1, tpl2)
+
     @unittest.skipUnless(files, "importlib.resources not available")
     def test_dimension_multiple_chains(self):
         with files(data).joinpath("1sur.qry").open() as f:

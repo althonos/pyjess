@@ -2,7 +2,7 @@ import unittest
 import sys
 import pickle
 
-from .._jess import TemplateAtom
+from .._jess import TemplateAtom, Atom
 
 
 class TestTemplateAtom(unittest.TestCase):
@@ -91,9 +91,31 @@ class TestTemplateAtom(unittest.TestCase):
             self.assertEqual(getattr(copy, attribute), getattr(atom, attribute))
         self.assertEqual(atom, copy)
 
+    def test_dumps(self):
+        atom = TemplateAtom(
+            chain_id="A",
+            residue_number=1136,
+            x=3.953,
+            y=0.597,
+            z=-1.721,
+            residue_names=["ARG", "LYS"],
+            atom_names=["NE"],
+            distance_weight=0.00,
+            match_mode=1,
+        )
+        t = atom.dumps()
+        self.assertEqual(
+            t,
+            "ATOM      1  NE  ARG A1136       3.953   0.597  -1.721 K     0.00"
+        )
+
     def test_dumps_roundtrip(self):
         atom = self._create_atom()
+        self.assertEqual(atom.chain_id, 'A')
+        t = atom.dumps()
+        self.assertEqual(t[20:22], ' A')
         copy = TemplateAtom.loads(atom.dumps())
         for attribute in ("atom_names", "residue_names", "chain_id", "x", "y", "z", "match_mode"):
             self.assertEqual(getattr(copy, attribute), getattr(atom, attribute), attribute)
+        self.assertEqual(atom._state(), copy._state())
         self.assertEqual(atom, copy)
