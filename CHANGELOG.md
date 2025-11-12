@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0...HEAD
 
 
+## [v0.8.0] - 2025-11-12
+[v0.8.0]: https://github.com/althonos/pyjess/compare/v0.7.0...v0.8.0
+
+### Added
+- Testing for Python 3.14.
+- `ignore_endmdl` parameter value in mmCIF parser to ignore models past the first one.
+- `dump` and `dumps` methods to `Template` and `TemplateAtom` ([#5](https://github.com/althonos/pyjess/issues/5)).
+
+### Fixed
+- Parsing issues with CIF files (by [@RayHackett](https://github.com/RayHackett/)).
+- Incorrect example use of the `pyjess.API` in `README.md` ([#6](https://github.com/althonos/pyjess/issues/6)).
+- Broken format detection for PDB or mmCIF files starting with comment lines (and fix handling of non-seekable files).
+
+
 ## [v0.7.0] - 2025-09-13
 [v0.7.0]: https://github.com/althonos/pyjess/compare/v0.6.0...v0.7.0
 
