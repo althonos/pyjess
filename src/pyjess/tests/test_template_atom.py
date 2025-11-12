@@ -117,5 +117,4 @@ class TestTemplateAtom(unittest.TestCase):
         copy = TemplateAtom.loads(atom.dumps())
         for attribute in ("atom_names", "residue_names", "chain_id", "x", "y", "z", "match_mode"):
             self.assertEqual(getattr(copy, attribute), getattr(atom, attribute), attribute)
-        self.assertEqual(atom._state(), copy._state())
         self.assertEqual(atom, copy)

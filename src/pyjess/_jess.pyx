@@ -1279,7 +1279,7 @@ cdef class TemplateAtom:
                 raise ValueError(f"Invalid residue name: {name!r}")
             encode_token(self._atom.resName[m], _name.ljust(3, b'\0'), 3)
 
-    cpdef dict _state(self):
+    cdef dict _state(self):
         return {
             "chain_id": self.chain_id,
             "residue_number": self.residue_number,
@@ -1352,8 +1352,8 @@ cdef class TemplateAtom:
         cdef char c1 = jess.tess_atom.TessAtom_chainID1(self._atom)
         cdef char c2 = jess.tess_atom.TessAtom_chainID2(self._atom)
         if c1 == ord(' '):
-            return PyUnicode_FromFormat("%c", c2)
-        return PyUnicode_FromFormat("%c%c", c1, c2)#.strip()
+            return chr(c2)
+        return PyUnicode_FromFormat("%c%c", c1, c2).strip()
 
     @property
     def x(self):
