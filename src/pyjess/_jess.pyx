@@ -152,30 +152,29 @@ class nullcontext:
     def __exit__(self, exc_type, exc_value, traceback):
         return False
 
-cdef char[21][3] AA3 = [
-    ['A', 'L', 'A'], ['C', 'Y', 'S'], ['A', 'S', 'P'], ['G', 'L', 'U'],
-    ['P', 'H', 'E'], ['G', 'L', 'Y'], ['H', 'I', 'S'], ['I', 'L', 'E'],
-    ['L', 'Y', 'S'], ['L', 'E', 'U'], ['M', 'E', 'T'], ['A', 'S', 'N'],
-    ['P', 'R', 'O'], ['G', 'L', 'N'], ['A', 'R', 'G'], ['S', 'E', 'R'],
-    ['T', 'H', 'R'], ['V', 'A', 'L'], ['T', 'R', 'P'], ['T', 'Y', 'R'],
-    ['X', 'X', 'X'],
-]
+cdef extern from * nogil:
+    """
+    const char AA3[21][3] = {
+        "ALA", "CYS", "ASP", "GLU", "PHE", "GLY", "HIS",
+        "ILE", "LYS", "LEU", "MET", "ASN", "PRO", "GLN",
+        "ARG", "SER", "THR", "VAL", "TRP", "TYR", "XXX"
+    };
 
-cdef char[21] AA1 = [
-    'A', 'C', 'D', 'E',
-    'F', 'G', 'H', 'I',
-    'K', 'L', 'M', 'N',
-    'P', 'Q', 'R', 'S',
-    'T', 'V', 'W', 'Y',
-    'X'
-]
+    const char AA1[21] = {
+        'A', 'C', 'D', 'E', 'F', 'G', 'H',
+        'I', 'K', 'L', 'M', 'N', 'P', 'Q',
+        'R', 'S', 'T', 'V', 'W', 'Y', 'X'
+    };
+    """
+    const char[21][3] AA3
+    const char[21] AA1
 
 cdef inline char encode_resname(const char* src) noexcept nogil:
     cdef size_t i
     for i in range(21):
         if AA3[i][0] == src[0] and AA3[i][1] == src[1] and AA3[i][2] == src[2]:
             return AA1[i]
-    return 'X'
+    return ord('X')
 
 # --- Classes ----------------------------------------------------------------
 
