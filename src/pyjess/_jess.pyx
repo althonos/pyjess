@@ -1480,7 +1480,7 @@ cdef class TemplateAtom:
             atom.pos[2],
         )
 
-        memset(&buffer[n], ' ', 7*sizeof(char))
+        memset(&buffer[n], ord(' '), 7*sizeof(char))
         for k in range(1, atom.resNameCount):
             buffer[n + k] = encode_resname(atom.resName[k])
 
