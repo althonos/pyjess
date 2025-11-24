@@ -129,7 +129,7 @@ class TestJess(unittest.TestCase):
         self.assertEqual(jess[0], template)
         self.assertIsInstance(jess[0], MyTemplate)
         hits = list(jess.query(molecule, 1, 2, 2))
-        self.assertIsInstance(hits[0].template, MyTemplate)
+        self.assertIsInstance(hits[0].template(), MyTemplate)
 
     @unittest.skipUnless(files, "importlib.resources not available")
     def test_query_max_candidates(self):
@@ -164,7 +164,7 @@ class TestJess(unittest.TestCase):
 
         hits = list(jess.query(molecule, 1, 2, 2))
         self.assertEqual(len(hits), 1)
-        self.assertIs(hits[0].template, template)
+        self.assertIs(hits[0].template(), template)
         self.assertAlmostEqual(hits[0].rmsd, 0.555, places=3)
         self.assertAlmostEqual(hits[0].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[0].log_evalue, -2.04, places=1)
@@ -172,12 +172,12 @@ class TestJess(unittest.TestCase):
 
         hits = list(jess.query(molecule, 2, 5, 3))
         self.assertEqual(len(hits), 2)
-        self.assertIs(hits[0].template, template)
+        self.assertIs(hits[0].template(), template)
         self.assertAlmostEqual(hits[0].rmsd, 0.555, places=3)
         self.assertAlmostEqual(hits[0].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[0].log_evalue, -2.04, places=1)
         self.assertAlmostEqual(hits[0].evalue, math.exp(-2.04), places=1)
-        self.assertIs(hits[1].template, template)
+        self.assertIs(hits[1].template(), template)
         self.assertAlmostEqual(hits[1].rmsd, 1.440, places=3)
         self.assertAlmostEqual(hits[1].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[1].log_evalue, 0.17, places=1)
@@ -185,17 +185,17 @@ class TestJess(unittest.TestCase):
 
         hits = list(jess.query(molecule, 2, 5, 5))
         self.assertEqual(len(hits), 3)
-        self.assertIs(hits[0].template, template)
+        self.assertIs(hits[0].template(), template)
         self.assertAlmostEqual(hits[0].rmsd, 0.555, places=3)
         self.assertAlmostEqual(hits[0].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[0].log_evalue, -2.04, places=1)
         self.assertAlmostEqual(hits[0].evalue, math.exp(-2.04), places=1)
-        self.assertIs(hits[1].template, template)
+        self.assertIs(hits[1].template(), template)
         self.assertAlmostEqual(hits[1].rmsd, 1.440, places=3)
         self.assertAlmostEqual(hits[1].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[1].log_evalue, 0.17, places=1)
         self.assertAlmostEqual(hits[1].evalue, math.exp(0.17), places=1)
-        self.assertIs(hits[2].template, template)
+        self.assertIs(hits[2].template(), template)
         self.assertAlmostEqual(hits[2].rmsd, 1.644, places=3)
         self.assertAlmostEqual(hits[2].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[2].log_evalue, 0.68, places=1)
@@ -203,7 +203,7 @@ class TestJess(unittest.TestCase):
 
         hits = list(jess.query(molecule.conserved(10.0), 1, 2, 2))
         self.assertEqual(len(hits), 1)
-        self.assertIs(hits[0].template, template)
+        self.assertIs(hits[0].template(), template)
         self.assertAlmostEqual(hits[0].rmsd, 0.555, places=3)
         self.assertAlmostEqual(hits[0].determinant, 1.0, places=3)
         self.assertAlmostEqual(hits[0].log_evalue, -2.10, places=1)
@@ -220,7 +220,7 @@ class TestJess(unittest.TestCase):
         hits = list(jess.query(molecule, 2, 5, 5, best_match=True))
         self.assertEqual(len(hits), 3)
         for hit in hits:
-            self.assertIs(hit.template, template)
+            self.assertIs(hit.template(), template)
             self.assertAlmostEqual(hit.rmsd, 0.555, places=3)
             self.assertAlmostEqual(hit.determinant, 1.0, places=3)
             self.assertAlmostEqual(hit.log_evalue, -2.04, places=1)
@@ -238,7 +238,7 @@ class TestJess(unittest.TestCase):
         hits = list(jess.query(molecule, 2, 4, 4, reorder=False))
         self.assertEqual(len(hits), len(results))
         for hit, block in zip(hits, results):
-            self.assertIs(hit.template, template)
+            self.assertIs(hit.template(), template)
 
             lines = block.strip().splitlines()
             query_id, rmsd, template_id, _, determinant, _, logE = lines[0].split()
@@ -297,7 +297,7 @@ class TestJess(unittest.TestCase):
             results_by_serials[serials] = block
 
         for hit in hits:
-            self.assertIs(hit.template, template)
+            self.assertIs(hit.template(), template)
             block = results_by_serials[tuple(atom.serial for atom in hit.atoms(False))]
 
             lines = block.strip().splitlines()
