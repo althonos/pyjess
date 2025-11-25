@@ -846,14 +846,6 @@ cdef class Molecule:
         for atom in self:
             atom.dump(file, format=format)
 
-        # py_atom = Atom.__new__(Atom) # Create a wrapper Python Atom object
-        # py_atom.owned = True
-        # py_atom.owner = self
-
-        # for k in range(count):
-        #     py_atom._atom = self._mol.atom[k]
-        #     py_atom.dump(file, format=format)
-
 
 cdef class Atom:
     """A single atom in a molecule.
@@ -975,8 +967,6 @@ cdef class Atom:
 
         self._atom.serial = serial
         self._atom.altLoc = ord(altloc)
-        # self._atom.chainID1 = ord(chain_id[0]) if len(chain_id) > 0 else 0
-        # self._atom.chainID2 = ord(chain_id[1]) if len(chain_id) > 1 else ord(' ')
         self._atom.resSeq = residue_number
         self._atom.iCode = ord(insertion_code)
         self._atom.x[0] = x
