@@ -800,6 +800,60 @@ cdef class Molecule:
         copy._id = self._id
         return copy
 
+    cpdef str dumps(self, str format="pdb", write_id: bint = True):
+        """Write the Molecule to a string.
+
+        Arguments:
+            format (`str`): The format in which to write the molecule.
+                Currently only supports ``pdb``, which writes the hits
+                in the same format as Jess.
+            write_id (`bool`): Whether to write the identifier of the
+                molecule as a ``HEADER`` line.
+
+        .. versionadded:: 0.9.0
+
+        """
+        file = io.StringIO()
+        self.dump(file, format=format, write_id=write_id)
+        return file.getvalue()
+
+    cpdef void dump(self, object file, str format="pdb", write_id: bint = True):
+        """Write the molecule to a file.
+
+        Arguments:
+            file (file-like object): A file opened in *text* mode where the
+                molecule will be written.
+            format (`str`): The format in which to write the hit.
+                Currently only supports ``pdb``, which writes the hits
+                in the same format as Jess.
+            write_id (`bool`): Whether to write the identifier of the
+                molecule as a ``HEADER`` line.
+
+        .. versionadded:: 0.9.0
+
+        """
+        cdef int    k
+        cdef int    count = self._mol.count
+        cdef Atom   py_atom
+
+        if write_id:
+            if len(self._id)==4:
+                # to make pdb id go in the right place in cols 62-66
+                file.write(f"HEADER{' ' * 56}{self._id}\n") 
+            else:
+                file.write(f"HEADER {self._id}\n")
+
+        for atom in self:
+            atom.dump(file, format=format)
+
+        # py_atom = Atom.__new__(Atom) # Create a wrapper Python Atom object
+        # py_atom.owned = True
+        # py_atom.owner = self
+
+        # for k in range(count):
+        #     py_atom._atom = self._mol.atom[k]
+        #     py_atom.dump(file, format=format)
+
 
 cdef class Atom:
     """A single atom in a molecule.
@@ -921,8 +975,8 @@ cdef class Atom:
 
         self._atom.serial = serial
         self._atom.altLoc = ord(altloc)
-        self._atom.chainID1 = ord(chain_id[0]) if len(chain_id) > 0 else 0
-        self._atom.chainID2 = ord(chain_id[1]) if len(chain_id) > 1 else ord(' ')
+        # self._atom.chainID1 = ord(chain_id[0]) if len(chain_id) > 0 else 0
+        # self._atom.chainID2 = ord(chain_id[1]) if len(chain_id) > 1 else ord(' ')
         self._atom.resSeq = residue_number
         self._atom.iCode = ord(insertion_code)
         self._atom.x[0] = x
@@ -933,7 +987,18 @@ cdef class Atom:
         self._atom.charge = charge
         encode_token(self._atom.resName, _residue_name.ljust(3, b'\0'), 3)
         encode_token(self._atom.segID, _segment.ljust(4, b'\0'), 4)
-        encode_token(self._atom.element, _element.ljust(2, b'\0'), 2)
+        encode_token(self._atom.element, _element.rjust(2, b'\0'), 2)
+
+        # copy chain ID
+        if len(chain_id) == 2:
+            self._atom.chainID1 = ord(chain_id[0])
+            self._atom.chainID2 = ord(chain_id[1])
+        elif len(chain_id) == 1:
+            self._atom.chainID1 = ord(' ')
+            self._atom.chainID2 = ord(chain_id[0])
+        else:
+            self._atom.chainID1 = ord(' ')
+            self._atom.chainID2 = ord('0')
 
         # FIXME: is alignment proper?
         _name = bytearray(name, 'ascii')
@@ -1113,6 +1178,64 @@ cdef class Atom:
         memcpy(copy._atom, self._atom, sizeof(_Atom))
         return copy
 
+    cpdef str dumps(self, str format="pdb"):
+        """Write the atom to a string.
+
+        Arguments:
+            format (`str`): The format in which to write the atom.
+                Currently only supports ``pdb``, which writes the hits
+                in the same format as Jess.
+
+        .. versionadded:: 0.9.0
+
+        """
+        file = io.StringIO()
+        self.dump(file, format=format)
+        return file.getvalue()
+
+    cpdef void dump(self, object file, str format="pdb"):
+        """Write the atom to a file.
+
+        Arguments:
+            file (file-like object): A file opened in *text* mode where the
+                atom will be written.
+            format (`str`): The format in which to write the hit.
+                Currently only supports ``pdb``, which writes the hits
+                in the same format as Jess.
+
+        .. versionadded:: 0.9.0
+
+        """
+        cdef char[80]  buffer
+        cdef char[5]   name
+        cdef char[5]   resname
+        cdef char[3]   elem
+        cdef int n
+        cdef _Atom* a = self._atom
+
+        decode_token(name, a.name, 4)
+        decode_token(resname, a.resName, 3)
+        decode_token(elem, a.element, 2)
+        n = sprintf(
+            buffer,
+            "ATOM  %5i%5s%c%-3s%c%c%4i%-4c%8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+            a.serial,
+            name,
+            a.altLoc,
+            resname,
+            a.chainID1,
+            a.chainID2,
+            a.resSeq,
+            a.iCode,
+            a.x[0],
+            a.x[1],
+            a.x[2],
+            a.occupancy,
+            a.tempFactor,
+            elem,
+            a.charge # ignored
+        )
+        file.write(PyUnicode_FromStringAndSize(buffer, n))
 
 cdef class TemplateAtom:
     """A single template atom.
@@ -1794,8 +1917,6 @@ cdef class Template:
         for template_atom in self:
             template_atom.dump(file)
             file.write("\n")
-        file.write("END\n")
-
 
 cdef class Query:
     """A query over templates with a given molecule.
@@ -2278,6 +2399,7 @@ cdef class Hit:
         cdef char[80]  buffer
         cdef char[5]   name
         cdef char[5]   resname
+        cdef char[3]   elem
         cdef double[3] x
         cdef int       count   = self._template._tpl.count(self._template._tpl)
 
@@ -2294,13 +2416,14 @@ cdef class Hit:
             atom = &self._atoms[k]
             decode_token(name, atom.name, 4)
             decode_token(resname, atom.resName, 3)
+            decode_token(elem, atom.element, 2)
             if transform:
                 self._transform_atom(x, atom.x)
             else:
                 memcpy(x, atom.x, 3*sizeof(double))
             n = sprintf(
                 buffer,
-                "ATOM  %5i%5s%c%-3s%c%c%4i%-4c%8.3f%8.3f%8.3f%6.2f%6.2f\n",
+                "ATOM  %5i%5s%c%-3s%c%c%4i%-4c%8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                 atom.serial,
                 name,
                 atom.altLoc,
@@ -2314,9 +2437,9 @@ cdef class Hit:
                 x[2],
                 atom.occupancy,
                 atom.tempFactor,
-                atom.segID,
-                atom.element,
-                atom.charge
+                # atom.segID,
+                elem,
+                atom.charge # ignored
             )
             file.write(PyUnicode_FromStringAndSize(buffer, n))
         file.write("ENDMDL\n")
@@ -2351,15 +2474,15 @@ cdef class Jess:
 
             >>> print(hit.dumps(format="pdb"), end="")
             REMARK 1AMY 1.439 2om2 Det= 1.0 log(E)~ 1.11
-            ATOM    729  CA  THR A  94      34.202 -24.426   8.851  1.00  2.00
-            ATOM    732  CB  THR A  94      35.157 -23.467   8.101  1.00  4.66
-            ATOM    733  OG1 THR A  94      36.338 -23.247   8.871  1.00  9.85
-            ATOM    746  CD  GLU A  96      41.454 -29.509   8.013  1.00 24.05
-            ATOM    748  OE2 GLU A  96      42.536 -29.680   7.441  1.00 34.44
-            ATOM    747  OE1 GLU A  96      41.212 -28.521   8.708  1.00 18.56
-            ATOM    437  CZ  ARG A  55      44.471 -26.619  10.181  1.00  8.51
-            ATOM    436  NE  ARG A  55      44.334 -27.346  11.290  1.00  9.05
-            ATOM    438  NH1 ARG A  55      43.590 -26.751   9.179  1.00 13.17
+            ATOM    729  CA  THR A  94      34.202 -24.426   8.851  1.00  2.00           C
+            ATOM    732  CB  THR A  94      35.157 -23.467   8.101  1.00  4.66           C
+            ATOM    733  OG1 THR A  94      36.338 -23.247   8.871  1.00  9.85           O
+            ATOM    746  CD  GLU A  96      41.454 -29.509   8.013  1.00 24.05           C
+            ATOM    748  OE2 GLU A  96      42.536 -29.680   7.441  1.00 34.44           O
+            ATOM    747  OE1 GLU A  96      41.212 -28.521   8.708  1.00 18.56           O
+            ATOM    437  CZ  ARG A  55      44.471 -26.619  10.181  1.00  8.51           C
+            ATOM    436  NE  ARG A  55      44.334 -27.346  11.290  1.00  9.05           N
+            ATOM    438  NH1 ARG A  55      43.590 -26.751   9.179  1.00 13.17           N
             ENDMDL
 
     .. versionadded:: 0.4.0

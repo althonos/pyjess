@@ -193,6 +193,69 @@ class TestMolecule(unittest.TestCase):
         self.assertEqual(mol1.id, mol2.id)
         self.assertEqual(mol1, mol2)
 
+    def test_dumps_roundtrip(self):
+        molecule = Molecule.loads(MOLECULE)
+        dump = Molecule.loads(molecule.dumps().strip())
+        self.assertEqual(molecule, dump)
+
+    def test_dumps(self):
+        molecule = Molecule.loads(MOLECULE)
+        expected = textwrap.dedent(
+            """
+            HEADER                                                        1A0P
+            ATOM      1  N   GLN A   3       8.171 -51.403  42.886  1.00 55.63           N
+            ATOM      2  CA  GLN A   3       9.475 -50.697  42.743  1.00 56.29           C
+            ATOM      3  C   GLN A   3      10.215 -51.213  41.516  1.00 55.54           C
+            ATOM      4  O   GLN A   3      10.401 -50.398  40.585  1.00 56.57           O
+            ATOM      5  CB  GLN A   3      10.267 -50.747  44.040  1.00 72.29           C
+            """
+        ).strip()
+        self.maxDiff = None
+        actual = molecule.dumps().strip()
+        self.assertMultiLineEqual(actual, expected)
+
+    def test_cif_dump(self):
+        with files(data).joinpath("1AMY.cif").open() as f:
+            text= f.read()
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            cif_molecule = Molecule.loads(text, format="cif")
+        first_5 = cif_molecule[0:5]
+        expected = textwrap.dedent(
+            """
+            HEADER                                                        1AMY
+            ATOM      1  N   GLN A   1       6.240  48.686  17.460  1.00 27.79           N
+            ATOM      2  CA  GLN A   1       5.440  49.851  17.773  1.00 16.62           C
+            ATOM      3  C   GLN A   1       6.628  50.721  18.086  1.00 14.24           C
+            ATOM      4  O   GLN A   1       7.313  50.396  19.052  1.00 11.61           O
+            ATOM      5  CB  GLN A   1       4.588  49.715  19.030  1.00 18.54           C
+            """
+        ).strip()
+
+        actual = first_5.dumps().strip()
+        self.maxDiff = None
+        self.assertMultiLineEqual(actual, expected)
+
+    def test_cif_vs_pdb(self):
+        with files(data).joinpath("1AMY.cif").open() as f:
+            text = f.read()
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            cif_molecule = Molecule.loads(text, format="cif")
+
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            text = f.read()
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            pdb_molecule = Molecule.loads(text, format="pdb")
+
+        first5_pdb = pdb_molecule[0:5]
+        first5_cif = cif_molecule[0:5]
+
+        self.maxDiff = None
+        self.assertEqual(first5_pdb, first5_cif)
+        self.assertMultiLineEqual(first5_pdb.dumps().strip(), first5_cif.dumps().strip())
+
     @unittest.skipUnless(files, "importlib.resources not available")
     @unittest.skipUnless(gemmi, "gemmi not available")
     def test_load_mmcif_comment(self):
