@@ -2047,7 +2047,7 @@ cdef class Hit:
         for i, atom in enumerate(state["atoms"]):
             memcpy(&self._atoms[i], atom._atom, sizeof(_Atom))
 
-    cdef void _transform_atom(self, double* x, const double* src):
+    cdef void _transform_atom(self, double* x, const double* src) noexcept nogil:
         cdef size_t        i
         cdef size_t        j
         cdef const double* M = self._rotation
@@ -2063,7 +2063,7 @@ cdef class Hit:
             for j in range(3):
                 x[i] += M[3*i + j] * tmp[j]
 
-    cdef void _inverse_transform_atom(self, double* x, const double* src):
+    cdef void _inverse_transform_atom(self, double* x, const double* src) noexcept nogil:
         cdef size_t        i
         cdef size_t        j
         cdef const double* M = self._rotation
@@ -2185,9 +2185,11 @@ cdef class Hit:
             return self._molecule
 
         mol = self._molecule.copy()
-        for k in range(mol._mol.count):
-            atom = mol._mol.atom[k]
-            self._transform_atom(atom.x, self._molecule._mol.atom[k].x)
+
+        with nogil:
+            for k in range(mol._mol.count):
+                atom = mol._mol.atom[k]
+                self._transform_atom(atom.x, self._molecule._mol.atom[k].x)
 
         return mol
 
@@ -2220,9 +2222,11 @@ cdef class Hit:
             return self._template
 
         template = self._template.copy()
-        for k in range(template._tess.count):
-            atom = template._tess.atom[k]
-            self._inverse_transform_atom(atom.pos, self._template._tess.atom[k].pos)
+
+        with nogil:
+            for k in range(template._tess.count):
+                atom = template._tess.atom[k]
+                self._inverse_transform_atom(atom.pos, self._template._tess.atom[k].pos)
 
         return template
 
