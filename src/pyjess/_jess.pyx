@@ -2053,11 +2053,15 @@ cdef class Hit:
         cdef const double* M = self._rotation
         cdef const double* c = self._centre[0]
         cdef const double* v = self._centre[1]
+        cdef double[3]     tmp
+
+        for i in range(3):
+            tmp[i] = src[i] - c[i]
 
         for i in range(3):
             x[i] = v[i]
             for j in range(3):
-                x[i] += M[3*i + j] * (src[j] - c[j])
+                x[i] += M[3*i + j] * tmp[j]
 
     cdef void _inverse_transform_atom(self, double* x, const double* src):
         cdef size_t        i
