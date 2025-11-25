@@ -44,7 +44,7 @@ Example:
 
         >>> hits = jess.query(mol, 2, 2, 2)
         >>> for hit in hits:
-        ...     print(hit.template.id, hit.rmsd)
+        ...     print(hit.template().id, hit.rmsd)
         2om2 1.4386...
         2om2 1.4877...
         2om2 1.4376...
@@ -66,7 +66,7 @@ Example:
 
         >>> hits = jess.query(mol, 2, 2, 2, best_match=True)
         >>> for hit in hits:
-        ...     print(hit.template.id, hit.rmsd)
+        ...     print(hit.template().id, hit.rmsd)
         2om2 1.071...
 
 References:
@@ -1990,7 +1990,7 @@ cdef class Query:
             raise StopIteration
 
         # get the template object for the hit
-        hit.template = self.jess._templates[self.jess._indices[<size_t> hit_tpl]]
+        hit._template = self.jess._templates[self.jess._indices[<size_t> hit_tpl]]
         return hit
 
 
@@ -2008,7 +2008,7 @@ cdef class Hit:
     cdef _Atom*          _atoms
 
     cdef readonly double   rmsd
-    cdef readonly Template template
+    cdef          Template _template
     cdef          Molecule _molecule
 
     def __dealloc__(self):
@@ -2020,7 +2020,7 @@ cdef class Hit:
             "centre": list(self._centre),
             "atoms": self.atoms(transform=False),
             "rmsd": self.rmsd,
-            "template": self.template,
+            "template": self.template(transform=False),
             "molecule": self.molecule(transform=False),
         }
 
@@ -2030,13 +2030,13 @@ cdef class Hit:
         cdef Atom   atom
 
         self.rmsd = state["rmsd"]
-        self.template = state["template"]
+        self._template = state["template"]
         self._molecule = state["molecule"]
         self._rotation = state["rotation"]
         self._centre = state["centre"]
 
         # check number of atoms is consistent
-        count = len(self.template)
+        count = len(self._template)
         if len(state["atoms"]) != count:
             raise ValueError(f"unexpected number of atoms: {len(state['atoms'])!r} (expected {count!r})")
         # allocate or reallocate memory for atoms
@@ -2047,17 +2047,37 @@ cdef class Hit:
         for i, atom in enumerate(state["atoms"]):
             memcpy(&self._atoms[i], atom._atom, sizeof(_Atom))
 
-    cdef void _transform_atom(self, double* x, const double* src):
+    cdef void _transform_atom(self, double* x, const double* src) noexcept nogil:
         cdef size_t        i
         cdef size_t        j
         cdef const double* M = self._rotation
         cdef const double* c = self._centre[0]
         cdef const double* v = self._centre[1]
+        cdef double[3]     tmp
+
+        for i in range(3):
+            tmp[i] = src[i] - c[i]
 
         for i in range(3):
             x[i] = v[i]
             for j in range(3):
-                x[i] += M[3*i + j] * (src[j] - c[j])
+                x[i] += M[3*i + j] * tmp[j]
+
+    cdef void _inverse_transform_atom(self, double* x, const double* src) noexcept nogil:
+        cdef size_t        i
+        cdef size_t        j
+        cdef const double* M = self._rotation
+        cdef const double* c = self._centre[0]
+        cdef const double* v = self._centre[1]
+        cdef double[3]     tmp
+
+        for i in range(3):
+            tmp[i] = src[i] - v[i]
+
+        for i in range(3):
+            x[i] = c[i]
+            for j in range(3):
+                x[i] += M[3*j + i] * tmp[j]
 
     @property
     def determinant(self):
@@ -2076,14 +2096,14 @@ cdef class Hit:
     def log_evalue(self):
         """`float`: The logarithm of the E-value estimated for the hit.
         """
-        assert self.template._tpl is not NULL
+        assert self._template._tpl is not NULL
 
         cdef int    n
         cdef double e
 
         with nogil:
             n = jess.molecule.Molecule_count(self._molecule._mol)
-            e = self.template._tpl.logE(self.template._tpl, self.rmsd, n)
+            e = self._template._tpl.logE(self._template._tpl, self.rmsd, n)
         return e
 
     @property
@@ -2095,7 +2115,7 @@ cdef class Hit:
 
         with nogil:
             n = jess.molecule.Molecule_count(self._molecule._mol)
-            e = exp(self.template._tpl.logE(self.template._tpl, self.rmsd, n))
+            e = exp(self._template._tpl.logE(self._template._tpl, self.rmsd, n))
         return e
 
     cpdef list atoms(self, bint transform=True):
@@ -2109,13 +2129,13 @@ cdef class Hit:
             `list` of `~pyjess.Atom`: The list of matching atoms.
 
         """
-        assert self.template._tpl is not NULL
+        assert self._template._tpl is not NULL
 
         cdef Atom atom
         cdef int  i
         cdef int  j
         cdef int  k
-        cdef int  count = self.template._tpl.count(self.template._tpl)
+        cdef int  count = self._template._tpl.count(self._template._tpl)
         cdef list atoms = []
 
         cdef const double* M = self._rotation
@@ -2150,7 +2170,7 @@ cdef class Hit:
         .. versionadded:: 0.5.0
 
         """
-        assert self.template._tpl is not NULL
+        assert self._template._tpl is not NULL
 
         cdef _Atom*        atom
         cdef Molecule      mol
@@ -2165,11 +2185,50 @@ cdef class Hit:
             return self._molecule
 
         mol = self._molecule.copy()
-        for k in range(mol._mol.count):
-            atom = mol._mol.atom[k]
-            self._transform_atom(atom.x, self._molecule._mol.atom[k].x)
+
+        with nogil:
+            for k in range(mol._mol.count):
+                atom = mol._mol.atom[k]
+                self._transform_atom(atom.x, self._molecule._mol.atom[k].x)
 
         return mol
+
+    cpdef Template template(self, bint transform=False):
+        """Get the template matching the hit.
+
+        Arguments:
+            transform (`bool`): Whether or not to transform coordinates
+                of the template atoms into the query frame.
+
+        Returns:
+            `~pyjess.Template`: The matching template, optionally
+            rotated to match the query coordinates.
+
+        .. versionadded:: 0.9.0
+
+        """
+        assert self._template._tpl is not NULL
+
+        cdef _TessAtom*    atom
+        cdef Template      template
+        cdef size_t        i
+        cdef size_t        j
+        cdef size_t        k
+        cdef const double* M = self._rotation
+        cdef const double* c = self._centre[0]
+        cdef const double* v = self._centre[1]
+
+        if not transform:
+            return self._template
+
+        template = self._template.copy()
+
+        with nogil:
+            for k in range(template._tess.count):
+                atom = template._tess.atom[k]
+                self._inverse_transform_atom(atom.pos, self._template._tess.atom[k].pos)
+
+        return template
 
     cpdef str dumps(self, str format="pdb", bint transform=True):
         """Write the hit to a string.
@@ -2211,7 +2270,7 @@ cdef class Hit:
         .. versionadded:: 0.7.0
 
         """
-        assert self.template._tpl is not NULL
+        assert self._template._tpl is not NULL
         assert self._molecule._mol is not NULL
 
         cdef _Atom*    atom
@@ -2220,15 +2279,15 @@ cdef class Hit:
         cdef char[5]   name
         cdef char[5]   resname
         cdef double[3] x
-        cdef int       count   = self.template._tpl.count(self.template._tpl)
+        cdef int       count   = self._template._tpl.count(self._template._tpl)
 
-        if self.template.id is None:
+        if self._template.id is None:
             raise RuntimeError("cannot dump `Hit` where `self.template.id` is `None`")
 
         file.write("REMARK ")
         file.write(self._molecule.id)
         file.write(f" {self.rmsd:5.3f} ")
-        file.write(self.template.id)
+        file.write(self._template.id)
         file.write(f" Det={self.determinant:4,.1f} log(E)~ {self.log_evalue:4.2f}\n")
 
         for k in range(count):

@@ -30,7 +30,7 @@ class TestHit(unittest.TestCase):
         self.assertEqual(self.hit.rmsd, hit.rmsd)
         self.assertEqual(self.hit.determinant, hit.determinant)
         self.assertEqual(self.hit.evalue, hit.evalue)
-        self.assertEqual(self.hit.template, hit.template)
+        self.assertEqual(self.hit.template(transform=False), hit.template(transform=False))
         self.assertListEqual(self.hit.atoms(transform=True), hit.atoms(transform=True))
         self.assertListEqual(self.hit.atoms(transform=False), hit.atoms(transform=False))
         self.assertEqual(self.hit.molecule(transform=False), hit.molecule(transform=False))
