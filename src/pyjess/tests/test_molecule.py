@@ -214,6 +214,8 @@ class TestMolecule(unittest.TestCase):
         actual = molecule.dumps().strip()
         self.assertMultiLineEqual(actual, expected)
 
+    @unittest.skipUnless(files, "importlib.resources not available")
+    @unittest.skipUnless(gemmi, "gemmi not available")
     def test_cif_dump(self):
         with files(data).joinpath("1AMY.cif").open() as f:
             text= f.read()
@@ -236,6 +238,8 @@ class TestMolecule(unittest.TestCase):
         self.maxDiff = None
         self.assertMultiLineEqual(actual, expected)
 
+    @unittest.skipUnless(files, "importlib.resources not available")
+    @unittest.skipUnless(gemmi, "gemmi not available")
     def test_cif_vs_pdb(self):
         with files(data).joinpath("1AMY.cif").open() as f:
             text = f.read()
