@@ -84,6 +84,8 @@ class TestMolecule(unittest.TestCase):
         molecule = Molecule.loads(MOLECULE)
         self.assertEqual(len(molecule), 5)
         self.assertEqual(molecule.id, '1A0P')
+        self.assertEqual(molecule.depdate, '05-DEC-97')
+        self.assertEqual(molecule.name, 'DNA RECOMBINATION')
 
     @unittest.skipUnless(sys.implementation.name == "cpython", "only available on CPython")
     def test_sizeof(self):
@@ -98,6 +100,8 @@ class TestMolecule(unittest.TestCase):
             molecule = Molecule.load(f.name)
         self.assertEqual(len(molecule), 5)
         self.assertEqual(molecule.id, '1A0P')
+        self.assertEqual(molecule.depdate, '05-DEC-97')
+        self.assertEqual(molecule.name, 'DNA RECOMBINATION')
 
     @unittest.skipIf(os.name == "nt", "permission errors on Windows")
     def test_load_file(self):
@@ -108,6 +112,8 @@ class TestMolecule(unittest.TestCase):
             molecule = Molecule.load(f)
         self.assertEqual(len(molecule), 5)
         self.assertEqual(molecule.id, '1A0P')
+        self.assertEqual(molecule.depdate, '05-DEC-97')
+        self.assertEqual(molecule.name, 'DNA RECOMBINATION')
 
     @unittest.skipIf(os.name == "nt", "permission errors on Windows")
     def test_load_error(self):
@@ -127,14 +133,23 @@ class TestMolecule(unittest.TestCase):
         self.assertEqual(molecule[2].name, 'C')
         self.assertEqual(molecule[3].name, 'O')
 
-    def test_init_long_id(self):
-        mol = Molecule.loads(MOLECULE, id="long identifier")
+    def test_init_with_kwargs(self):
+        mol = Molecule.loads(
+            MOLECULE,
+            id="long identifier",
+            name='struct',
+            depdate='today',
+        )
         self.assertEqual(mol.id, "long identifier")
+        self.assertEqual(mol.name, "struct")
+        self.assertEqual(mol.depdate, "today")
 
     def test_getitem_slicing(self):
         mol = Molecule.loads(MOLECULE)
         mol2 = mol[1:3]
         self.assertEqual(mol2.id, mol.id)
+        self.assertEqual(mol2.depdate, mol.depdate)
+        self.assertEqual(mol2.name, mol.name)
         self.assertEqual(len(mol2), 2)
         self.assertEqual(mol2[0].name, "CA")
         self.assertEqual(mol2[1].name, "C")
@@ -191,6 +206,8 @@ class TestMolecule(unittest.TestCase):
         mol2 = pickle.loads(pickle.dumps(mol1))
         self.assertEqual(list(mol1), list(mol2))
         self.assertEqual(mol1.id, mol2.id)
+        self.assertEqual(mol1.depdate, mol2.depdate)
+        self.assertEqual(mol1.name, mol2.name)
         self.assertEqual(mol1, mol2)
 
     def test_dumps_roundtrip(self):
@@ -202,7 +219,7 @@ class TestMolecule(unittest.TestCase):
         molecule = Molecule.loads(MOLECULE)
         expected = textwrap.dedent(
             """
-            HEADER                                                        1A0P
+            HEADER    DNA RECOMBINATION                       05-DEC-97   1A0P
             ATOM      1  N   GLN A   3       8.171 -51.403  42.886  1.00 55.63           N
             ATOM      2  CA  GLN A   3       9.475 -50.697  42.743  1.00 56.29           C
             ATOM      3  C   GLN A   3      10.215 -51.213  41.516  1.00 55.54           C
@@ -258,7 +275,7 @@ class TestMolecule(unittest.TestCase):
 
         self.maxDiff = None
         self.assertEqual(first5_pdb, first5_cif)
-        self.assertMultiLineEqual(first5_pdb.dumps().strip(), first5_cif.dumps().strip())
+        self.assertMultiLineEqual(first5_pdb.dumps(write_id=False).strip(), first5_cif.dumps(write_id=False).strip())
 
     @unittest.skipUnless(files, "importlib.resources not available")
     @unittest.skipUnless(gemmi, "gemmi not available")
