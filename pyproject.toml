@@ -4,13 +4,14 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "pyjess"
-version = "0.8.0"
+version = "0.9.0"
 description = "Cython bindings and Python interface to JESS, a 3D template matching software."
 readme = "README.md"
 requires-python = ">=3.7"
 license = { file = "COPYING" }
 authors = [
   { name = "Martin Larralde", email = "martin.larralde@embl.de" },
+  { name = "Raymund Hacket", email = "r.e.hackett@lumc.nl" },
 ]
 keywords = ["bioinformatics", "structure", "template", "matching"]
 classifiers = [

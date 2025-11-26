@@ -6,7 +6,23 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.8.0...HEAD
+
+
+## [v0.9.0] - 2025-11-26
+[v0.9.0]: https://github.com/althonos/pyjess/compare/v0.8.0...v0.9.0
+
+### Added
+- `Molecule.name` and `Molecule.date` properties exposing the metadata usually found in a PDB `HEADER` line.
+- `dump` and `dumps` methods to `Atom` and `Molecule` ([#8](https://github.com/althonos/pyjess/pull/8), by [@RayHackett](https://github.com/RayHackett/)).
+
+### Changed
+- **breaking**: Turn `Hit.template` into a function to support transforming template atoms into query reference frame ([#7](https://github.com/althonos/pyjess/pull/7), by [@RayHackett](https://github.com/RayHackett/)).
+- Make `Hit.dump` write the element column (by [@RayHackett](https://github.com/RayHackett/)).
+- Move I/O logic and auxilliary classes to a dedicated `pyjess._io` module.
+
+### Fixed
+- Incorrect formatting of `chain_id` written from an `Atom` instantiated with the API (by [@RayHackett](https://github.com/RayHackett/)).
 
 
 ## [v0.8.0] - 2025-11-12
