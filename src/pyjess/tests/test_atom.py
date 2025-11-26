@@ -1,6 +1,7 @@
 import ctypes
 import unittest
 import pickle
+import textwrap
 
 from .._jess import Atom
 
@@ -109,3 +110,9 @@ class TestAtom(unittest.TestCase):
         self.assertEqual(atom.y, copy.y)
         self.assertEqual(atom.z, copy.z)
         self.assertEqual(atom, copy)
+
+    def test_dumps(self):
+        atom = Atom.loads("ATOM     39  CA  PRO A 469     -14.948   2.091  10.228  1.00 27.71           C")
+        expected = "ATOM     39  CA  PRO A 469     -14.948   2.091  10.228  1.00 27.71           C".strip()
+        actual = atom.dumps().strip()
+        self.assertEqual(actual, expected)

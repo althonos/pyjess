@@ -93,6 +93,7 @@ from cpython.unicode cimport (
     PyUnicode_AsASCIIString,
 )
 
+from datetime import datetime
 from libc.math cimport isnan, exp, INFINITY, NAN
 from libc.stdio cimport FILE, fclose, fdopen, printf, sprintf
 from libc.stdint cimport uintptr_t
@@ -117,6 +118,7 @@ from jess.tess_atom cimport TessAtom as _TessAtom
 
 # --- Python imports ---------------------------------------------------------
 
+import datetime
 import functools
 import io
 
@@ -180,16 +182,27 @@ cdef inline char encode_resname(const char* src) noexcept nogil:
 
 cdef class _MoleculeParser:
     cdef str id
+    cdef object date
+    cdef str name
 
-    def __init__(self, str id = None):
+    def __init__(self, str id = None, date = None, name = None):
         self.id = id
+        self.date = date
+        self.name = name
 
 cdef class _PDBMoleculeParser(_MoleculeParser):
     cdef bint ignore_endmdl
     cdef bint skip_hetatm
 
-    def __init__(self, str id = None, bint ignore_endmdl = False, bint skip_hetatm = False):
-        super().__init__(id=id)
+    def __init__(
+        self,
+        str id = None,
+        object date = None,
+        str name = None,
+        bint ignore_endmdl = False,
+        bint skip_hetatm = False
+    ):
+        super().__init__(id=id, date=date, name=name)
         self.ignore_endmdl = ignore_endmdl
         self.skip_hetatm = skip_hetatm
 
@@ -197,9 +210,11 @@ cdef class _PDBMoleculeParser(_MoleculeParser):
         return self.load(io.StringIO(text), molecule_type)
 
     def load(self, file, molecule_type):
-        cdef str  line
-        cdef str  id    = self.id
-        cdef list atoms = []
+        cdef str    line
+        cdef str    id    = self.id
+        cdef object date  = self.date
+        cdef str    name  = self.name
+        cdef list   atoms = []
         try:
             handle = open(file)
         except TypeError:
@@ -209,6 +224,12 @@ cdef class _PDBMoleculeParser(_MoleculeParser):
                 if line.startswith("HEADER"):
                     if id is None:
                         id = line[62:66].strip() or None
+                    if date is None:
+                        date_text = line[50:59].strip()
+                        if date_text:
+                            date = datetime.datetime.strptime(date_text, "%d-%b-%y").date()
+                    if name is None:
+                        name = line[10:50].strip() or None
                 elif line.startswith("ATOM"):
                     atoms.append(Atom.loads(line))
                 elif line.startswith("HETATM") and not self.skip_hetatm:
@@ -218,7 +239,7 @@ cdef class _PDBMoleculeParser(_MoleculeParser):
                         break
                 elif line.lower().startswith(("data_", "loop_")):
                     raise ValueError("mmCIF data tags found, file is not in PDB format")
-        return molecule_type(atoms, id=id)
+        return molecule_type(atoms, id=id, date=date, name=name)
 
 
 cdef class _CIFMoleculeParser(_MoleculeParser):
@@ -244,11 +265,13 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
     def __init__(
         self,
         str id = None,
+        object date = None,
+        str name = None,
         bint use_author = False,
         bint skip_hetatm = False,
         bint ignore_endmdl = False,
     ):
-        super().__init__(id=id)
+        super().__init__(id=id, date=date, name=name)
         self.gemmi = __import__('gemmi')
         self.use_author = use_author
         self.skip_hetatm = skip_hetatm
@@ -308,7 +331,28 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
             atoms.append(atom)
 
         id = block.name if self.id is None else self.id
-        return molecule_type(atoms, id=id)
+
+        entry_id = block.find_value("_entry.id")
+        pdb_kwds = block.find_value("_struct_keywords.pdbx_keywords")
+        title    = block.find_value("_struct.title")
+
+        if pdb_kwds:
+            name = pdb_kwds.strip("'")
+        elif title:
+            name = title.strip("'")
+        elif entry_id:
+            name = entry_id.strip("'")
+        else:
+            name = None
+
+        date_tbl = block.find('_pdbx_audit_revision_history.', ["revision_date"])
+        if not date_tbl:
+            date=None
+        else:
+            # take earliest date as deposition date
+            date = min(datetime.datetime.strptime(row[0], "%Y-%m-%d") for row in date_tbl)
+
+        return molecule_type(atoms, id=id, date=date, name=name)
 
     def loads(self, text, molecule_type):
         document = self.gemmi.cif.read_string(text)
@@ -334,6 +378,8 @@ cdef class Molecule:
     """
     cdef _Molecule* _mol
     cdef str        _id
+    cdef object     _date
+    cdef str        _name
 
     @classmethod
     def loads(
@@ -342,6 +388,8 @@ cdef class Molecule:
         str format = "pdb",
         *,
         str id = None,
+        object date = None,
+        str name = None,
         bint ignore_endmdl = False,
         bint use_author = False,
         bint skip_hetatm = False,
@@ -362,6 +410,14 @@ cdef class Molecule:
                 given, the parser will attempt to extract it from the
                 ``HEADER`` line (for PDB files) or the block name (for CIF
                 files).
+            date (`datetime.date`, optional): The deposition date of the 
+                structure. If `None` given, the parser will attempt to extract 
+                it from the ``HEADER`` line (for PDB files) or the earliest
+                revision data (for CIF files)
+            name (`str`, optional): The name of the structure. If `None`
+                given, the parser will attempt to extract it from the
+                ``HEADER`` line (for PDB files) or the
+                _struct_keywords.pdbx_keywords (for CIF files)
             ignore_endmdl (`bool`): Pass `True` to make the parser read all
                 the atoms from the PDB file. By default, the parser only
                 reads the atoms of the first model, and stops at the first
@@ -388,11 +444,16 @@ cdef class Molecule:
         .. versionadded:: 0.7.0
             The ``format`` argument, and support for CIF parsing.
 
+        .. versionadded:: 0.9.0
+            The ``date`` and ``name`` arguments.
+
         """
         return cls.load(
             io.StringIO(text),
             format=format,
             id=id,
+            date=date,
+            name=name,
             ignore_endmdl=ignore_endmdl,
             skip_hetatm=skip_hetatm,
         )
@@ -404,6 +465,8 @@ cdef class Molecule:
         str format = "detect",
         *,
         str id = None,
+        object date = None,
+        str name = None,
         bint ignore_endmdl = False,
         bint use_author = False,
         bint skip_hetatm = False,
@@ -425,6 +488,14 @@ cdef class Molecule:
                 given, the parser will attempt to extract it from the
                 ``HEADER`` line (for PDB files) or the block name (for CIF
                 files).
+            date (`datetime.date`, optional): The deposition date of the 
+                structure. If `None` given, the parser will attempt to extract 
+                it from the ``HEADER`` line (for PDB files) or the earliest
+                revision data (for CIF files).
+            name (`str`, optional): The name of the structure. If `None`
+                given, the parser will attempt to extract it from the
+                ``HEADER`` line (for PDB files) or the
+                _struct_keywords.pdbx_keywords (for CIF files).
             ignore_endmdl (`bool`): Pass `True` to make the parser read all
                 the atoms from the PDB file. By default, the parser only
                 reads the atoms of the first model, and stops at the first
@@ -452,6 +523,9 @@ cdef class Molecule:
         .. versionadded:: 0.7.0
             The ``format`` and ``skip_hetatm`` arguments, and mmCIF support.
 
+        .. versionadded:: 0.9.0
+            The ``date`` and ``name`` arguments.
+
         """
         cdef _MoleculeParser parser
         cdef str             peek
@@ -470,6 +544,8 @@ cdef class Molecule:
                 if peek.startswith(("data_", "loop_")):
                     parser = _CIFMoleculeParser(
                         id=id,
+                        date=date,
+                        name=name,
                         use_author=use_author,
                         skip_hetatm=skip_hetatm,
                         ignore_endmdl=ignore_endmdl,
@@ -477,6 +553,8 @@ cdef class Molecule:
                 else:
                     parser = _PDBMoleculeParser(
                         id=id,
+                        date=date,
+                        name=name,
                         ignore_endmdl=ignore_endmdl,
                         skip_hetatm=skip_hetatm,
                     )
@@ -484,12 +562,16 @@ cdef class Molecule:
         elif format == "pdb":
             parser = _PDBMoleculeParser(
                 id=id,
+                date=date,
+                name=name,
                 ignore_endmdl=ignore_endmdl,
                 skip_hetatm=skip_hetatm
             )
         elif format == "cif":
             parser = _CIFMoleculeParser(
                 id=id,
+                date=date,
+                name=name,
                 use_author=use_author,
                 skip_hetatm=skip_hetatm,
                 ignore_endmdl=ignore_endmdl,
@@ -499,7 +581,13 @@ cdef class Molecule:
         return parser.load(file, molecule_type=cls)
 
     @classmethod
-    def from_biopython(cls, object structure, str id = None):
+    def from_biopython(
+        cls,
+        object structure,
+        str id = None,
+        object date = None,
+        str name = None,
+    ):
         """Create a new `~pyjess.Molecule` from a `Bio.PDB.Structure`.
 
         Arguments:
@@ -508,6 +596,10 @@ cdef class Molecule:
             id (`str` or `None`): The identifier to give to the newly
                 created molecule. If `None` given, will use the value of
                 ``structure.id``.
+            date (`datetime.date` or `None`): The deposition date to give to 
+                the newly created molecule.
+            name (`str` or `None`): The name to give to the newly
+                created molecule.
 
         Returns:
             `~pyjess.Molecule`: A molecule object suitable for using
@@ -540,16 +632,28 @@ cdef class Molecule:
                         element=a.element,
                     )
                     atoms.append(atom)
-        return cls(atoms, id=structure.id)
+        if id is None:
+            id = structure.id
+        return cls(atoms, id=id, date=date, name=name)
 
     @classmethod
-    def from_gemmi(cls, object model, str id=None):
+    def from_gemmi(
+        cls,
+        object model,
+        str id=None,
+        object date=None,
+        str name=None,
+    ):
         """Create a new `~pyjess.Molecule` from a `gemmi.Model`.
 
         Arguments:
             structure (`gemmi.Model`): The ``gemmi`` object
                 containing the structure data.
             id (`str` or `None`): The identifier to give to the newly
+                created molecule.
+            date (`datetime.date` or `None`): The deposition date to give to 
+                the newly created molecule.
+            name (`str` or `None`): The name to give to the newly
                 created molecule.
 
         Returns:
@@ -582,15 +686,27 @@ cdef class Molecule:
                 insertion_code=r.seqid.icode,
             )
             atoms.append(atom)
-        return cls(atoms, id=id)
+        return cls(atoms, id=id, date=date, name=name)
 
     @classmethod
-    def from_biotite(cls, object atom_array, str id=None):
+    def from_biotite(
+        cls,
+        object atom_array,
+        str id=None,
+        object date=None,
+        str name=None,
+    ):
         """Create a new `~pyjess.Molecule` from a `biotite.structure.AtomArray`.
 
         Arguments:
-            structure (`biotite.structure.AtomArray`): The ``biotite``
+            atom_array (`biotite.structure.AtomArray`): The ``biotite``
                 object containing the structure data.
+            id (`str` or `None`): The id to give to the newly
+                created molecule.
+            date (`datetime.date` or `None`): The deposition date to give to 
+                the newly created molecule.
+            name (`str` or `None`): The name to give to the newly
+                created molecule.
 
         Returns:
             `~pyjess.Molecule`: A molecule object suitable for using
@@ -631,7 +747,7 @@ cdef class Molecule:
                 insertion_code=str(a.ins_code).ljust(1),
             )
             atoms.append(atom)
-        return cls(atoms)
+        return cls(atoms=atoms, id=id, date=date, name=name)
 
     def __cinit__(self):
         self._mol = NULL
@@ -639,14 +755,23 @@ cdef class Molecule:
     def __dealloc__(self):
         jess.molecule.Molecule_free(self._mol)
 
-    def __init__(self, object atoms = (), str id = None):
-        """__init__(self, atoms=(), id=None)\n--\n
+    def __init__(
+        self,
+        object atoms = (),
+        str id = None,
+        object date = None,
+        str name = None,
+    ):
+        """__init__(self, atoms=(), id=None, date=None, name=None)\n--\n
 
         Create a new molecule.
 
         Arguments:
             atoms (sequence of `~pyjess.Atom`): The atoms of the molecule.
             id (`str`, optional): The identifier of the molecule.
+            date (`datetime.date`, optional): The deposition date of the 
+                molecule.
+            name (`str`, optional): The name of the molecule.
 
         Raises:
             `MemoryError`: When the system allocator fails to allocate
@@ -656,6 +781,10 @@ cdef class Molecule:
         cdef Atom atom
         cdef int i
         cdef int count = len(atoms)
+
+        if date is not None and not isinstance(date, datetime.date):
+            ty = type(date).__name__
+            raise TypeError(f"expected datetime.date or None, found {ty} ")
 
         self._mol = <_Molecule*> malloc(sizeof(_Molecule) + count * sizeof(_Atom*))
         if self._mol is NULL:
@@ -667,6 +796,8 @@ cdef class Molecule:
             self._mol.atom[i] = NULL
         memset(self._mol.id, b' ', 5)
         self._id = id
+        self._date = date
+        self._name = name
 
         for i, atom in enumerate(atoms):
             self._mol.atom[i] = <_Atom*> malloc(sizeof(_Atom))
@@ -691,7 +822,7 @@ cdef class Molecule:
 
         if isinstance(index, slice):
             indices = range(*index.indices(length))
-            return type(self)(atoms=[self[i] for i in indices], id=self.id)
+            return type(self)(atoms=[self[i] for i in indices], id=self.id, date=self.date, name=self.name)
         else:
             index_ = index
             if index_ < 0:
@@ -722,7 +853,13 @@ cdef class Molecule:
         return hash((self._id, *(hash(x) for x in self)))
 
     def __reduce__(self):
-        return type(self), (list(self), self.id)
+        return functools.partial(
+            type(self), 
+            list(self),
+            id=self.id,
+            name=self.name,
+            date=self.date
+        ), ()
 
     def __sizeof__(self):
         assert self._mol is not NULL
@@ -734,7 +871,27 @@ cdef class Molecule:
 
     @property
     def id(self):
+        """`str` or `None`: The 4-character PDB identifier of the molecule.
+        """
         return self._id
+
+    @property
+    def date(self):
+        """`datetime.date` or `None`: The deposition date of the molecule.
+
+        .. versionadded:: 0.9.0
+
+        """
+        return self._date
+
+    @property
+    def name(self):
+        """`str` or `None`: The name of the molecule.
+
+        .. versionadded:: 0.9.0
+
+        """
+        return self._name
 
     cpdef Molecule conserved(self, double cutoff = 0.0):
         """Get a molecule containing only a subset of conserved atoms.
@@ -762,7 +919,7 @@ cdef class Molecule:
             if self._mol.atom[i].tempFactor >= cutoff:
                 atoms.append(self[i])
 
-        return type(self)(id=self.id, atoms=atoms)
+        return type(self)(id=self.id, atoms=atoms, date=self.date, name=self.name)
 
     cpdef Molecule copy(self):
         """Create a copy of this molecule and its atoms.
@@ -798,7 +955,65 @@ cdef class Molecule:
                 raise MemoryError("Failed to allocate residue index")
 
         copy._id = self._id
+        copy._date = self.date
+        copy._name = self.name
         return copy
+
+    cpdef str dumps(self, str format="pdb", bint write_header = True):
+        """Write the Molecule to a string.
+
+        Arguments:
+            format (`str`): The format in which to write the molecule.
+                Currently only supports ``pdb``, which writes the hits
+                in the same format as Jess.
+            write_header (`bool`): Whether to write the molecule metadata 
+                as a ``HEADER`` line.
+
+        .. versionadded:: 0.9.0
+
+        """
+        file = io.StringIO()
+        self.dump(file, format=format, write_header=write_header)
+        return file.getvalue()
+
+    cpdef void dump(self, object file, str format="pdb", bint write_header = True):
+        """Write the molecule to a file.
+
+        Arguments:
+            file (file-like object): A file opened in *text* mode where the
+                molecule will be written.
+            format (`str`): The format in which to write the hit.
+                Currently only supports ``pdb``, which writes the hits
+                in the same format as Jess.
+            write_header (`bool`): Whether to write the molecule metadata 
+                as a ``HEADER`` line.
+
+        .. versionadded:: 0.9.0
+
+        """
+        cdef int    k
+        cdef int    count = self._mol.count
+        cdef Atom   py_atom
+
+        if write_header:
+            # Truncate if too long
+            name = (self._name or '')[:40].ljust(40)
+            date = (self._date.strftime("%d-%b-%y").upper() or '')[:9].rjust(9)
+            id = (self._id or '')[:4].ljust(4)
+
+            # HEADER line
+            header_line = (
+                f"{'HEADER':<6}"      # cols 1–6
+                f"{'':4}"             # cols 7–10
+                f"{name}"             # cols 11–50
+                f"{date}"          # cols 51–59
+                f"{'':3}"             # cols 60–62
+                f"{id}"               # cols 63–66
+            )
+            file.write(f"{header_line}\n")
+
+        for atom in self:
+            atom.dump(file, format=format)
 
 
 cdef class Atom:
@@ -921,8 +1136,6 @@ cdef class Atom:
 
         self._atom.serial = serial
         self._atom.altLoc = ord(altloc)
-        self._atom.chainID1 = ord(chain_id[0]) if len(chain_id) > 0 else 0
-        self._atom.chainID2 = ord(chain_id[1]) if len(chain_id) > 1 else ord(' ')
         self._atom.resSeq = residue_number
         self._atom.iCode = ord(insertion_code)
         self._atom.x[0] = x
@@ -933,7 +1146,18 @@ cdef class Atom:
         self._atom.charge = charge
         encode_token(self._atom.resName, _residue_name.ljust(3, b'\0'), 3)
         encode_token(self._atom.segID, _segment.ljust(4, b'\0'), 4)
-        encode_token(self._atom.element, _element.ljust(2, b'\0'), 2)
+        encode_token(self._atom.element, _element.rjust(2, b'\0'), 2)
+
+        # copy chain ID
+        if len(chain_id) == 2:
+            self._atom.chainID1 = ord(chain_id[0])
+            self._atom.chainID2 = ord(chain_id[1])
+        elif len(chain_id) == 1:
+            self._atom.chainID1 = ord(' ')
+            self._atom.chainID2 = ord(chain_id[0])
+        else:
+            self._atom.chainID1 = ord(' ')
+            self._atom.chainID2 = ord('0')
 
         # FIXME: is alignment proper?
         _name = bytearray(name, 'ascii')
@@ -1113,6 +1337,64 @@ cdef class Atom:
         memcpy(copy._atom, self._atom, sizeof(_Atom))
         return copy
 
+    cpdef str dumps(self, str format="pdb"):
+        """Write the atom to a string.
+
+        Arguments:
+            format (`str`): The format in which to write the atom.
+                Currently only supports ``pdb``, which writes the hits
+                in the same format as Jess.
+
+        .. versionadded:: 0.9.0
+
+        """
+        file = io.StringIO()
+        self.dump(file, format=format)
+        return file.getvalue()
+
+    cpdef void dump(self, object file, str format="pdb"):
+        """Write the atom to a file.
+
+        Arguments:
+            file (file-like object): A file opened in *text* mode where the
+                atom will be written.
+            format (`str`): The format in which to write the hit.
+                Currently only supports ``pdb``, which writes the hits
+                in the same format as Jess.
+
+        .. versionadded:: 0.9.0
+
+        """
+        cdef char[80]  buffer
+        cdef char[5]   name
+        cdef char[5]   resname
+        cdef char[3]   elem
+        cdef int n
+        cdef _Atom* a = self._atom
+
+        decode_token(name, a.name, 4)
+        decode_token(resname, a.resName, 3)
+        decode_token(elem, a.element, 2)
+        n = sprintf(
+            buffer,
+            "ATOM  %5i%5s%c%-3s%c%c%4i%-4c%8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+            a.serial,
+            name,
+            a.altLoc,
+            resname,
+            a.chainID1,
+            a.chainID2,
+            a.resSeq,
+            a.iCode,
+            a.x[0],
+            a.x[1],
+            a.x[2],
+            a.occupancy,
+            a.tempFactor,
+            elem,
+            a.charge # ignored
+        )
+        file.write(PyUnicode_FromStringAndSize(buffer, n))
 
 cdef class TemplateAtom:
     """A single template atom.
@@ -1794,8 +2076,6 @@ cdef class Template:
         for template_atom in self:
             template_atom.dump(file)
             file.write("\n")
-        file.write("END\n")
-
 
 cdef class Query:
     """A query over templates with a given molecule.
@@ -2278,6 +2558,7 @@ cdef class Hit:
         cdef char[80]  buffer
         cdef char[5]   name
         cdef char[5]   resname
+        cdef char[3]   elem
         cdef double[3] x
         cdef int       count   = self._template._tpl.count(self._template._tpl)
 
@@ -2294,13 +2575,14 @@ cdef class Hit:
             atom = &self._atoms[k]
             decode_token(name, atom.name, 4)
             decode_token(resname, atom.resName, 3)
+            decode_token(elem, atom.element, 2)
             if transform:
                 self._transform_atom(x, atom.x)
             else:
                 memcpy(x, atom.x, 3*sizeof(double))
             n = sprintf(
                 buffer,
-                "ATOM  %5i%5s%c%-3s%c%c%4i%-4c%8.3f%8.3f%8.3f%6.2f%6.2f\n",
+                "ATOM  %5i%5s%c%-3s%c%c%4i%-4c%8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                 atom.serial,
                 name,
                 atom.altLoc,
@@ -2314,9 +2596,9 @@ cdef class Hit:
                 x[2],
                 atom.occupancy,
                 atom.tempFactor,
-                atom.segID,
-                atom.element,
-                atom.charge
+                # atom.segID,
+                elem,
+                atom.charge # ignored
             )
             file.write(PyUnicode_FromStringAndSize(buffer, n))
         file.write("ENDMDL\n")
@@ -2351,15 +2633,15 @@ cdef class Jess:
 
             >>> print(hit.dumps(format="pdb"), end="")
             REMARK 1AMY 1.439 2om2 Det= 1.0 log(E)~ 1.11
-            ATOM    729  CA  THR A  94      34.202 -24.426   8.851  1.00  2.00
-            ATOM    732  CB  THR A  94      35.157 -23.467   8.101  1.00  4.66
-            ATOM    733  OG1 THR A  94      36.338 -23.247   8.871  1.00  9.85
-            ATOM    746  CD  GLU A  96      41.454 -29.509   8.013  1.00 24.05
-            ATOM    748  OE2 GLU A  96      42.536 -29.680   7.441  1.00 34.44
-            ATOM    747  OE1 GLU A  96      41.212 -28.521   8.708  1.00 18.56
-            ATOM    437  CZ  ARG A  55      44.471 -26.619  10.181  1.00  8.51
-            ATOM    436  NE  ARG A  55      44.334 -27.346  11.290  1.00  9.05
-            ATOM    438  NH1 ARG A  55      43.590 -26.751   9.179  1.00 13.17
+            ATOM    729  CA  THR A  94      34.202 -24.426   8.851  1.00  2.00           C
+            ATOM    732  CB  THR A  94      35.157 -23.467   8.101  1.00  4.66           C
+            ATOM    733  OG1 THR A  94      36.338 -23.247   8.871  1.00  9.85           O
+            ATOM    746  CD  GLU A  96      41.454 -29.509   8.013  1.00 24.05           C
+            ATOM    748  OE2 GLU A  96      42.536 -29.680   7.441  1.00 34.44           O
+            ATOM    747  OE1 GLU A  96      41.212 -28.521   8.708  1.00 18.56           O
+            ATOM    437  CZ  ARG A  55      44.471 -26.619  10.181  1.00  8.51           C
+            ATOM    436  NE  ARG A  55      44.334 -27.346  11.290  1.00  9.05           N
+            ATOM    438  NH1 ARG A  55      43.590 -26.751   9.179  1.00 13.17           N
             ENDMDL
 
     .. versionadded:: 0.4.0

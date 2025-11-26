@@ -1,3 +1,4 @@
+import datetime
 import itertools
 import io
 import os
@@ -84,6 +85,8 @@ class TestMolecule(unittest.TestCase):
         molecule = Molecule.loads(MOLECULE)
         self.assertEqual(len(molecule), 5)
         self.assertEqual(molecule.id, '1A0P')
+        self.assertEqual(molecule.date, datetime.date(1997, 12, 5))
+        self.assertEqual(molecule.name, 'DNA RECOMBINATION')
 
     @unittest.skipUnless(sys.implementation.name == "cpython", "only available on CPython")
     def test_sizeof(self):
@@ -98,6 +101,8 @@ class TestMolecule(unittest.TestCase):
             molecule = Molecule.load(f.name)
         self.assertEqual(len(molecule), 5)
         self.assertEqual(molecule.id, '1A0P')
+        self.assertEqual(molecule.date, datetime.date(1997, 12, 5))
+        self.assertEqual(molecule.name, 'DNA RECOMBINATION')
 
     @unittest.skipIf(os.name == "nt", "permission errors on Windows")
     def test_load_file(self):
@@ -108,6 +113,8 @@ class TestMolecule(unittest.TestCase):
             molecule = Molecule.load(f)
         self.assertEqual(len(molecule), 5)
         self.assertEqual(molecule.id, '1A0P')
+        self.assertEqual(molecule.date, datetime.date(1997, 12, 5))
+        self.assertEqual(molecule.name, 'DNA RECOMBINATION')
 
     @unittest.skipIf(os.name == "nt", "permission errors on Windows")
     def test_load_error(self):
@@ -122,19 +129,31 @@ class TestMolecule(unittest.TestCase):
             self._create_atom(serial=4, name='O'),
         ]
         molecule = Molecule(atoms)
+        self.assertIs(molecule.id, None)
+        self.assertIs(molecule.name, None)
+        self.assertIs(molecule.date, None)
         self.assertEqual(molecule[0].name, 'N')
         self.assertEqual(molecule[1].name, 'CA')
         self.assertEqual(molecule[2].name, 'C')
         self.assertEqual(molecule[3].name, 'O')
 
-    def test_init_long_id(self):
-        mol = Molecule.loads(MOLECULE, id="long identifier")
+    def test_loads_with_kwargs(self):
+        mol = Molecule.loads(
+            MOLECULE,
+            id="long identifier",
+            name='struct',
+            date=datetime.date.today(),
+        )
         self.assertEqual(mol.id, "long identifier")
+        self.assertEqual(mol.name, "struct")
+        self.assertEqual(mol.date, datetime.date.today())
 
     def test_getitem_slicing(self):
         mol = Molecule.loads(MOLECULE)
         mol2 = mol[1:3]
         self.assertEqual(mol2.id, mol.id)
+        self.assertEqual(mol2.date, mol.date)
+        self.assertEqual(mol2.name, mol.name)
         self.assertEqual(len(mol2), 2)
         self.assertEqual(mol2[0].name, "CA")
         self.assertEqual(mol2[1].name, "C")
@@ -191,7 +210,96 @@ class TestMolecule(unittest.TestCase):
         mol2 = pickle.loads(pickle.dumps(mol1))
         self.assertEqual(list(mol1), list(mol2))
         self.assertEqual(mol1.id, mol2.id)
+        self.assertEqual(mol1.date, mol2.date)
+        self.assertEqual(mol1.name, mol2.name)
         self.assertEqual(mol1, mol2)
+
+    def test_pickle_metadata_roundtrip(self):
+        atoms = [
+            self._create_atom(serial=1, name='N'),
+            self._create_atom(serial=2, name='CA'),
+            self._create_atom(serial=3, name='C'),
+            self._create_atom(serial=4, name='O'),
+        ]
+        mol1 = Molecule(atoms, id="ABC1", name="TEST MOLECULE", date=datetime.date.today())
+        mol2 = pickle.loads(pickle.dumps(mol1))
+        self.assertEqual(list(mol1), list(mol2))
+        self.assertEqual(mol1.id, mol2.id)
+        self.assertEqual(mol1.date, mol2.date)
+        self.assertEqual(mol1.name, mol2.name)
+        self.assertEqual(mol1, mol2)
+
+    def test_dumps_roundtrip(self):
+        molecule = Molecule.loads(MOLECULE)
+        dump = Molecule.loads(molecule.dumps().strip())
+        self.assertEqual(molecule, dump)
+
+    def test_dumps(self):
+        molecule = Molecule.loads(MOLECULE)
+        expected = textwrap.dedent(
+            """
+            HEADER    DNA RECOMBINATION                       05-DEC-97   1A0P
+            ATOM      1  N   GLN A   3       8.171 -51.403  42.886  1.00 55.63           N
+            ATOM      2  CA  GLN A   3       9.475 -50.697  42.743  1.00 56.29           C
+            ATOM      3  C   GLN A   3      10.215 -51.213  41.516  1.00 55.54           C
+            ATOM      4  O   GLN A   3      10.401 -50.398  40.585  1.00 56.57           O
+            ATOM      5  CB  GLN A   3      10.267 -50.747  44.040  1.00 72.29           C
+            """
+        ).strip()
+        self.maxDiff = None
+        actual = molecule.dumps().strip()
+        self.assertMultiLineEqual(actual, expected)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    @unittest.skipUnless(gemmi, "gemmi not available")
+    def test_cif_dump(self):
+        with files(data).joinpath("1AMY.cif").open() as f:
+            text= f.read()
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            cif_molecule = Molecule.loads(text, format="cif")
+
+        first_5 = cif_molecule[0:5]
+        expected = textwrap.dedent(
+            """
+            HEADER    HYDROLASE (O-GLYCOSYL)                  13-MAY-95   1AMY
+            ATOM      1  N   GLN A   1       6.240  48.686  17.460  1.00 27.79           N
+            ATOM      2  CA  GLN A   1       5.440  49.851  17.773  1.00 16.62           C
+            ATOM      3  C   GLN A   1       6.628  50.721  18.086  1.00 14.24           C
+            ATOM      4  O   GLN A   1       7.313  50.396  19.052  1.00 11.61           O
+            ATOM      5  CB  GLN A   1       4.588  49.715  19.030  1.00 18.54           C
+            """
+        ).strip()
+
+        actual = first_5.dumps().strip()
+        self.maxDiff = None
+        self.assertMultiLineEqual(actual, expected)
+
+    @unittest.skipUnless(files, "importlib.resources not available")
+    @unittest.skipUnless(gemmi, "gemmi not available")
+    def test_cif_vs_pdb(self):
+        with files(data).joinpath("1AMY.cif").open() as f:
+            text = f.read()
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            cif_molecule = Molecule.loads(text, format="cif")
+
+        with files(data).joinpath("1AMY.pdb").open() as f:
+            text = f.read()
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore')
+            pdb_molecule = Molecule.loads(text, format="pdb")
+
+        first5_pdb = pdb_molecule[0:5]
+        first5_cif = cif_molecule[0:5]
+
+        self.maxDiff = None
+        self.assertEqual(first5_pdb, first5_cif)
+        # I set write_header to False since the dates in the cif and pdb files dont match
+        self.assertMultiLineEqual(
+            first5_pdb.dumps(write_header=False).strip(), 
+            first5_cif.dumps(write_header=False).strip()
+        )
 
     @unittest.skipUnless(files, "importlib.resources not available")
     @unittest.skipUnless(gemmi, "gemmi not available")
