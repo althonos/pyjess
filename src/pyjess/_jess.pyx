@@ -941,24 +941,24 @@ cdef class Molecule:
         copy._name = self.name
         return copy
 
-    cpdef str dumps(self, str format="pdb", write_id: bint = True):
+    cpdef str dumps(self, str format="pdb", bint write_header = True):
         """Write the Molecule to a string.
 
         Arguments:
             format (`str`): The format in which to write the molecule.
                 Currently only supports ``pdb``, which writes the hits
                 in the same format as Jess.
-            write_id (`bool`): Whether to write the identifier of the
-                molecule as a ``HEADER`` line.
+            write_header (`bool`): Whether to write the molecule metadata 
+                as a ``HEADER`` line.
 
         .. versionadded:: 0.9.0
 
         """
         file = io.StringIO()
-        self.dump(file, format=format, write_id=write_id)
+        self.dump(file, format=format, write_header=write_header)
         return file.getvalue()
 
-    cpdef void dump(self, object file, str format="pdb", write_id: bint = True):
+    cpdef void dump(self, object file, str format="pdb", bint write_header = True):
         """Write the molecule to a file.
 
         Arguments:
@@ -967,8 +967,8 @@ cdef class Molecule:
             format (`str`): The format in which to write the hit.
                 Currently only supports ``pdb``, which writes the hits
                 in the same format as Jess.
-            write_id (`bool`): Whether to write the identifier of the
-                molecule as a ``HEADER`` line.
+            write_header (`bool`): Whether to write the molecule metadata 
+                as a ``HEADER`` line.
 
         .. versionadded:: 0.9.0
 
@@ -977,7 +977,7 @@ cdef class Molecule:
         cdef int    count = self._mol.count
         cdef Atom   py_atom
 
-        if write_id:
+        if write_header:
             # Truncate if too long
             name = (self._name or '')[:40].ljust(40)
             date = (self._date.strftime("%d-%b-%y").upper() or '')[:9].rjust(9)

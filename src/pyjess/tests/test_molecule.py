@@ -280,8 +280,11 @@ class TestMolecule(unittest.TestCase):
 
         self.maxDiff = None
         self.assertEqual(first5_pdb, first5_cif)
-        # I set write_id to False since the dates in the cif and pdb files dont match
-        self.assertMultiLineEqual(first5_pdb.dumps(write_id=False).strip(), first5_cif.dumps(write_id=False).strip())
+        # I set write_header to False since the dates in the cif and pdb files dont match
+        self.assertMultiLineEqual(
+            first5_pdb.dumps(write_header=False).strip(), 
+            first5_cif.dumps(write_header=False).strip()
+        )
 
     @unittest.skipUnless(files, "importlib.resources not available")
     @unittest.skipUnless(gemmi, "gemmi not available")
