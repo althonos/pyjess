@@ -93,6 +93,7 @@ from cpython.unicode cimport (
     PyUnicode_AsASCIIString,
 )
 
+from datetime import datetime
 from libc.math cimport isnan, exp, INFINITY, NAN
 from libc.stdio cimport FILE, fclose, fdopen, printf, sprintf
 from libc.stdint cimport uintptr_t
@@ -328,7 +329,31 @@ cdef class _CIFMoleculeParser(_MoleculeParser):
 
         id = block.name if self.id is None else self.id
 
-        return molecule_type(atoms, id=id, depdate=None, name=None)
+        entry_id = block.find_value("_entry.id")
+        pdb_kwds = block.find_value("_struct_keywords.pdbx_keywords")
+        title    = block.find_value("_struct.title")
+
+        if pdb_kwds:
+            name = pdb_kwds.strip("'")
+        elif title:
+            name = title.strip("'")
+        elif entry_id:
+            name = entry_id.strip("'")
+        else:
+            name = None
+
+        date_tbl = block.find('_pdbx_audit_revision_history.', ["revision_date"])
+        if not date_tbl:
+            depdate=None
+        else:
+            # Deposition is in format YYYY-MM-DD = earliest date in the list
+            dates = [row[0] for row in date_tbl]
+            depdate = min(dates)
+
+            # # e.g. 1998-08-12 → 12-AUG-98
+            depdate = datetime.strptime(depdate, "%Y-%m-%d").strftime("%d-%b-%y").upper()
+
+        return molecule_type(atoms, id=id, depdate=depdate, name=name)
 
     def loads(self, text, molecule_type):
         document = self.gemmi.cif.read_string(text)
@@ -388,10 +413,12 @@ cdef class Molecule:
                 files).
             depdate (`str`, optional): The deposition date of the structure. If `None`
                 given, the parser will attempt to extract it from the
-                ``HEADER`` line (for PDB files)
+                ``HEADER`` line (for PDB files) or the earliest
+                revision data (for CIF files)
             name (`str`, optional): The name of the structure. If `None`
                 given, the parser will attempt to extract it from the
-                ``HEADER`` line (for PDB files)
+                ``HEADER`` line (for PDB files) or the
+                _struct_keywords.pdbx_keywords (for CIF files)
             ignore_endmdl (`bool`): Pass `True` to make the parser read all
                 the atoms from the PDB file. By default, the parser only
                 reads the atoms of the first model, and stops at the first
@@ -464,10 +491,12 @@ cdef class Molecule:
                 files).
             depdate (`str`, optional): The deposition date of the structure. If `None`
                 given, the parser will attempt to extract it from the
-                ``HEADER`` line (for PDB files)
+                ``HEADER`` line (for PDB files) or the earliest
+                revision data (for CIF files)
             name (`str`, optional): The name of the structure. If `None`
                 given, the parser will attempt to extract it from the
-                ``HEADER`` line (for PDB files)
+                ``HEADER`` line (for PDB files) or the
+                _struct_keywords.pdbx_keywords (for CIF files)
             ignore_endmdl (`bool`): Pass `True` to make the parser read all
                 the atoms from the PDB file. By default, the parser only
                 reads the atoms of the first model, and stops at the first

@@ -239,10 +239,11 @@ class TestMolecule(unittest.TestCase):
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             cif_molecule = Molecule.loads(text, format="cif")
+
         first_5 = cif_molecule[0:5]
         expected = textwrap.dedent(
             """
-            HEADER                                                        1AMY
+            HEADER    HYDROLASE (O-GLYCOSYL)                  13-MAY-95   1AMY
             ATOM      1  N   GLN A   1       6.240  48.686  17.460  1.00 27.79           N
             ATOM      2  CA  GLN A   1       5.440  49.851  17.773  1.00 16.62           C
             ATOM      3  C   GLN A   1       6.628  50.721  18.086  1.00 14.24           C
@@ -275,6 +276,7 @@ class TestMolecule(unittest.TestCase):
 
         self.maxDiff = None
         self.assertEqual(first5_pdb, first5_cif)
+        # I set write_id to False since the dates in the cif and pdb files dont match
         self.assertMultiLineEqual(first5_pdb.dumps(write_id=False).strip(), first5_cif.dumps(write_id=False).strip())
 
     @unittest.skipUnless(files, "importlib.resources not available")
