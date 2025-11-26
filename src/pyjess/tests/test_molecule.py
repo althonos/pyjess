@@ -1,3 +1,4 @@
+import datetime
 import itertools
 import io
 import os
@@ -84,7 +85,7 @@ class TestMolecule(unittest.TestCase):
         molecule = Molecule.loads(MOLECULE)
         self.assertEqual(len(molecule), 5)
         self.assertEqual(molecule.id, '1A0P')
-        self.assertEqual(molecule.depdate, '05-DEC-97')
+        self.assertEqual(molecule.date, datetime.date(1997, 12, 5))
         self.assertEqual(molecule.name, 'DNA RECOMBINATION')
 
     @unittest.skipUnless(sys.implementation.name == "cpython", "only available on CPython")
@@ -100,7 +101,7 @@ class TestMolecule(unittest.TestCase):
             molecule = Molecule.load(f.name)
         self.assertEqual(len(molecule), 5)
         self.assertEqual(molecule.id, '1A0P')
-        self.assertEqual(molecule.depdate, '05-DEC-97')
+        self.assertEqual(molecule.date, datetime.date(1997, 12, 5))
         self.assertEqual(molecule.name, 'DNA RECOMBINATION')
 
     @unittest.skipIf(os.name == "nt", "permission errors on Windows")
@@ -112,7 +113,7 @@ class TestMolecule(unittest.TestCase):
             molecule = Molecule.load(f)
         self.assertEqual(len(molecule), 5)
         self.assertEqual(molecule.id, '1A0P')
-        self.assertEqual(molecule.depdate, '05-DEC-97')
+        self.assertEqual(molecule.date, datetime.date(1997, 12, 5))
         self.assertEqual(molecule.name, 'DNA RECOMBINATION')
 
     @unittest.skipIf(os.name == "nt", "permission errors on Windows")
@@ -128,27 +129,30 @@ class TestMolecule(unittest.TestCase):
             self._create_atom(serial=4, name='O'),
         ]
         molecule = Molecule(atoms)
+        self.assertIs(molecule.id, None)
+        self.assertIs(molecule.name, None)
+        self.assertIs(molecule.date, None)
         self.assertEqual(molecule[0].name, 'N')
         self.assertEqual(molecule[1].name, 'CA')
         self.assertEqual(molecule[2].name, 'C')
         self.assertEqual(molecule[3].name, 'O')
 
-    def test_init_with_kwargs(self):
+    def test_loads_with_kwargs(self):
         mol = Molecule.loads(
             MOLECULE,
             id="long identifier",
             name='struct',
-            depdate='today',
+            date=datetime.date.today(),
         )
         self.assertEqual(mol.id, "long identifier")
         self.assertEqual(mol.name, "struct")
-        self.assertEqual(mol.depdate, "today")
+        self.assertEqual(mol.date, datetime.date.today())
 
     def test_getitem_slicing(self):
         mol = Molecule.loads(MOLECULE)
         mol2 = mol[1:3]
         self.assertEqual(mol2.id, mol.id)
-        self.assertEqual(mol2.depdate, mol.depdate)
+        self.assertEqual(mol2.date, mol.date)
         self.assertEqual(mol2.name, mol.name)
         self.assertEqual(len(mol2), 2)
         self.assertEqual(mol2[0].name, "CA")
@@ -206,7 +210,7 @@ class TestMolecule(unittest.TestCase):
         mol2 = pickle.loads(pickle.dumps(mol1))
         self.assertEqual(list(mol1), list(mol2))
         self.assertEqual(mol1.id, mol2.id)
-        self.assertEqual(mol1.depdate, mol2.depdate)
+        self.assertEqual(mol1.date, mol2.date)
         self.assertEqual(mol1.name, mol2.name)
         self.assertEqual(mol1, mol2)
 
