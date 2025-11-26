@@ -871,14 +871,26 @@ cdef class Molecule:
 
     @property
     def id(self):
+        """`str` or `None`: The 4-character PDB identifier of the molecule.
+        """
         return self._id
 
     @property
     def date(self):
+        """`datetime.date` or `None`: The deposition date of the molecule.
+
+        .. versionadded:: 0.9.0
+
+        """
         return self._date
 
     @property
     def name(self):
+        """`str` or `None`: The name of the molecule.
+
+        .. versionadded:: 0.9.0
+
+        """
         return self._name
 
     cpdef Molecule conserved(self, double cutoff = 0.0):
