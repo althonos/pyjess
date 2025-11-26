@@ -4,22 +4,24 @@ import io
 import os
 import typing
 import warnings
-from typing import Optional, Type, TextIO, Union
+from typing import Optional, Type, TextIO, Union, ContextManager
 
 from ._jess import Atom, Molecule
 
+_T = typing.TypeVar("_T")
 _M = typing.TypeVar("_M", bound=Molecule)
 
 
-class nullcontext:
-    def __init__(self, return_value=None):
+class nullcontext(ContextManager[_T]):
+
+    def __init__(self, return_value: _T):
         self.retval = return_value
 
-    def __enter__(self):
+    def __enter__(self) -> _T:
         return self.retval
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        return False
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        return
 
 
 class MoleculeParser(abc.ABC):
@@ -159,7 +161,7 @@ class CIFMoleculeParser(MoleculeParser):
         self.skip_hetatm = skip_hetatm
         self.ignore_endmdl = ignore_endmdl
 
-    def _load_block(self, document, molecule_type):
+    def _load_block(self, document, molecule_type: Type[_M]) -> _M:
         block = document.sole_block()
         cols = self._AUTH_COLUMNS if self.use_author else self._PRIMARY_COLUMNS
         table = block.find("_atom_site.", cols)
@@ -260,7 +262,7 @@ class MoleculeWriter(abc.ABC):
         return file.getvalue()
 
     @abc.abstractmethod
-    def dump(self, file: Union[TextIO, "os.PathLike[str]"], molecule: Molecule):
+    def dump(self, file: Union[TextIO, "os.PathLike[str]"], molecule: Molecule) -> None:
         raise NotImplementedError
 
 
@@ -273,12 +275,12 @@ class PDBMoleculeWriter(MoleculeWriter):
         super().__init__()
         self.write_header = write_header
 
-    def dump(self, file: Union[TextIO, "os.PathLike[str]"], molecule: Molecule):
+    def dump(self, file: Union[TextIO, "os.PathLike[str]"], molecule: Molecule) -> None:
         try:
             handle = open(file, "w")
         except TypeError:
             handle = nullcontext(file)
-        with handle:
+        with handle as f:
             if self.write_header:
                 # format header fields
                 name = molecule.name or ""
@@ -313,7 +315,7 @@ class PDBMoleculeWriter(MoleculeWriter):
                     f"{id_:4}"  # cols 63–66
                     "\n"
                 )
-                file.write(header_line)
+                f.write(header_line)
 
             for atom in molecule:
-                atom.dump(file, format="pdb")
+                atom.dump(f, format="pdb")
