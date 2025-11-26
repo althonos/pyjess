@@ -214,6 +214,21 @@ class TestMolecule(unittest.TestCase):
         self.assertEqual(mol1.name, mol2.name)
         self.assertEqual(mol1, mol2)
 
+    def test_pickle_metadata_roundtrip(self):
+        atoms = [
+            self._create_atom(serial=1, name='N'),
+            self._create_atom(serial=2, name='CA'),
+            self._create_atom(serial=3, name='C'),
+            self._create_atom(serial=4, name='O'),
+        ]
+        mol1 = Molecule(atoms, id="ABC1", name="TEST MOLECULE", date=datetime.date.today())
+        mol2 = pickle.loads(pickle.dumps(mol1))
+        self.assertEqual(list(mol1), list(mol2))
+        self.assertEqual(mol1.id, mol2.id)
+        self.assertEqual(mol1.date, mol2.date)
+        self.assertEqual(mol1.name, mol2.name)
+        self.assertEqual(mol1, mol2)
+
     def test_dumps_roundtrip(self):
         molecule = Molecule.loads(MOLECULE)
         dump = Molecule.loads(molecule.dumps().strip())

@@ -853,7 +853,13 @@ cdef class Molecule:
         return hash((self._id, *(hash(x) for x in self)))
 
     def __reduce__(self):
-        return type(self), (list(self), self.id)
+        return functools.partial(
+            type(self), 
+            list(self),
+            id=self.id,
+            name=self.name,
+            date=self.date
+        ), ()
 
     def __sizeof__(self):
         assert self._mol is not NULL
