@@ -123,7 +123,7 @@ import functools
 import io
 
 from ._peekable import PeekableFile
-from ._io import nullcontext, CIFMoleculeParser, PDBMoleculeParser
+from ._io import nullcontext, CIFMoleculeParser, PDBMoleculeParser, PDBMoleculeWriter
 
 __version__ = PROJECT_VERSION
 
@@ -767,7 +767,7 @@ cdef class Molecule:
         return copy
 
     cpdef str dumps(self, str format="pdb", bint write_header = True):
-        """Write the Molecule to a string.
+        """Write the molecule to a string.
 
         Arguments:
             format (`str`): The format in which to write the molecule.
@@ -779,9 +779,12 @@ cdef class Molecule:
         .. versionadded:: 0.9.0
 
         """
-        file = io.StringIO()
-        self.dump(file, format=format, write_header=write_header)
-        return file.getvalue()
+        cdef object writer
+        if format == "pdb":
+            writer = PDBMoleculeWriter(write_header=write_header)
+        else:
+            raise ValueError(f"invalid value for `format` argument: {format!r}")
+        return writer.dumps(self)
 
     cpdef void dump(self, object file, str format="pdb", bint write_header = True):
         """Write the molecule to a file.
@@ -798,29 +801,12 @@ cdef class Molecule:
         .. versionadded:: 0.9.0
 
         """
-        cdef int    k
-        cdef int    count = self._mol.count
-        cdef Atom   py_atom
-
-        if write_header:
-            # Truncate if too long
-            name = (self._name or '')[:40].ljust(40)
-            date = (self._date.strftime("%d-%b-%y").upper() or '')[:9].rjust(9)
-            id = (self._id or '')[:4].ljust(4)
-
-            # HEADER line
-            header_line = (
-                f"{'HEADER':<6}"      # cols 1–6
-                f"{'':4}"             # cols 7–10
-                f"{name}"             # cols 11–50
-                f"{date}"          # cols 51–59
-                f"{'':3}"             # cols 60–62
-                f"{id}"               # cols 63–66
-            )
-            file.write(f"{header_line}\n")
-
-        for atom in self:
-            atom.dump(file, format=format)
+        cdef object writer
+        if format == "pdb":
+            writer = PDBMoleculeWriter(write_header=write_header)
+        else:
+            raise ValueError(f"invalid value for `format` argument: {format!r}")
+        writer.dump(file, self)
 
 
 cdef class Atom:

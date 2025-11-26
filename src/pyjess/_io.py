@@ -1,5 +1,6 @@
 import abc
 import datetime
+import io
 import os
 import typing
 import warnings
@@ -13,8 +14,10 @@ _M = typing.TypeVar("_M", bound=Molecule)
 class nullcontext:
     def __init__(self, return_value=None):
         self.retval = return_value
+
     def __enter__(self):
         return self.retval
+
     def __exit__(self, exc_type, exc_value, traceback):
         return False
 
@@ -25,9 +28,9 @@ class MoleculeParser(abc.ABC):
     name: Optional[str]
 
     def __init__(
-        self, 
-        id: Optional[str] = None, 
-        date: Optional[datetime.date] = None, 
+        self,
+        id: Optional[str] = None,
+        date: Optional[datetime.date] = None,
         name: Optional[str] = None,
     ):
         self.id = id
@@ -38,7 +41,9 @@ class MoleculeParser(abc.ABC):
         return self.load(io.StringIO(text), molecule_type)
 
     @abc.abstractmethod
-    def load(self, file: Union[TextIO, "os.PathLike[str]"], molecule_type: Type[_M]) -> _M:
+    def load(
+        self, file: Union[TextIO, "os.PathLike[str]"], molecule_type: Type[_M]
+    ) -> _M:
         raise NotImplementedError
 
 
@@ -52,13 +57,15 @@ class PDBMoleculeParser(MoleculeParser):
         date: Optional[datetime.date] = None,
         name: Optional[str] = None,
         ignore_endmdl: bool = False,
-        skip_hetatm: bool = False
+        skip_hetatm: bool = False,
     ):
         super().__init__(id=id, date=date, name=name)
         self.ignore_endmdl = ignore_endmdl
         self.skip_hetatm = skip_hetatm
 
-    def load(self, file: Union[TextIO, "os.PathLike[str]"], molecule_type: Type[_M]) -> _M:
+    def load(
+        self, file: Union[TextIO, "os.PathLike[str]"], molecule_type: Type[_M]
+    ) -> _M:
         # cdef str    line
         id_ = self.id
         date = self.date
@@ -77,7 +84,9 @@ class PDBMoleculeParser(MoleculeParser):
                     if date is None:
                         date_text = line[50:59].strip()
                         if date_text:
-                            date = datetime.datetime.strptime(date_text, "%d-%b-%y").date()
+                            date = datetime.datetime.strptime(
+                                date_text, "%d-%b-%y"
+                            ).date()
                     if name is None:
                         name = line[10:50].strip() or None
                 elif line.startswith("ATOM"):
@@ -98,17 +107,41 @@ class CIFMoleculeParser(MoleculeParser):
     ignore_endmdl: bool
 
     _PRIMARY_COLUMNS = [
-        'id', 'type_symbol', 'label_atom_id', 'label_alt_id', 'label_comp_id',
-        'label_asym_id', 'label_seq_id', '?pdbx_PDB_ins_code', 'Cartn_x',
-        'Cartn_y', 'Cartn_z', 'occupancy', 'B_iso_or_equiv',
-        '?pdbx_formal_charge', '?group_PDB', 'pdbx_PDB_model_num',
+        "id",
+        "type_symbol",
+        "label_atom_id",
+        "label_alt_id",
+        "label_comp_id",
+        "label_asym_id",
+        "label_seq_id",
+        "?pdbx_PDB_ins_code",
+        "Cartn_x",
+        "Cartn_y",
+        "Cartn_z",
+        "occupancy",
+        "B_iso_or_equiv",
+        "?pdbx_formal_charge",
+        "?group_PDB",
+        "pdbx_PDB_model_num",
     ]
 
     _AUTH_COLUMNS = [
-        'id', 'type_symbol', 'auth_atom_id', 'label_alt_id', 'auth_comp_id',
-        'auth_asym_id', 'auth_seq_id', '?pdbx_PDB_ins_code', 'Cartn_x',
-        'Cartn_y', 'Cartn_z', 'occupancy', 'B_iso_or_equiv',
-        '?pdbx_formal_charge', '?group_PDB', 'pdbx_PDB_model_num',
+        "id",
+        "type_symbol",
+        "auth_atom_id",
+        "label_alt_id",
+        "auth_comp_id",
+        "auth_asym_id",
+        "auth_seq_id",
+        "?pdbx_PDB_ins_code",
+        "Cartn_x",
+        "Cartn_y",
+        "Cartn_z",
+        "occupancy",
+        "B_iso_or_equiv",
+        "?pdbx_formal_charge",
+        "?group_PDB",
+        "pdbx_PDB_model_num",
     ]
 
     def __init__(
@@ -121,7 +154,7 @@ class CIFMoleculeParser(MoleculeParser):
         ignore_endmdl: bool = False,
     ):
         super().__init__(id=id, date=date, name=name)
-        self.gemmi = __import__('gemmi')
+        self.gemmi = __import__("gemmi")
         self.use_author = use_author
         self.skip_hetatm = skip_hetatm
         self.ignore_endmdl = ignore_endmdl
@@ -129,7 +162,7 @@ class CIFMoleculeParser(MoleculeParser):
     def _load_block(self, document, molecule_type):
         block = document.sole_block()
         cols = self._AUTH_COLUMNS if self.use_author else self._PRIMARY_COLUMNS
-        table = block.find('_atom_site.', cols)
+        table = block.find("_atom_site.", cols)
         max_residue_number = 0
 
         if not table:
@@ -140,7 +173,7 @@ class CIFMoleculeParser(MoleculeParser):
 
             # row[15] contains _atom_site.pdbx_PDB_model_num
             # by default (if ignore_endmdl is False) we break on model number
-            if not self.ignore_endmdl and row[15] != '1':
+            if not self.ignore_endmdl and row[15] != "1":
                 break
 
             if row[14] != "ATOM" and (row[14] != "HETATM" or self.skip_hetatm):
@@ -165,16 +198,16 @@ class CIFMoleculeParser(MoleculeParser):
                 serial=int(row[0]),
                 element=row[1],
                 name=row[2].strip('"'),
-                altloc=' ' if row[3] == "." else row[3], # FIXME: replace with None?
+                altloc=" " if row[3] == "." else row[3],  # FIXME: replace with None?
                 residue_name=row[4],
                 chain_id=row[5],
                 residue_number=residue_number,
-                insertion_code=' ' if not row.has(7) or row[7] == "?" else row[7],
+                insertion_code=" " if not row.has(7) or row[7] == "?" else row[7],
                 x=float(row[8]),
                 y=float(row[9]),
                 z=float(row[10]),
-                occupancy=0.0 if row[11] == '.' else float(row[11]),
-                temperature_factor=0.0 if row[12] == '.' else float(row[12]),
+                occupancy=0.0 if row[11] == "." else float(row[11]),
+                temperature_factor=0.0 if row[12] == "." else float(row[12]),
                 charge=0 if not row.has(13) or row[13] == "?" else int(row[13]),
             )
             atoms.append(atom)
@@ -183,7 +216,7 @@ class CIFMoleculeParser(MoleculeParser):
 
         entry_id = block.find_value("_entry.id")
         pdb_kwds = block.find_value("_struct_keywords.pdbx_keywords")
-        title    = block.find_value("_struct.title")
+        title = block.find_value("_struct.title")
 
         if pdb_kwds:
             name = pdb_kwds.strip("'")
@@ -194,12 +227,14 @@ class CIFMoleculeParser(MoleculeParser):
         else:
             name = None
 
-        date_tbl = block.find('_pdbx_audit_revision_history.', ["revision_date"])
+        date_tbl = block.find("_pdbx_audit_revision_history.", ["revision_date"])
         if not date_tbl:
-            date=None
+            date = None
         else:
             # take earliest date as deposition date
-            date = min(datetime.datetime.strptime(row[0], "%Y-%m-%d") for row in date_tbl)
+            date = min(
+                datetime.datetime.strptime(row[0], "%Y-%m-%d") for row in date_tbl
+            )
 
         return molecule_type(atoms, id=id, date=date, name=name)
 
@@ -207,10 +242,78 @@ class CIFMoleculeParser(MoleculeParser):
         document = self.gemmi.cif.read_string(text)
         return self._load_block(document, molecule_type)
 
-    def load(self, file: Union[TextIO, "os.PathLike[str]"], molecule_type: Type[_M]) -> _M:
+    def load(
+        self, file: Union[TextIO, "os.PathLike[str]"], molecule_type: Type[_M]
+    ) -> _M:
         if hasattr(file, "read"):
             document = self.gemmi.cif.read_string(file.read())
         else:
             document = self.gemmi.cif.read_file(file)
         return self._load_block(document, molecule_type)
 
+
+class MoleculeWriter(abc.ABC):
+
+    def dumps(self, molecule: _M) -> str:
+        file = io.StringIO()
+        self.dump(file, molecule)
+        return file.getvalue()
+
+    @abc.abstractmethod
+    def dump(self, file: Union[TextIO, "os.PathLike[str]"], molecule: Molecule):
+        raise NotImplementedError
+
+
+class PDBMoleculeWriter(MoleculeWriter):
+
+    def __init__(
+        self,
+        write_header: bool = True,
+    ):
+        super().__init__()
+        self.write_header = write_header
+
+    def dump(self, file: Union[TextIO, "os.PathLike[str]"], molecule: Molecule):
+        try:
+            handle = open(file, "w")
+        except TypeError:
+            handle = nullcontext(file)
+        with handle:
+            if self.write_header:
+                # format header fields
+                name = molecule.name or ""
+                if len(name) > 40:
+                    warnings.warn(
+                        f"Truncating name too long for PDB: {name!r}",
+                        UserWarning,
+                        stacklevel=3,
+                    )
+                    name = name[:40]
+                id_ = molecule.id or ""
+                if len(id_) > 4:
+                    warnings.warn(
+                        f"Truncating ID too long for PDB: {id_!r}",
+                        UserWarning,
+                        stacklevel=3,
+                    )
+                    id_ = id_[:4]
+                date = (
+                    ""
+                    if molecule.date is None
+                    else molecule.date.strftime("%d-%b-%y").upper()
+                )
+
+                # write header line
+                header_line = (
+                    f"{'HEADER':<6}"  # cols 1–6
+                    f"{'':4}"  # cols 7–10
+                    f"{name:40}"  # cols 11–50
+                    f"{date:9}"  # cols 51–59
+                    f"{'':3}"  # cols 60–62
+                    f"{id_:4}"  # cols 63–66
+                    "\n"
+                )
+                file.write(header_line)
+
+            for atom in molecule:
+                atom.dump(file, format="pdb")

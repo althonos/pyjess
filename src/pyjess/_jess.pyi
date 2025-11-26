@@ -1,6 +1,20 @@
 import os
 import typing
-from typing import Any, Dict, Generic, Union, Optional, Sequence, Iterator, Iterable, List, TextIO, Sized, TypeVar, Tuple
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    Union,
+    Optional,
+    Sequence,
+    Iterator,
+    Iterable,
+    List,
+    TextIO,
+    Sized,
+    TypeVar,
+    Tuple,
+)
 
 try:
     from typing import Literal
@@ -16,13 +30,12 @@ except ImportError:
 try:
     import gemmi
 except ImportError:
-    gemmi = Any    # type: ignore
+    gemmi = Any  # type: ignore
 
 try:
     import biotite.structure
 except ImportError:
-    biotite = Any    # type: ignore
-
+    biotite = Any  # type: ignore
 
 MATCH_MODE = Literal[
     -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 100, 101, 102, 103, 104, 105, 106, 107
@@ -34,11 +47,23 @@ __version__: str
 
 class Molecule(Sequence[Atom]):
     @classmethod
-    def from_biopython(cls, structure: Union[Structure, Model], id: Optional[str] = None, date: Optional[date] = None, name: Optional[str] = None) -> Molecule: ...
+    def from_biopython(
+        cls,
+        structure: Union[Structure, Model],
+        id: Optional[str] = None,
+        date: Optional[date] = None,
+        name: Optional[str] = None,
+    ) -> Molecule: ...
     @classmethod
     def from_gemmi(cls, structure: gemmi.Structure) -> Molecule: ...
     @classmethod
-    def from_biotite(cls, atom_array: biotite.structure.AtomArray, id: Optional[str] = None, date: Optional[date] = None, name: Optional[str] = None) -> Molecule: ...
+    def from_biotite(
+        cls,
+        atom_array: biotite.structure.AtomArray,
+        id: Optional[str] = None,
+        date: Optional[date] = None,
+        name: Optional[str] = None,
+    ) -> Molecule: ...
     @classmethod
     def load(
         cls,
@@ -65,7 +90,13 @@ class Molecule(Sequence[Atom]):
         use_author: bool = False,
         skip_hetatm: bool = False,
     ) -> Molecule: ...
-    def __init__(self, atoms: Sequence[Atom] = (), id: Optional[str] = None, date: Optional[date] = None, name: Optional[str] = None): ...
+    def __init__(
+        self,
+        atoms: Sequence[Atom] = (),
+        id: Optional[str] = None,
+        date: Optional[date] = None,
+        name: Optional[str] = None,
+    ): ...
     def __len__(self) -> int: ...
     @typing.overload
     def __getitem__(self, index: int) -> Atom: ...
@@ -85,8 +116,15 @@ class Molecule(Sequence[Atom]):
     def name(self) -> Optional[str]: ...
     def conserved(self: _SELF, cutoff: float = 0.0) -> _SELF: ...
     def copy(self) -> Molecule: ...
-    def dumps(self, format: Literal["pdb"] = "pdb", write_header: bool = True) -> str: ...
-    def dump(self, file: TextIO, format: Literal["pdb"] = "pdb", write_header: bool = True) -> None: ...
+    def dumps(
+        self, format: Literal["pdb"] = "pdb", write_header: bool = True
+    ) -> str: ...
+    def dump(
+        self,
+        file: Union[TextIO, str, os.PathLike[str]],
+        format: Literal["pdb"] = "pdb",
+        write_header: bool = True,
+    ) -> None: ...
 
 class Atom:
     @classmethod
@@ -198,17 +236,23 @@ class TemplateAtom:
 
 class Template(Sequence[TemplateAtom]):
     @classmethod
-    def load(cls, file: Union[TextIO, str, os.PathLike[str]], id: Optional[str] = None) -> Template: ...
+    def load(
+        cls, file: Union[TextIO, str, os.PathLike[str]], id: Optional[str] = None
+    ) -> Template: ...
     @classmethod
     def loads(cls, text: str, id: Optional[str] = None) -> Template: ...
-    def __init__(self, atoms: Sequence[TemplateAtom] = (), id: Optional[str] = None): ...
+    def __init__(
+        self, atoms: Sequence[TemplateAtom] = (), id: Optional[str] = None
+    ): ...
     def __len__(self) -> int: ...
     @typing.overload
     def __getitem__(self, index: int) -> TemplateAtom: ...
     @typing.overload
     def __getitem__(self: _SELF, index: slice) -> _SELF: ...
     @typing.overload
-    def __getitem__(self: _SELF, index: Union[int, slice]) -> Union[TemplateAtom, _SELF]: ...
+    def __getitem__(
+        self: _SELF, index: Union[int, slice]
+    ) -> Union[TemplateAtom, _SELF]: ...
     def __eq__(self, other: object) -> bool: ...
     def __hash__(self) -> int: ...
     def __reduce__(self) -> Tuple[Any, ...]: ...
@@ -253,7 +297,9 @@ class Hit(Generic[_T]):
     def atoms(self, transform: bool = True) -> List[Atom]: ...
     def molecule(self, transform: bool = False) -> Molecule: ...
     def template(self, transform: bool = False) -> _T: ...
-    def dump(self, file: TextIO, format: Literal["pdb"] = "pdb", transform: bool = True) -> None: ...
+    def dump(
+        self, file: TextIO, format: Literal["pdb"] = "pdb", transform: bool = True
+    ) -> None: ...
     def dumps(self, format: Literal["pdb"] = "pdb", transform: bool = True) -> str: ...
 
 class Jess(Generic[_T], Sequence[_T]):
