@@ -258,6 +258,9 @@ def main(
                 for filename in map(str.strip, f):
                     id_ = filename if args.query_filename else None
                     mol = Molecule.load(filename, id=id_, ignore_endmdl=args.ignore_endmdl)
+                    if mol.id is None:
+                        warnings.warn(f"No id in molecule {filename}. Using filename instead.")
+                        mol = Molecule(mol, id=filename, date=mol.date, name=mol.name)
                     if args.filenames:
                         print(filename, file=stderr)
                     query = jess.query(
