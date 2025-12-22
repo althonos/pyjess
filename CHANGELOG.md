@@ -6,7 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.9.1...HEAD
+
+
+## [v0.9.1] - 2025-12-22
+[v0.9.1]: https://github.com/althonos/pyjess/compare/v0.9.0...v0.9.1
+
+### Added
+- Documentation page with a command line interface reference.
+### Fixed
+- Correct error type when calling `Hit.dump` with a `Molecule` where `id` is `None` ([#9](https://github.com/althonos/pyjess/pull/9), by [@RayHackett](https://github.com/RayHackett)).
+- Broken AUR `PKGBUILD` not working with Limited API wheels.
 
 
 ## [v0.9.0] - 2025-11-26
