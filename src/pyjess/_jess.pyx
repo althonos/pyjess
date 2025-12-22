@@ -2358,6 +2358,9 @@ cdef class Hit:
         if self._template.id is None:
             raise RuntimeError("cannot dump `Hit` where `self.template.id` is `None`")
 
+        if self._molecule.id is None:
+            raise RuntimeError("cannot dump `Hit` where `self.molecule.id` is `None`")
+
         file.write("REMARK ")
         file.write(self._molecule.id)
         file.write(f" {self.rmsd:5.3f} ")
