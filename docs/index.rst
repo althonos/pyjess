@@ -138,6 +138,7 @@ Library
 
    User Guide <guide/index>
    API Reference <api/index>
+   CLI Reference <cli>
 
 
 Related Projects
