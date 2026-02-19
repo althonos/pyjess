@@ -119,7 +119,12 @@ html_css_files = ["custom.css"]
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "external_links": [],
+    "external_links": [
+        {
+            "url": "https://www.biorxiv.org/content/10.64898/2026.02.10.705182v1",
+            "name": "Preprint",
+        },
+    ],
     "show_toc_level": 2,
     "use_edit_page_button": True,
     "icon_links": [

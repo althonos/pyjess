@@ -7,7 +7,7 @@ PyJess |Stars|
 
 *A Python interface to Jess, a 3D template matching software.*
 
-|Actions| |Coverage| |PyPI| |Bioconda| |AUR| |Wheel| |Versions| |Implementations| |License| |Source| |Mirror| |Issues| |Docs| |Changelog| |Downloads|
+|Actions| |Coverage| |PyPI| |Bioconda| |AUR| |Wheel| |Versions| |Implementations| |License| |Source| |Mirror| |Issues| |Docs| |Changelog| |Downloads| |Preprint|
 
 .. |Actions| image:: https://img.shields.io/github/actions/workflow/status/althonos/pyjess/test.yml?branch=main&logo=github&style=flat-square&maxAge=300
    :target: https://github.com/althonos/pyjess/actions
@@ -67,6 +67,10 @@ PyJess |Stars|
 
 .. |Downloads| image:: https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fpepy.tech%2Fprojects%2Fpyjess&search=%5B0-9%5D%2B.%5B0-9%5D%2B(k%7CM)&style=flat-square&label=downloads&color=303f9f&cacheSeconds=86400
    :target: https://pepy.tech/project/pyjess
+   :class: dark-light
+
+.. |Paper| image:: https://img.shields.io/badge/preprint-bioRxiv-darkblue.svg?style=flat-square&maxAge=3600
+   :target: https://www.biorxiv.org/content/10.64898/2026.02.10.705182v1
    :class: dark-light
 
 

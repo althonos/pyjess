@@ -46,6 +46,7 @@ classifiers = [
 "Builds" = "https://github.com/althonos/pyjess/actions"
 "PyPI" = "https://pypi.org/project/pyjess"
 "PiWheels" = "https://piwheels.org/project/pyjess/"
+"Preprint" = "https://www.biorxiv.org/content/10.64898/2026.02.10.705182v1"
 
 [project.optional-dependencies]
 test = ["importlib-resources ; python_version < '3.9'"]
