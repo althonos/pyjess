@@ -37,7 +37,8 @@ with protein structures, and retrieving the hits using a Python API without
 performing any external I/O. It's also more than 10x faster than Jess thanks to
 [algorithmic optimizations](https://pyjess.readthedocs.io/en/latest/guide/optimizations.html)
 added to improve the original Jess code while producing consistent results.
-PyJess was developed to support EnzyMM, the Enzyme Motif Miner[\[3\]](#ref3).
+PyJess was developed to support [EnzyMM](github.com/RayHackett/enzymm), 
+the Enzyme Motif Miner[\[3\]](#ref3).
 
 
 ## 🔧 Installing
