@@ -1,5 +1,5 @@
 # coding: utf-8
-# cython: language_level=3, linetrace=True, binding=True
+# cython: language_level=3, binding=True
 """Bindings to Jess, a 3D template matching software.
 
 Jess is an algorithm for constraint-based structural template matching
