@@ -1192,24 +1192,6 @@ cdef class Atom:
         memcpy(copy._atom, self._atom, sizeof(_Atom))
         return copy
 
-    @staticmethod
-    cdef void _transform(_Atom* atom, Mat4 matrix) noexcept nogil:
-        cdef double[4] tmp
-        tmp[0] = atom.x[0]
-        tmp[1] = atom.x[1]
-        tmp[2] = atom.x[2]
-        tmp[3] = 1.0
-
-        for i in range(3):
-            atom.x[i] = 0.0
-            for j in range(4):
-                atom.x[i] += matrix._data[i][j] * tmp[j]
-
-    cpdef Atom transform(self, Mat4 matrix):
-        cdef Atom copy = self.copy()
-        Atom._transform(copy._atom, matrix)
-        return copy
-
     cpdef str dumps(self, str format="pdb"):
         """Write the atom to a string.
 
@@ -1268,6 +1250,31 @@ cdef class Atom:
             a.charge # ignored
         )
         file.write(PyUnicode_FromStringAndSize(buffer, n))
+
+    @staticmethod
+    cdef void _transform(_Atom* atom, Mat4 matrix) noexcept nogil:
+        cdef double[4] tmp
+        tmp[0] = atom.x[0]
+        tmp[1] = atom.x[1]
+        tmp[2] = atom.x[2]
+        tmp[3] = 1.0
+
+        for i in range(3):
+            atom.x[i] = 0.0
+            for j in range(4):
+                atom.x[i] += matrix._data[i][j] * tmp[j]
+
+    cpdef Atom transform(self, Mat4 matrix):
+        """Apply an arbitrary transformation to the atom coordinates.
+
+        Arguments:
+            matrix (`~pyjess.Mat4`): A 4x4 matrix in homogeneous coordinates
+                describing the transformation to apply.
+
+        """
+        cdef Atom copy = self.copy()
+        Atom._transform(copy._atom, matrix)
+        return copy
 
 cdef class TemplateAtom:
     """A single template atom.
@@ -1643,6 +1650,31 @@ cdef class TemplateAtom:
         n += sprintf(&buffer[n], "%4.2f", atom.distWeight)
 
         file.write(PyUnicode_FromStringAndSize(buffer, n))
+
+    @staticmethod
+    cdef void _transform(_TessAtom* atom, Mat4 matrix) noexcept nogil:
+        cdef double[4] tmp
+        tmp[0] = atom.pos[0]
+        tmp[1] = atom.pos[1]
+        tmp[2] = atom.pos[2]
+        tmp[3] = 1.0
+
+        for i in range(3):
+            atom.pos[i] = 0.0
+            for j in range(4):
+                atom.pos[i] += matrix._data[i][j] * tmp[j]
+
+    cpdef TemplateAtom transform(self, Mat4 matrix):
+        """Apply an arbitrary transformation to the atom coordinates.
+
+        Arguments:
+            matrix (`~pyjess.Mat4`): A 4x4 matrix in homogeneous coordinates
+                describing the transformation to apply.
+
+        """
+        cdef TemplateAtom copy = self.copy()
+        TemplateAtom._transform(copy._atom, matrix)
+        return copy
 
 
 cdef class Template:
