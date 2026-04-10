@@ -12,6 +12,7 @@ from typing import (
     Iterable,
     List,
     TextIO,
+    Sequence,
     Sized,
     TypeVar,
     Tuple,
@@ -45,6 +46,10 @@ MATCH_MODE = Literal[
 _SELF = TypeVar("_SELF")
 
 __version__: str
+
+class Mat4:
+    def __init__(self, data: Sequence[Sequence[float]]) -> None: ...
+    def __matmul__(self, other: Mat4) -> Mat4: ...
 
 class Molecule(Sequence[Atom]):
     @classmethod
@@ -287,6 +292,8 @@ class Query(Generic[_T], Iterator[Hit[_T]]):
 class Hit(Generic[_T]):
     def __getstate__(self) -> Dict[str, object]: ...
     def __setstate__(self, state: Dict[str, object]) -> None: ...
+    @property
+    def transformation(self) -> Mat4: ...
     @property
     def rmsd(self) -> float: ...
     @property

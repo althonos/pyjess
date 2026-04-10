@@ -85,6 +85,7 @@ References:
 # --- C imports --------------------------------------------------------------
 
 cimport cython
+from cpython cimport Py_buffer
 from cpython.exc cimport PyErr_WarnEx
 from cpython.bytes cimport PyBytes_FromStringAndSize
 from cpython.unicode cimport (
@@ -173,6 +174,67 @@ cdef inline char encode_resname(const char* src) noexcept nogil:
 
 # --- Classes ----------------------------------------------------------------
 
+cdef class Mat4:
+    cdef          double[4][4]  _data
+    cdef readonly Py_ssize_t[2] shape
+
+    def __cinit__(self):
+        self.shape[0] = self.shape[1] = 4
+
+        for i in range(4):
+            for j in range(4):
+                self._data[i][j] = 0
+
+    def __init__(self, data):
+        if len(data) != 4:
+            raise ValueError("invalid dimensions")
+
+        for i, row in enumerate(data):
+            if len(row) != 4:
+                raise ValueError("invalid dimensions")
+            for j, x in enumerate(row):
+                self._data[i][j] = x
+
+    def __reduce__(self):
+        data = [
+            [self._data[i][j] for j in range(4)]
+            for i in range(4)
+        ]
+        return type(self), (data,)
+
+    def __getbuffer__(self, Py_buffer* buffer, int flags):
+        buffer.buf = <char*> self._data
+        buffer.format = 'd'
+        buffer.internal = NULL
+        buffer.itemsize = sizeof(double)
+        buffer.len = 4 * 4 * sizeof(double)
+        buffer.ndim = 2
+        buffer.obj = self
+        buffer.readonly = 0
+        buffer.shape = self.shape
+        buffer.strides = NULL
+        buffer.suboffsets = NULL
+
+    def __releasebuffer__(self, Py_buffer *buffer):
+        pass
+
+    def __matmul__(self, double[:, :] other):
+        cdef size_t i
+        cdef size_t j
+        cdef Mat4   res = Mat4.__new__(Mat4)
+
+        if other.shape[0] != 4 and other.shape[1] != 4:
+            raise ValueError(f"dimension error: expected shape (4, 4), got {tuple(other.shape)!r}")
+
+        with nogil:
+            for i in range(4):
+                for j in range(4):
+                    for k in range(4):
+                        res._data[i][j] += self._data[i][k] * other[k][j]
+
+        return res
+
+
 cdef class Molecule:
     """A molecule structure, as a sequence of `Atom` objects.
 
@@ -217,8 +279,8 @@ cdef class Molecule:
                 given, the parser will attempt to extract it from the
                 ``HEADER`` line (for PDB files) or the block name (for CIF
                 files).
-            date (`datetime.date`, optional): The deposition date of the 
-                structure. If `None` given, the parser will attempt to extract 
+            date (`datetime.date`, optional): The deposition date of the
+                structure. If `None` given, the parser will attempt to extract
                 it from the ``HEADER`` line (for PDB files) or the earliest
                 revision data (for CIF files)
             name (`str`, optional): The name of the structure. If `None`
@@ -295,8 +357,8 @@ cdef class Molecule:
                 given, the parser will attempt to extract it from the
                 ``HEADER`` line (for PDB files) or the block name (for CIF
                 files).
-            date (`datetime.date`, optional): The deposition date of the 
-                structure. If `None` given, the parser will attempt to extract 
+            date (`datetime.date`, optional): The deposition date of the
+                structure. If `None` given, the parser will attempt to extract
                 it from the ``HEADER`` line (for PDB files) or the earliest
                 revision data (for CIF files).
             name (`str`, optional): The name of the structure. If `None`
@@ -403,7 +465,7 @@ cdef class Molecule:
             id (`str` or `None`): The identifier to give to the newly
                 created molecule. If `None` given, will use the value of
                 ``structure.id``.
-            date (`datetime.date` or `None`): The deposition date to give to 
+            date (`datetime.date` or `None`): The deposition date to give to
                 the newly created molecule.
             name (`str` or `None`): The name to give to the newly
                 created molecule.
@@ -458,7 +520,7 @@ cdef class Molecule:
                 containing the structure data.
             id (`str` or `None`): The identifier to give to the newly
                 created molecule.
-            date (`datetime.date` or `None`): The deposition date to give to 
+            date (`datetime.date` or `None`): The deposition date to give to
                 the newly created molecule.
             name (`str` or `None`): The name to give to the newly
                 created molecule.
@@ -510,7 +572,7 @@ cdef class Molecule:
                 object containing the structure data.
             id (`str` or `None`): The id to give to the newly
                 created molecule.
-            date (`datetime.date` or `None`): The deposition date to give to 
+            date (`datetime.date` or `None`): The deposition date to give to
                 the newly created molecule.
             name (`str` or `None`): The name to give to the newly
                 created molecule.
@@ -576,7 +638,7 @@ cdef class Molecule:
         Arguments:
             atoms (sequence of `~pyjess.Atom`): The atoms of the molecule.
             id (`str`, optional): The identifier of the molecule.
-            date (`datetime.date`, optional): The deposition date of the 
+            date (`datetime.date`, optional): The deposition date of the
                 molecule.
             name (`str`, optional): The name of the molecule.
 
@@ -661,7 +723,7 @@ cdef class Molecule:
 
     def __reduce__(self):
         return functools.partial(
-            type(self), 
+            type(self),
             list(self),
             id=self.id,
             name=self.name,
@@ -773,7 +835,7 @@ cdef class Molecule:
             format (`str`): The format in which to write the molecule.
                 Currently only supports ``pdb``, which writes the hits
                 in the same format as Jess.
-            write_header (`bool`): Whether to write the molecule metadata 
+            write_header (`bool`): Whether to write the molecule metadata
                 as a ``HEADER`` line.
 
         .. versionadded:: 0.9.0
@@ -795,7 +857,7 @@ cdef class Molecule:
             format (`str`): The format in which to write the hit.
                 Currently only supports ``pdb``, which writes the hits
                 in the same format as Jess.
-            write_header (`bool`): Whether to write the molecule metadata 
+            write_header (`bool`): Whether to write the molecule metadata
                 as a ``HEADER`` line.
 
         .. versionadded:: 0.9.0
@@ -1976,6 +2038,42 @@ cdef class Query:
         memcpy(hit._rotation, M, 9*sizeof(double))
         memcpy(hit._centre[0], c, 3*sizeof(double))
         memcpy(hit._centre[1], v, 3*sizeof(double))
+
+    cdef int _compute_transformation(self, Hit hit):
+
+        cdef const double* M = hit._rotation
+        cdef const double* c = hit._centre[0]
+        cdef const double* v = hit._centre[1]
+
+        cdef Mat4 Mr = Mat4.__new__(Mat4)
+        cdef Mat4 Mc = Mat4.__new__(Mat4)
+        cdef Mat4 Mv = Mat4.__new__(Mat4)
+        hit.transformation = Mat4.__new__(Mat4)
+
+        # copy first translation
+        for i in range(4):
+            Mc._data[i][i] = 1.0
+        Mc._data[0][3] = -c[0]
+        Mc._data[1][3] = -c[1]
+        Mc._data[2][3] = -c[2]
+
+        # copy rotation
+        for i in range(3):
+            Mr._data[i][i] = 1.0
+            for j in range(3):
+                Mr._data[i][j] = M[3*i + j]
+        Mr._data[3][3] = 1.0
+
+        # copy second translation
+        for i in range(4):
+            Mv._data[i][i] = 1.0
+        Mv._data[0][3] = v[0]
+        Mv._data[1][3] = v[1]
+        Mv._data[2][3] = v[2]
+
+        # compute transformation
+        hit.transformation = Mv @ Mr @ Mc
+
         return 0
 
     def __next__(self):
@@ -2063,6 +2161,7 @@ cdef class Query:
             raise StopIteration
 
         # get the template object for the hit
+        self._compute_transformation(hit)
         hit._template = self.jess._templates[self.jess._indices[<size_t> hit_tpl]]
         return hit
 
@@ -2080,6 +2179,7 @@ cdef class Hit:
     cdef double[2][3]    _centre
     cdef _Atom*          _atoms
 
+    cdef readonly Mat4     transformation
     cdef readonly double   rmsd
     cdef          Template _template
     cdef          Molecule _molecule
@@ -2091,6 +2191,7 @@ cdef class Hit:
         return {
             "rotation": list(self._rotation),
             "centre": list(self._centre),
+            "transformation": self.transformation,
             "atoms": self.atoms(transform=False),
             "rmsd": self.rmsd,
             "template": self.template(transform=False),
@@ -2107,6 +2208,7 @@ cdef class Hit:
         self._molecule = state["molecule"]
         self._rotation = state["rotation"]
         self._centre = state["centre"]
+        self.transformation = state["transformation"]
 
         # check number of atoms is consistent
         count = len(self._template)
