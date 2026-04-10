@@ -870,6 +870,27 @@ cdef class Molecule:
             raise ValueError(f"invalid value for `format` argument: {format!r}")
         writer.dump(file, self)
 
+    cpdef Molecule transform(self, double[:, :] matrix):
+        """Apply a geometric transformation to all atoms of the molecule.
+
+        Arguments:
+            matrix (`~pyjess.Mat4`): A 4x4 matrix in homogeneous coordinates
+                describing the transformation to apply.
+
+        """
+        cdef int      k
+        cdef Molecule copy
+
+        if matrix.shape[0] != 4 and matrix.shape[1] != 4:
+            raise ValueError(f"dimension error: expected shape (4, 4), got {tuple(matrix.shape)!r}")
+
+        copy = self.copy()
+        with nogil:
+            for k in range(copy._mol.count):
+                atom = copy._mol.atom[k]
+                Atom._transform(atom, matrix)
+
+        return copy
 
 cdef class Atom:
     """A single atom in a molecule.
@@ -1265,20 +1286,21 @@ cdef class Atom:
                 atom.x[i] += matrix[i][j] * tmp[j]
 
     cpdef Atom transform(self, double[:, :] matrix):
-        """Apply an arbitrary transformation to the atom coordinates.
+        """Apply a geometric transformation to the atom coordinates.
 
         Arguments:
             matrix (`~pyjess.Mat4`): A 4x4 matrix in homogeneous coordinates
                 describing the transformation to apply.
 
         """
-        cdef Atom copy 
-        
+        cdef Atom copy
+
         if matrix.shape[0] != 4 and matrix.shape[1] != 4:
             raise ValueError(f"dimension error: expected shape (4, 4), got {tuple(matrix.shape)!r}")
 
         copy = self.copy()
-        Atom._transform(copy._atom, matrix)
+        with nogil:
+            Atom._transform(copy._atom, matrix)
         return copy
 
 cdef class TemplateAtom:
@@ -1677,13 +1699,14 @@ cdef class TemplateAtom:
                 describing the transformation to apply.
 
         """
-        cdef TemplateAtom copy 
+        cdef TemplateAtom copy
 
         if matrix.shape[0] != 4 and matrix.shape[1] != 4:
             raise ValueError(f"dimension error: expected shape (4, 4), got {tuple(matrix.shape)!r}")
 
         copy = self.copy()
-        TemplateAtom._transform(copy._atom, matrix)
+        with nogil:
+            TemplateAtom._transform(copy._atom, matrix)
         return copy
 
 
@@ -2405,28 +2428,9 @@ cdef class Hit:
         .. versionadded:: 0.5.0
 
         """
-        assert self._template._tpl is not NULL
-
-        cdef _Atom*        atom
-        cdef Molecule      mol
-        cdef size_t        i
-        cdef size_t        j
-        cdef size_t        k
-        cdef const double* M = self._rotation
-        cdef const double* c = self._centre[0]
-        cdef const double* v = self._centre[1]
-
         if not transform:
             return self._molecule
-
-        mol = self._molecule.copy()
-
-        with nogil:
-            for k in range(mol._mol.count):
-                atom = mol._mol.atom[k]
-                Atom._transform(atom, self.transformation)
-
-        return mol
+        return self._molecule.transform(self.transformation)
 
     cpdef Template template(self, bint transform=False):
         """Get the template matching the hit.

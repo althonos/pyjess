@@ -131,6 +131,7 @@ class Molecule(Sequence[Atom]):
         format: Literal["pdb"] = "pdb",
         write_header: bool = True,
     ) -> None: ...
+    def transform(self, matrix: Mat4) -> Molecule: ...
 
 class Atom:
     @classmethod
