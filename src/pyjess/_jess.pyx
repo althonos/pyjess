@@ -1252,7 +1252,7 @@ cdef class Atom:
         file.write(PyUnicode_FromStringAndSize(buffer, n))
 
     @staticmethod
-    cdef void _transform(_Atom* atom, Mat4 matrix) noexcept nogil:
+    cdef void _transform(_Atom* atom, double[:, :] matrix) noexcept nogil:
         cdef double[4] tmp
         tmp[0] = atom.x[0]
         tmp[1] = atom.x[1]
@@ -1262,9 +1262,9 @@ cdef class Atom:
         for i in range(3):
             atom.x[i] = 0.0
             for j in range(4):
-                atom.x[i] += matrix._data[i][j] * tmp[j]
+                atom.x[i] += matrix[i][j] * tmp[j]
 
-    cpdef Atom transform(self, Mat4 matrix):
+    cpdef Atom transform(self, double[:, :] matrix):
         """Apply an arbitrary transformation to the atom coordinates.
 
         Arguments:
@@ -1272,7 +1272,12 @@ cdef class Atom:
                 describing the transformation to apply.
 
         """
-        cdef Atom copy = self.copy()
+        cdef Atom copy 
+        
+        if matrix.shape[0] != 4 and matrix.shape[1] != 4:
+            raise ValueError(f"dimension error: expected shape (4, 4), got {tuple(matrix.shape)!r}")
+
+        copy = self.copy()
         Atom._transform(copy._atom, matrix)
         return copy
 
@@ -1652,7 +1657,7 @@ cdef class TemplateAtom:
         file.write(PyUnicode_FromStringAndSize(buffer, n))
 
     @staticmethod
-    cdef void _transform(_TessAtom* atom, Mat4 matrix) noexcept nogil:
+    cdef void _transform(_TessAtom* atom, double[:, :] matrix) noexcept nogil:
         cdef double[4] tmp
         tmp[0] = atom.pos[0]
         tmp[1] = atom.pos[1]
@@ -1662,9 +1667,9 @@ cdef class TemplateAtom:
         for i in range(3):
             atom.pos[i] = 0.0
             for j in range(4):
-                atom.pos[i] += matrix._data[i][j] * tmp[j]
+                atom.pos[i] += matrix[i, j] * tmp[j]
 
-    cpdef TemplateAtom transform(self, Mat4 matrix):
+    cpdef TemplateAtom transform(self, double[:, :] matrix):
         """Apply an arbitrary transformation to the atom coordinates.
 
         Arguments:
@@ -1672,7 +1677,12 @@ cdef class TemplateAtom:
                 describing the transformation to apply.
 
         """
-        cdef TemplateAtom copy = self.copy()
+        cdef TemplateAtom copy 
+
+        if matrix.shape[0] != 4 and matrix.shape[1] != 4:
+            raise ValueError(f"dimension error: expected shape (4, 4), got {tuple(matrix.shape)!r}")
+
+        copy = self.copy()
         TemplateAtom._transform(copy._atom, matrix)
         return copy
 
