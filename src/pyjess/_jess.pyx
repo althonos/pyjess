@@ -1192,6 +1192,24 @@ cdef class Atom:
         memcpy(copy._atom, self._atom, sizeof(_Atom))
         return copy
 
+    @staticmethod
+    cdef void _transform(_Atom* atom, Mat4 matrix) noexcept nogil:
+        cdef double[4] tmp
+        tmp[0] = atom.x[0]
+        tmp[1] = atom.x[1]
+        tmp[2] = atom.x[2]
+        tmp[3] = 1.0
+
+        for i in range(3):
+            atom.x[i] = 0.0
+            for j in range(4):
+                atom.x[i] += matrix._data[i][j] * tmp[j]
+
+    cpdef Atom transform(self, Mat4 matrix):
+        cdef Atom copy = self.copy()
+        Atom._transform(copy._atom, matrix)
+        return copy
+
     cpdef str dumps(self, str format="pdb"):
         """Write the atom to a string.
 
@@ -2173,6 +2191,9 @@ cdef class Hit:
         rmsd (`float`): The RMSD between the aligned structures.
         template (`~pyjess.Template`): The template that matched the
             query molecule.
+        transformation (`~pyjess.Mat4`): The transformation matrix
+            (in homogenous coordinates) to superpose the molecule
+            onto the template coordinate space.
 
     """
     cdef double[9]       _rotation
@@ -2319,14 +2340,11 @@ cdef class Hit:
 
         for k in range(count):
             atom = Atom.__new__(Atom)
+            atom.owned = True
+            atom.owner = self
+            atom._atom = &self._atoms[k]
             if transform:
-                atom._atom = <_Atom*> malloc(sizeof(_Atom))
-                memcpy(atom._atom, &self._atoms[k], sizeof(_Atom))
-                self._transform_atom(atom._atom.x, self._atoms[k].x)
-            else:
-                atom.owned = True
-                atom.owner = self
-                atom._atom = &self._atoms[k]
+                atom = atom.transform(self.transformation)
             atoms.append(atom)
 
         return atoms
@@ -2364,7 +2382,7 @@ cdef class Hit:
         with nogil:
             for k in range(mol._mol.count):
                 atom = mol._mol.atom[k]
-                self._transform_atom(atom.x, self._molecule._mol.atom[k].x)
+                Atom._transform(atom, self.transformation)
 
         return mol
 
