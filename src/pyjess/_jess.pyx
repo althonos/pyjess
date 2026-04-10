@@ -217,7 +217,7 @@ cdef class Mat4:
 
     def __releasebuffer__(self, Py_buffer *buffer):
         pass
-
+        
     def __matmul__(self, double[:, :] other):
         cdef size_t i
         cdef size_t j
@@ -2015,6 +2015,28 @@ cdef class Template:
             template_atom.dump(file)
             file.write("\n")
 
+    cpdef Template transform(self, double[:, :] matrix):
+        """Apply a geometric transformation to all atoms of the template.
+
+        Arguments:
+            matrix (`~pyjess.Mat4`): A 4x4 matrix in homogeneous coordinates
+                describing the transformation to apply.
+
+        """
+        cdef int      k
+        cdef Template copy
+
+        if matrix.shape[0] != 4 and matrix.shape[1] != 4:
+            raise ValueError(f"dimension error: expected shape (4, 4), got {tuple(matrix.shape)!r}")
+
+        copy = self.copy()
+        with nogil:
+            for k in range(copy._tess.count):
+                atom = copy._tess.atom[k]
+                TemplateAtom._transform(atom, matrix)
+
+        return copy
+
 cdef class Query:
     """A query over templates with a given molecule.
 
@@ -2122,43 +2144,6 @@ cdef class Query:
         memcpy(hit._centre[0], c, 3*sizeof(double))
         memcpy(hit._centre[1], v, 3*sizeof(double))
 
-    cdef int _compute_transformation(self, Hit hit):
-
-        cdef const double* M = hit._rotation
-        cdef const double* c = hit._centre[0]
-        cdef const double* v = hit._centre[1]
-
-        cdef Mat4 Mr = Mat4.__new__(Mat4)
-        cdef Mat4 Mc = Mat4.__new__(Mat4)
-        cdef Mat4 Mv = Mat4.__new__(Mat4)
-        hit.transformation = Mat4.__new__(Mat4)
-
-        # copy first translation
-        for i in range(4):
-            Mc._data[i][i] = 1.0
-        Mc._data[0][3] = -c[0]
-        Mc._data[1][3] = -c[1]
-        Mc._data[2][3] = -c[2]
-
-        # copy rotation
-        for i in range(3):
-            Mr._data[i][i] = 1.0
-            for j in range(3):
-                Mr._data[i][j] = M[3*i + j]
-        Mr._data[3][3] = 1.0
-
-        # copy second translation
-        for i in range(4):
-            Mv._data[i][i] = 1.0
-        Mv._data[0][3] = v[0]
-        Mv._data[1][3] = v[1]
-        Mv._data[2][3] = v[2]
-
-        # compute transformation
-        hit.transformation = Mv @ Mr @ Mc
-
-        return 0
-
     def __next__(self):
         assert self._jq is not NULL
 
@@ -2244,7 +2229,6 @@ cdef class Query:
             raise StopIteration
 
         # get the template object for the hit
-        self._compute_transformation(hit)
         hit._template = self.jess._templates[self.jess._indices[<size_t> hit_tpl]]
         return hit
 
@@ -2265,7 +2249,7 @@ cdef class Hit:
     cdef double[2][3]    _centre
     cdef _Atom*          _atoms
 
-    cdef readonly Mat4     transformation
+    # cdef readonly Mat4     transformation
     cdef readonly double   rmsd
     cdef          Template _template
     cdef          Molecule _molecule
@@ -2277,7 +2261,6 @@ cdef class Hit:
         return {
             "rotation": list(self._rotation),
             "centre": list(self._centre),
-            "transformation": self.transformation,
             "atoms": self.atoms(transform=False),
             "rmsd": self.rmsd,
             "template": self.template(transform=False),
@@ -2294,7 +2277,6 @@ cdef class Hit:
         self._molecule = state["molecule"]
         self._rotation = state["rotation"]
         self._centre = state["centre"]
-        self.transformation = state["transformation"]
 
         # check number of atoms is consistent
         count = len(self._template)
@@ -2308,38 +2290,78 @@ cdef class Hit:
         for i, atom in enumerate(state["atoms"]):
             memcpy(&self._atoms[i], atom._atom, sizeof(_Atom))
 
-    cdef void _transform_atom(self, double* x, const double* src) noexcept nogil:
-        cdef size_t        i
-        cdef size_t        j
+    @property
+    def transformation(self):
+        """`Mat4`: The matrix to transform atoms into template coordinates.
+        """
         cdef const double* M = self._rotation
         cdef const double* c = self._centre[0]
         cdef const double* v = self._centre[1]
-        cdef double[3]     tmp
 
-        for i in range(3):
-            tmp[i] = src[i] - c[i]
+        cdef Mat4 Mr    = Mat4.__new__(Mat4)
+        cdef Mat4 Mc    = Mat4.__new__(Mat4)
+        cdef Mat4 Mv    = Mat4.__new__(Mat4)
 
+        # copy first translation
+        for i in range(4):
+            Mc._data[i][i] = 1.0
+        Mc._data[0][3] = -c[0]
+        Mc._data[1][3] = -c[1]
+        Mc._data[2][3] = -c[2]
+
+        # copy rotation
         for i in range(3):
-            x[i] = v[i]
+            Mr._data[i][i] = 1.0
             for j in range(3):
-                x[i] += M[3*i + j] * tmp[j]
+                Mr._data[i][j] = M[3*i + j]
+        Mr._data[3][3] = 1.0
 
-    cdef void _inverse_transform_atom(self, double* x, const double* src) noexcept nogil:
-        cdef size_t        i
-        cdef size_t        j
+        # copy second translation
+        for i in range(4):
+            Mv._data[i][i] = 1.0
+        Mv._data[0][3] = v[0]
+        Mv._data[1][3] = v[1]
+        Mv._data[2][3] = v[2]
+
+        # compute transformation
+        return Mv @ Mr @ Mc
+
+    @property
+    def inverse_transformation(self):
+        """`Mat4`: The matrix to transform atoms into molecule coordinates.
+        """
         cdef const double* M = self._rotation
         cdef const double* c = self._centre[0]
         cdef const double* v = self._centre[1]
-        cdef double[3]     tmp
 
-        for i in range(3):
-            tmp[i] = src[i] - v[i]
+        cdef Mat4 Mr    = Mat4.__new__(Mat4)
+        cdef Mat4 Mc    = Mat4.__new__(Mat4)
+        cdef Mat4 Mv    = Mat4.__new__(Mat4)
 
+        # copy first translation
+        for i in range(4):
+            Mv._data[i][i] = 1.0
+        Mv._data[0][3] = -v[0]
+        Mv._data[1][3] = -v[1]
+        Mv._data[2][3] = -v[2]
+
+        # copy rotation
         for i in range(3):
-            x[i] = c[i]
+            Mr._data[i][i] = 1.0
             for j in range(3):
-                x[i] += M[3*j + i] * tmp[j]
+                Mr._data[i][j] = M[3*j + i]
+        Mr._data[3][3] = 1.0
 
+        # copy second translation
+        for i in range(4):
+            Mc._data[i][i] = 1.0
+        Mc._data[0][3] = c[0]
+        Mc._data[1][3] = c[1]
+        Mc._data[2][3] = c[2]
+
+        # compute transformation
+        return Mc @ Mr @ Mv
+    
     @property
     def determinant(self):
         """`float`: The determinant of the rotation matrix.
@@ -2393,15 +2415,10 @@ cdef class Hit:
         assert self._template._tpl is not NULL
 
         cdef Atom atom
-        cdef int  i
-        cdef int  j
         cdef int  k
-        cdef int  count = self._template._tpl.count(self._template._tpl)
         cdef list atoms = []
-
-        cdef const double* M = self._rotation
-        cdef const double* c = self._centre[0]
-        cdef const double* v = self._centre[1]
+        cdef int  count = self._template._tpl.count(self._template._tpl)
+        cdef Mat4 trans = self.transformation if transform else None
 
         for k in range(count):
             atom = Atom.__new__(Atom)
@@ -2409,7 +2426,7 @@ cdef class Hit:
             atom.owner = self
             atom._atom = &self._atoms[k]
             if transform:
-                atom = atom.transform(self.transformation)
+                atom = atom.transform(trans)
             atoms.append(atom)
 
         return atoms
@@ -2457,6 +2474,8 @@ cdef class Hit:
         cdef const double* c = self._centre[0]
         cdef const double* v = self._centre[1]
 
+        cdef Mat4 trans = self.inverse_transformation if transform else None
+
         if not transform:
             return self._template
 
@@ -2465,7 +2484,7 @@ cdef class Hit:
         with nogil:
             for k in range(template._tess.count):
                 atom = template._tess.atom[k]
-                self._inverse_transform_atom(atom.pos, self._template._tess.atom[k].pos)
+                TemplateAtom._transform(atom, trans)
 
         return template
 
@@ -2512,7 +2531,7 @@ cdef class Hit:
         assert self._template._tpl is not NULL
         assert self._molecule._mol is not NULL
 
-        cdef _Atom*    atom
+        cdef Atom      tmp
         cdef size_t    k
         cdef char[80]  buffer
         cdef char[5]   name
@@ -2520,6 +2539,8 @@ cdef class Hit:
         cdef char[3]   elem
         cdef double[3] x
         cdef int       count   = self._template._tpl.count(self._template._tpl)
+        cdef Atom      atom    = Atom.__new__(Atom)
+        cdef Mat4      trans   = self.transformation
 
         if self._template.id is None:
             raise RuntimeError("cannot dump `Hit` where `self.template.id` is `None`")
@@ -2533,34 +2554,39 @@ cdef class Hit:
         file.write(self._template.id)
         file.write(f" Det={self.determinant:4,.1f} log(E)~ {self.log_evalue:4.2f}\n")
 
+        atom.owner = self
+        atom.owned = True
+        atom._atom = NULL
+
         for k in range(count):
-            atom = &self._atoms[k]
-            decode_token(name, atom.name, 4)
-            decode_token(resname, atom.resName, 3)
-            decode_token(elem, atom.element, 2)
+            atom._atom = &self._atoms[k]
+            decode_token(name, atom._atom.name, 4)
+            decode_token(resname, atom._atom.resName, 3)
+            decode_token(elem, atom._atom.element, 2)
             if transform:
-                self._transform_atom(x, atom.x)
+                tmp = atom.transform(trans)  # FIXME: avoid copy?
+                memcpy(x, tmp._atom.x, 3*sizeof(double))
             else:
-                memcpy(x, atom.x, 3*sizeof(double))
+                memcpy(x, atom._atom.x, 3*sizeof(double))
             n = sprintf(
                 buffer,
                 "ATOM  %5i%5s%c%-3s%c%c%4i%-4c%8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
-                atom.serial,
+                atom._atom.serial,
                 name,
-                atom.altLoc,
+                atom._atom.altLoc,
                 resname,
-                atom.chainID1,
-                atom.chainID2,
-                atom.resSeq,
-                atom.iCode,
+                atom._atom.chainID1,
+                atom._atom.chainID2,
+                atom._atom.resSeq,
+                atom._atom.iCode,
                 x[0],
                 x[1],
                 x[2],
-                atom.occupancy,
-                atom.tempFactor,
-                # atom.segID,
+                atom._atom.occupancy,
+                atom._atom.tempFactor,
+                # atom._atom.segID,
                 elem,
-                atom.charge # ignored
+                atom._atom.charge # ignored
             )
             file.write(PyUnicode_FromStringAndSize(buffer, n))
         file.write("ENDMDL\n")
