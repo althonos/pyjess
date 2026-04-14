@@ -6,7 +6,21 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.9.1...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.10.0...HEAD
+
+
+## [v0.10.0] - 2026-04-14
+[v0.10.0]: https://github.com/althonos/pyjess/compare/v0.9.1...v0.10.0
+
+### Added
+- Geometric transformation methods to `Atom`, `Molecule`, `TemplateAtom` and `Template`.
+- `Mat4` class to store a transformation matrix in homogeneous coordinates.
+
+### Changed
+- Bump minimum supported Limited API to Python 3.11 to use typed memoryviews.
+
+### Fixed
+- Line tracing being enabled by default in Cython extensions.
 
 
 ## [v0.9.1] - 2025-12-22
@@ -14,6 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - Documentation page with a command line interface reference.
+
 ### Fixed
 - Correct error type when calling `Hit.dump` with a `Molecule` where `id` is `None` ([#9](https://github.com/althonos/pyjess/pull/9), by [@RayHackett](https://github.com/RayHackett)).
 - Broken AUR `PKGBUILD` not working with Limited API wheels.

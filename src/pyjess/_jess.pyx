@@ -175,6 +175,11 @@ cdef inline char encode_resname(const char* src) noexcept nogil:
 # --- Classes ----------------------------------------------------------------
 
 cdef class Mat4:
+    """A 4x4 matrix of double precision.
+
+    .. versionadded:: 0.10.0
+
+    """
     cdef          double[4][4]  _data
     cdef readonly Py_ssize_t[2] shape
 
@@ -877,6 +882,8 @@ cdef class Molecule:
             matrix (`~pyjess.Mat4`): A 4x4 matrix in homogeneous coordinates
                 describing the transformation to apply.
 
+        .. versionadded:: 0.10.0
+
         """
         cdef size_t   i
         cdef size_t   j
@@ -1302,6 +1309,8 @@ cdef class Atom:
             matrix (`~pyjess.Mat4`): A 4x4 matrix in homogeneous coordinates
                 describing the transformation to apply.
 
+        .. versionadded:: 0.10.0
+
         """
         cdef Atom       copy
         cdef double[16] mat
@@ -1716,6 +1725,8 @@ cdef class TemplateAtom:
             matrix (`~pyjess.Mat4`): A 4x4 matrix in homogeneous coordinates
                 describing the transformation to apply.
 
+        .. versionadded:: 0.10.0
+
         """
         cdef size_t    i
         cdef size_t    j
@@ -2046,6 +2057,8 @@ cdef class Template:
         Arguments:
             matrix (`~pyjess.Mat4`): A 4x4 matrix in homogeneous coordinates
                 describing the transformation to apply.
+
+        .. versionadded:: 0.10.0
 
         """
         assert self._tess is not NULL
