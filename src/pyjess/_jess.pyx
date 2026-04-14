@@ -217,7 +217,7 @@ cdef class Mat4:
 
     def __releasebuffer__(self, Py_buffer *buffer):
         pass
-        
+
     def __matmul__(self, double[:, :] other):
         cdef size_t i
         cdef size_t j
@@ -878,17 +878,24 @@ cdef class Molecule:
                 describing the transformation to apply.
 
         """
+        cdef size_t   i
+        cdef size_t   j
         cdef int      k
         cdef Molecule copy
+        cdef double[16]   mat
 
         if matrix.shape[0] != 4 and matrix.shape[1] != 4:
             raise ValueError(f"dimension error: expected shape (4, 4), got {tuple(matrix.shape)!r}")
+
+        for i in range(4):
+            for j in range(4):
+                mat[4*i+j] = matrix[i, j]
 
         copy = self.copy()
         with nogil:
             for k in range(copy._mol.count):
                 atom = copy._mol.atom[k]
-                Atom._transform(atom, matrix)
+                Atom._transform(atom, mat)
 
         return copy
 
@@ -1273,8 +1280,11 @@ cdef class Atom:
         file.write(PyUnicode_FromStringAndSize(buffer, n))
 
     @staticmethod
-    cdef void _transform(_Atom* atom, double[:, :] matrix) noexcept nogil:
+    cdef void _transform(_Atom* atom, const double* matrix) noexcept nogil:
+        cdef size_t    i
+        cdef size_t    j
         cdef double[4] tmp
+
         tmp[0] = atom.x[0]
         tmp[1] = atom.x[1]
         tmp[2] = atom.x[2]
@@ -1283,7 +1293,7 @@ cdef class Atom:
         for i in range(3):
             atom.x[i] = 0.0
             for j in range(4):
-                atom.x[i] += matrix[i][j] * tmp[j]
+                atom.x[i] += matrix[4*i+j] * tmp[j]
 
     cpdef Atom transform(self, double[:, :] matrix):
         """Apply a geometric transformation to the atom coordinates.
@@ -1293,14 +1303,19 @@ cdef class Atom:
                 describing the transformation to apply.
 
         """
-        cdef Atom copy
+        cdef Atom       copy
+        cdef double[16] mat
 
         if matrix.shape[0] != 4 and matrix.shape[1] != 4:
             raise ValueError(f"dimension error: expected shape (4, 4), got {tuple(matrix.shape)!r}")
 
+        for i in range(4):
+            for j in range(4):
+                mat[4*i+j] = matrix[i, j]
+
         copy = self.copy()
         with nogil:
-            Atom._transform(copy._atom, matrix)
+            Atom._transform(copy._atom, mat)
         return copy
 
 cdef class TemplateAtom:
@@ -1679,8 +1694,11 @@ cdef class TemplateAtom:
         file.write(PyUnicode_FromStringAndSize(buffer, n))
 
     @staticmethod
-    cdef void _transform(_TessAtom* atom, double[:, :] matrix) noexcept nogil:
+    cdef void _transform(_TessAtom* atom, const double* matrix) noexcept nogil:
+        cdef size_t    i
+        cdef size_t    j
         cdef double[4] tmp
+
         tmp[0] = atom.pos[0]
         tmp[1] = atom.pos[1]
         tmp[2] = atom.pos[2]
@@ -1689,7 +1707,7 @@ cdef class TemplateAtom:
         for i in range(3):
             atom.pos[i] = 0.0
             for j in range(4):
-                atom.pos[i] += matrix[i, j] * tmp[j]
+                atom.pos[i] += matrix[4*i+j] * tmp[j]
 
     cpdef TemplateAtom transform(self, double[:, :] matrix):
         """Apply an arbitrary transformation to the atom coordinates.
@@ -1699,14 +1717,21 @@ cdef class TemplateAtom:
                 describing the transformation to apply.
 
         """
+        cdef size_t    i
+        cdef size_t    j
         cdef TemplateAtom copy
+        cdef double[16]   mat
 
         if matrix.shape[0] != 4 and matrix.shape[1] != 4:
             raise ValueError(f"dimension error: expected shape (4, 4), got {tuple(matrix.shape)!r}")
 
+        for i in range(4):
+            for j in range(4):
+                mat[4*i+j] = matrix[i, j]
+
         copy = self.copy()
         with nogil:
-            TemplateAtom._transform(copy._atom, matrix)
+            TemplateAtom._transform(copy._atom, mat)
         return copy
 
 
@@ -2023,17 +2048,27 @@ cdef class Template:
                 describing the transformation to apply.
 
         """
-        cdef int      k
-        cdef Template copy
+        assert self._tess is not NULL
+
+        cdef size_t     i
+        cdef size_t     j
+        cdef int        k
+        cdef Template   copy
+        cdef double[16] mat
+        cdef ssize_t    length = self._tess.count
 
         if matrix.shape[0] != 4 and matrix.shape[1] != 4:
             raise ValueError(f"dimension error: expected shape (4, 4), got {tuple(matrix.shape)!r}")
 
+        for i in range(4):
+            for j in range(4):
+                mat[4*i+j] = matrix[i, j]
+
         copy = self.copy()
         with nogil:
-            for k in range(copy._tess.count):
+            for k in range(length):
                 atom = copy._tess.atom[k]
-                TemplateAtom._transform(atom, matrix)
+                TemplateAtom._transform(atom, mat)
 
         return copy
 
@@ -2361,7 +2396,7 @@ cdef class Hit:
 
         # compute transformation
         return Mc @ Mr @ Mv
-    
+
     @property
     def determinant(self):
         """`float`: The determinant of the rotation matrix.
@@ -2463,30 +2498,9 @@ cdef class Hit:
         .. versionadded:: 0.9.0
 
         """
-        assert self._template._tpl is not NULL
-
-        cdef _TessAtom*    atom
-        cdef Template      template
-        cdef size_t        i
-        cdef size_t        j
-        cdef size_t        k
-        cdef const double* M = self._rotation
-        cdef const double* c = self._centre[0]
-        cdef const double* v = self._centre[1]
-
-        cdef Mat4 trans = self.inverse_transformation if transform else None
-
         if not transform:
             return self._template
-
-        template = self._template.copy()
-
-        with nogil:
-            for k in range(template._tess.count):
-                atom = template._tess.atom[k]
-                TemplateAtom._transform(atom, trans)
-
-        return template
+        return self._template.transform(self.inverse_transformation)
 
     cpdef str dumps(self, str format="pdb", bint transform=True):
         """Write the hit to a string.
