@@ -1314,6 +1314,8 @@ cdef class Atom:
         """
         cdef Atom       copy
         cdef double[16] mat
+        cdef size_t     i
+        cdef size_t     j
 
         if matrix.shape[0] != 4 and matrix.shape[1] != 4:
             raise ValueError(f"dimension error: expected shape (4, 4), got {tuple(matrix.shape)!r}")
