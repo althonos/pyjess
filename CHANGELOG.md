@@ -6,7 +6,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [Unreleased]
-[Unreleased]: https://github.com/althonos/pyjess/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/althonos/pyjess/compare/v0.10.1...HEAD
+
+
+## [v0.10.1] - 2026-05-27
+[v0.10.1]: https://github.com/althonos/pyjess/compare/v0.10.0...v0.10.1
+
+### Fixed
+- Undeclared index type in `Atom.transform` implementation.
+
+### Changed
+- Improved performance of data copy/swap in QuickSelect implementation.
 
 
 ## [v0.10.0] - 2026-04-14
