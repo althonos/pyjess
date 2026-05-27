@@ -65,7 +65,7 @@ PyJess |Stars|
    :target: https://github.com/althonos/pyjess/blob/main/CHANGELOG.md
    :class: dark-light
 
-.. |Downloads| image:: https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fpepy.tech%2Fprojects%2Fpyjess&search=%5B0-9%5D%2B.%5B0-9%5D%2B(k%7CM)&style=flat-square&label=downloads&color=303f9f&cacheSeconds=86400
+.. |Downloads| image:: https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fpepy.tech%2Fprojects%2Fpyjess&search=downloaded%20(%5B0-9%2C.%20kM%5D%2B)%20times&replace=%241&style=flat-square&label=downloads&color=303f9f&cacheSeconds=86400
    :target: https://pepy.tech/project/pyjess
    :class: dark-light
 
