@@ -1,9 +1,9 @@
 diff --git a/src/qselect.h b/src/qselect.h
 new file mode 100644
-index 0000000..1019f38
+index 0000000..56d90ec
 --- /dev/null
 +++ b/src/qselect.h
-@@ -0,0 +1,89 @@
+@@ -0,0 +1,117 @@
 +#ifndef QSELECT_H
 +#define QSELECT_H
 +
@@ -17,12 +17,40 @@ index 0000000..1019f38
 +static inline void
 +_qselect_memswap(void *restrict p1, void *restrict p2, size_t n)
 +{
-+  while (n > 0)
-+    {
-+      unsigned char t = ((unsigned char *)p1)[--n];
-+      ((unsigned char *)p1)[n] = ((unsigned char *)p2)[n];
-+      ((unsigned char *)p2)[n] = t;
-+    }
++	uintptr_t a1 = (uintptr_t) p1;
++	uintptr_t a2 = (uintptr_t) p2;
++  	do
++	{
++		switch(n)
++		{
++			case 8:
++				n -= 8;
++				uint64_t t8 = *((uint64_t*) a1 + n);
++				*((uint64_t*) (a1 + n)) = *((uint64_t*) (a2 + n));
++				*((uint64_t*) (a2 + n)) = t8;
++				break;
++			case 4:
++				n -= 4;
++				uint32_t t4 = *((uint32_t*) (a1 + n));
++				*((uint32_t*) (a1 + n)) = *((uint32_t*) (a2 + n));
++				*((uint32_t*) (a2 + n)) = t4;
++				break;
++			case 2:
++				n -= 2;
++				uint16_t t2 = *((uint16_t*) (a1 + n));
++				*((uint16_t*) (a1 + n)) = *((uint16_t*) (a2 + n));
++				*((uint16_t*) (a2 + n)) = t2;
++				break;
++			default:
++				n -= 1;
++				uint8_t t1 = *((uint8_t*) (a1 + n));
++				*((uint8_t*) (a1 + n)) = *((uint8_t*) (a2 + n));
++				*((uint8_t*) (a2 + n)) = t1;
++				break;
++			case 0:
++				break;
++		}
++	} while(n>0);
 +}
 +
 +static size_t 
@@ -93,4 +121,3 @@ index 0000000..1019f38
 +#undef _SAFE_INDEX
 +
 +#endif
-\ No newline at end of file
