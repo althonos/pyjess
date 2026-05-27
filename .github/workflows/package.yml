@@ -16,7 +16,7 @@ jobs:
         submodules: true
     - name: Build manylinux wheels
       if: "!contains(github.ref, 'rc') && !contains(github.ref, 'alpha')"
-      uses: pypa/cibuildwheel@v2.21.3
+      uses: pypa/cibuildwheel@v3.4.1
       env:
         CIBW_ARCHS: aarch64
         CIBW_BUILD: '*-manylinux_aarch64'
@@ -37,7 +37,7 @@ jobs:
         submodules: true
     - name: Build manylinux wheels
       if: "!contains(github.ref, 'rc') && !contains(github.ref, 'alpha')"
-      uses: pypa/cibuildwheel@v2.21.3
+      uses: pypa/cibuildwheel@v3.4.1
       env:
         CIBW_ARCHS: x86_64
         CIBW_BUILD: '*-manylinux_x86_64'
@@ -58,7 +58,7 @@ jobs:
         submodules: true
     - name: Build manylinux wheels
       if: "!contains(github.ref, 'rc') && !contains(github.ref, 'alpha')"
-      uses: pypa/cibuildwheel@v2.21.3
+      uses: pypa/cibuildwheel@v3.4.1
       env:
         CIBW_ARCHS: x86_64
         CIBW_BUILD: '*-macosx_x86_64'
@@ -79,7 +79,7 @@ jobs:
         submodules: true
     - name: Build manylinux wheels
       if: "!contains(github.ref, 'rc') && !contains(github.ref, 'alpha')"
-      uses: pypa/cibuildwheel@v2.21.3
+      uses: pypa/cibuildwheel@v3.4.1
       env:
         CIBW_ARCHS: arm64
         CIBW_BUILD: '*-macosx_arm64'
@@ -104,7 +104,7 @@ jobs:
         arch: amd64
     - name: Build manylinux wheels
       if: "!contains(github.ref, 'rc') && !contains(github.ref, 'alpha')"
-      uses: pypa/cibuildwheel@v2.21.3
+      uses: pypa/cibuildwheel@v3.4.1
       env:
         CIBW_ARCHS: AMD64
         CIBW_BUILD: '*-win_amd64'
