@@ -17,7 +17,7 @@
 [![Docs](https://img.shields.io/readthedocs/pyjess/latest?style=flat-square&maxAge=600)](https://pyjess.readthedocs.io)
 [![Changelog](https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/pyjess/blob/main/CHANGELOG.md)
 [![Downloads](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fpepy.tech%2Fprojects%2Fpyjess&search=downloaded%20(%5B0-9%2C.%20kM%5D%2B)%20times&replace=%241&style=flat-square&label=downloads&color=303f9f&cacheSeconds=86400)](https://pepy.tech/project/pyjess)
-[![Preprint](https://img.shields.io/badge/preprint-bioRxiv-darkblue?style=flat-square&maxAge=2678400)](https://www.biorxiv.org/content/10.64898/2026.02.10.705182v1)
+[![Paper](https://img.shields.io/badge/paper-Protein%20Science-darkblue?style=flat-square&maxAge=2678400)](https://onlinelibrary.wiley.com/doi/10.1002/pro.70744)
 
 
 ## 🗺️ Overview
@@ -37,7 +37,7 @@ with protein structures, and retrieving the hits using a Python API without
 performing any external I/O. It's also more than 10x faster than Jess thanks to
 [algorithmic optimizations](https://pyjess.readthedocs.io/en/latest/guide/optimizations.html)
 added to improve the original Jess code while producing consistent results.
-PyJess was developed to support [EnzyMM](github.com/RayHackett/enzymm), 
+PyJess was developed to support [EnzyMM](https://github.com/RayHackett/enzymm), 
 the Enzyme Motif Miner[\[3\]](#ref3).
 
 
@@ -220,6 +220,6 @@ the [Zeller team](https://github.com/zellerlab).*
 
 ## 📚 References
 
-- <a id="ref1">\[1\]</a> Barker, J. A., & Thornton, J. M. (2003). An algorithm for constraint-based structural template matching: application to 3D templates with statistical analysis. Bioinformatics (Oxford, England), 19(13), 1644–1649. [doi:10.1093/bioinformatics/btg226](https://doi.org/10.1093/bioinformatics/btg226).
-- <a id="ref2">\[2\]</a> Wallace, A. C., Borkakoti, N., & Thornton, J. M. (1997). TESS: a geometric hashing algorithm for deriving 3D coordinate templates for searching structural databases. Application to enzyme active sites. Protein science : a publication of the Protein Society, 6(11), 2308–2323. [doi:10.1002/pro.5560061104](https://doi.org/10.1002/pro.5560061104).
-- <a id="ref3">\[3\]</a>  Hackett, R. E., Riziotis, I. G., Larralde, M., Ribeiro, A. J. M., Zeller, G., Thornton, J. M. (2026). Investigating Enzyme Function by Geometric Matching of Catalytic Motifs. bioRxiv. 2026.02.10.705182; [doi:10.64898/2026.02.10.705182](https://doi.org/10.64898/2026.02.10.705182).
+- <a id="ref1">\[1\]</a> Barker, J. A., & Thornton, J. M. (2003). 'An algorithm for constraint-based structural template matching: application to 3D templates with statistical analysis'. *Bioinformatics* (Oxford, England), 19(13), 1644–1649. [doi:10.1093/bioinformatics/btg226](https://doi.org/10.1093/bioinformatics/btg226).
+- <a id="ref2">\[2\]</a> Wallace, A. C., Borkakoti, N., & Thornton, J. M. (1997). 'TESS: a geometric hashing algorithm for deriving 3D coordinate templates for searching structural databases. Application to enzyme active sites'. *Protein Science* 6(11), 2308–2323. [doi:10.1002/pro.5560061104](https://doi.org/10.1002/pro.5560061104).
+- <a id="ref3">\[3\]</a> Hackett, R. E., Riziotis, I. G., Larralde, M., Ribeiro, A. J. M., Zeller, G., Thornton, J. M. (2026). 'Investigating enzyme function by geometric matching of catalytic motifs'. *Protein Science*, 35(9), e70744. [doi:10.1002/pro.70744](https://doi.org/10.1002/pro.70744).

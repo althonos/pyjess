@@ -69,8 +69,8 @@ PyJess |Stars|
    :target: https://pepy.tech/project/pyjess
    :class: dark-light
 
-.. |Paper| image:: https://img.shields.io/badge/preprint-bioRxiv-darkblue.svg?style=flat-square&maxAge=3600
-   :target: https://www.biorxiv.org/content/10.64898/2026.02.10.705182v1
+.. |Paper| image:: https://img.shields.io/badge/paper-Protein%20Science-darkblue?style=flat-square&maxAge=2678400
+   :target: https://onlinelibrary.wiley.com/doi/10.1002/pro.70744 
    :class: dark-light
 
 
